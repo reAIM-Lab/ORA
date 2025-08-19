@@ -23,7 +23,7 @@ import femr.models.rmsnorm
 import femr.models.tasks
 import femr.models.tokenizer
 import femr.models.xformers
-
+import os
 
 @dataclass(frozen=False)
 class TotalFlops:
@@ -512,6 +512,8 @@ def compute_features(
         use_linear_interpolation,  # or True, doesn’t matter for LabeledSubjectTask
         config
     )
+    state_dict = torch.load(os.path.join(model_path, "pytorch_model.bin"), map_location="cpu")
+    missing, unexpected = model.load_state_dict(state_dict, strict=False)
 
     tokenizer = femr.models.tokenizer.HierarchicalTokenizer.from_pretrained(model_path, ontology=ontology)
     processor = femr.models.processor.FEMRBatchProcessor(tokenizer, task=task)
