@@ -164,19 +164,25 @@ class BatchCreator:
         self.tokenizer.start_subject()
 
         for event in subject.events:
-            if event.time is None or event.time.date() <= birth.date():
+            if event.time is None or (
+                    event.time.date() <= birth.date()
+                    and getattr(event, "table", "person") == "person"
+            ):
                 # Get features and weights for the current event
                 features, weights = self.tokenizer.get_feature_codes(event)
                 per_subject_hierarchical_tokens.extend(features)
                 per_subject_hierarchical_weights.extend(weights)
 
         per_subject_token_indices.append(len(per_subject_hierarchical_tokens))
-        per_subject_ages.append((birth - birth) / datetime.timedelta(days=1))
+        per_subject_ages.append((event.time - birth) / datetime.timedelta(days=1))
         per_subject_time_data.append([1, 0, 0, 0, 0])
         per_subject_timestamps.append(event.time.replace(tzinfo=datetime.timezone.utc).timestamp())
                 
         for event in subject.events:
-            if event.time is None or event.time.date() <= birth.date():
+            if event.time is None or (
+                    event.time.date() <= birth.date()
+                    and getattr(event, "table", "person") == "person"
+            ):
                 continue
 
             # We want to avoid duplicate codes in the same day, so we maintain codes_seen_today
@@ -184,7 +190,7 @@ class BatchCreator:
                 current_date = event.time.date()
                 codes_seen_today = set()
 
-            age = event.time - birth
+            age = max(datetime.timedelta(seconds=0), event.time - birth)
             if last_time is not None:
                 delta = event.time - last_time
             else:
@@ -211,14 +217,14 @@ class BatchCreator:
                     for _ in range(num_added):
                         per_subject_label_indices.append(len(per_subject_ages) - 1)
 
-
-            if isinstance(self.tokenizer, femr.models.tokenizer.HierarchicalTokenizer):
+            if False:
+                assert len(features) == 1
+                per_subject_tokens.append(features[0])
+            elif isinstance(self.tokenizer, femr.models.tokenizer.HierarchicalTokenizer):
                 assert weights is not None
                 per_subject_hierarchical_tokens.extend(features)
                 per_subject_hierarchical_weights.extend(weights)
                 per_subject_token_indices.append(len(per_subject_hierarchical_tokens))
-            else:
-                assert False, "Only hierarchical tokenizer is currently supported"
 
             per_subject_ages.append((event.time - birth) / datetime.timedelta(days=1))
 
@@ -451,7 +457,7 @@ class FEMRBatchProcessor:
         return {"batch": _add_dimension(self.creator.cleanup_batch(batches[0]))}
 
     def convert_dataset(
-        self, db: meds_reader.SubjectDatabase, tokens_per_batch: int, min_subjects_per_batch: int = 1, num_proc: int = 1
+        self, db: meds_reader.SubjectDatabase, tokens_per_batch: int, min_subjects_per_batch: int = 2, num_proc: int = 1
     ):
         """Convert an entire dataset to batches.
 
@@ -532,7 +538,7 @@ class FEMRBatchProcessor:
             gen_kwargs={
                 "batch_data": final_batch_data,
             },
-            num_proc=(num_proc + 3) // 4,
+            num_proc=num_proc // 4,
             writer_batch_size=8,
         )
 
