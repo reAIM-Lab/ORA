@@ -201,8 +201,8 @@ class SurvivalCalculator:
         for event in subject.events:
             if event.time is None:
                 continue
-            if event.code.split('/')[0] in ('LAB', 'MEDICATION', 'INFUSION_START', 'INFUSION_END'):
-                continue
+            # if event.code.split('/')[0] in ('LAB', 'MEDICATION', 'INFUSION_START', 'INFUSION_END'):
+            #     continue
             if event.numeric_value is not None or event.text_value is not None:
                 continue
             codes = set()
@@ -295,6 +295,7 @@ class MOTORTask(Task):
             final_layer_size: int,
             codes_to_skip: List[str] = None,
     ) -> MOTORTask:
+        print("Begin fit_pretraining_task_info")
         tasks = []
         for dict_entry in tokenizer.dictionary["vocab"]:
             if dict_entry["type"] == "code":
