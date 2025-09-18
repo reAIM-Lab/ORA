@@ -3,12 +3,12 @@ import transformers
 import pathlib
 import torch
 import sys
-import femr.models_tpp.transformer
-import femr.models_tpp.config
+import src.femr.models.architecture.transformer_mtpp
+import femr.models.config
 import pickle
 import datasets
-import femr.models_tpp.tokenizer
-import femr.models_tpp.processor
+import femr.models.tokenizer
+import femr.models.processor
 from femr.omop_meds_tutorial.motor_evaluation.generate_labels import create_omop_meds_tutorial_arg_parser
 import torch.nn as nn
 from transformers import TrainerCallback
@@ -143,7 +143,7 @@ def main():
         ontology = pickle.load(f)
 
     tokenizer_path = pretraining_data / 'tokenizer'
-    tokenizer = femr.models_tpp.tokenizer.HierarchicalTokenizer.from_pretrained(
+    tokenizer = femr.models.tokenizer.HierarchicalTokenizer.from_pretrained(
         tokenizer_path, ontology=ontology
     )
     print(f"Tokenizer vocab size: {tokenizer.vocab_size}")
@@ -153,7 +153,7 @@ def main():
         motor_task = pickle.load(f)
     print(f"Motor task: {motor_task}")
     print(f"Motor task length: {len(motor_task.pretraining_task_codes)}")
-    processor = femr.models_tpp.processor.FEMRBatchProcessor(tokenizer, motor_task)
+    processor = femr.models.processor.FEMRBatchProcessor(tokenizer, motor_task)
 
     train_batches_path = pretraining_data / 'train_batches'
     train_batches = datasets.Dataset.load_from_disk(str(train_batches_path))
@@ -164,22 +164,22 @@ def main():
 
     # Finally, given the batches, we can train CLMBR.
     # We can use huggingface's trainer to do this.
-    transformer_config = femr.models_tpp.config.FEMRTransformerConfig(
+    transformer_config = femr.models.config.FEMRTransformerConfig(
         vocab_size=tokenizer.vocab_size,
-        is_hierarchical=isinstance(tokenizer, femr.models_tpp.tokenizer.HierarchicalTokenizer),
+        is_hierarchical=isinstance(tokenizer, femr.models.tokenizer.HierarchicalTokenizer),
         n_layers=args.n_layers,
         use_normed_ages=True,
         use_bias=False,
         hidden_act='swiglu',
     )
 
-    config = femr.models_tpp.config.FEMRModelConfig.from_transformer_task_configs(
+    config = femr.models.config.FEMRModelConfig.from_transformer_task_configs(
         transformer_config,
         motor_task.get_task_config()
     )
 
     # print(f"Transformer config: {transformer_config}")
-    model = femr.models_tpp.transformer.FEMRModel(config,attn_implementation="flash_attention_2",linear_interpolation=args.linear_interpolation)
+    model = femr.models.architecture.transformer_mtpp.FEMRModel(config,attn_implementation="flash_attention_2",linear_interpolation=args.linear_interpolation)
     model = model.to(torch.device("cuda:0"))
 
 
@@ -200,8 +200,8 @@ def main():
 
         weight_decay=0.1,
         adam_beta2=0.95,
-        report_to="none",
-        # report_to=["wandb"],
+        # report_to="none",
+        report_to=["wandb"],
         run_name="mtpp_mimic_8_mask_no_divide_mean_um",
         # run_name="motor_pretrain_mimic",
         num_train_epochs=args.n_epochs,
@@ -266,15 +266,16 @@ python pretrain_motor_tpp.py \
   17.5
 
 gsb
-CUDA_VISIBLE_DEVICES=1,4,5 accelerate launch \
+CUDA_VISIBLE_DEVICES=0,3,5 accelerate launch \
   --num_processes 3 \
   --mixed_precision bf16 \
-  --gpu_ids "1,4,5" \
+  --gpu_ids "0,3,5" \
   pretrain_motor_tpp.py \
   --pretraining_data /user/zj2398/cache/deephit_tpp_8k \
   --meds_reader /user/zj2398/cache/hf_ehr/mimic/meds_v0.6_reader \
   --per_device_train_batch_size 1 \
   --output_dir /user/zj2398/cache/deephit_tpp_8k/output_no_divide_mask_mean_um
+
 
 CUDA_VISIBLE_DEVICES=0,3,5 accelerate launch \
   --num_processes 3 \
