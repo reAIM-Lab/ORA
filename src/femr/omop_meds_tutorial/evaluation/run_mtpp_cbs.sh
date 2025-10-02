@@ -236,7 +236,9 @@ for TASK_DIR in "$COHORT_BASE_DIR"*/; do
       --device \"$DEVICE\" \
       --min_subjects_per_batch \"$MIN_SUBJECTS_PER_BATCH\" \
       --cohort_dir \"$TASK_DIR\" \
-      --ontology_path \"$ONTOLOGY_PATH\"
+      --ontology_path \"$ONTOLOGY_PATH\" \
+      --task_type "binary" \
+      --output_root 
       --loss_type \"$LOSS_TYPE\""
 
     # Add linear_interpolation parameter if specified

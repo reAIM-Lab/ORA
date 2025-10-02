@@ -13,7 +13,11 @@ import pickle
 import meds
 import pathlib
 import torch
-from .generate_labels import create_omop_meds_tutorial_arg_parser, LABEL_NAMES
+from femr.omop_meds_tutorial.evaluation.generate_labels import (  # type: ignore
+        create_omop_meds_tutorial_arg_parser,
+        LABEL_NAMES,
+    )
+#  from .generate_labels import create_omop_meds_tutorial_arg_parser, LABEL_NAMES
 
 
 def create_arg_parser():
@@ -83,6 +87,17 @@ def create_arg_parser():
         default=None,
         help="The loss type",
     )
+    args.add_argument(
+        "--task_type",
+        dest="task_type",
+        default="binary",
+        help="The task type",
+    )
+    args.add_argument(
+        "--output_root",
+        default=None,
+        help="Directory where labels/features/flops will be written. Defaults to --pretraining_data.",
+    )
     return args
 
 
@@ -105,12 +120,19 @@ def main():
     args = create_arg_parser().parse_args()
     with meds_reader.SubjectDatabase(args.meds_reader, num_threads=6) as database:
         pretraining_data = pathlib.Path(args.pretraining_data)
+        output_root = pathlib.Path(args.output_root) if args.output_root else pretraining_data
         ontology_path = args.ontology_path
 
-        features_path = pathlib.Path(os.path.dirname(args.model_path)) / "features"
+        # features_path = pathlib.Path(os.path.dirname(args.model_path)) / "features"
+        # features_path.mkdir(exist_ok=True, parents=True)
+        # flops_path = pretraining_data / "flops"
+        # flops_path.mkdir(exist_ok=True, parents=True)
+        features_path = output_root / "features"
         features_path.mkdir(exist_ok=True, parents=True)
-        flops_path = pretraining_data / "flops"
+        flops_path = output_root / "flops"
         flops_path.mkdir(exist_ok=True, parents=True)
+        labels_path = output_root / "labels"
+        labels_path.mkdir(exist_ok=True, parents=True)
 
         with open(ontology_path, 'rb') as f:
             ontology = pickle.load(f)
@@ -136,10 +158,8 @@ def main():
             if len(cohort) > 0 and isinstance(cohort.prediction_time.iloc[0], datetime.date):
                 cohort["prediction_time"] = pd.to_datetime(cohort["prediction_time"])
 
-            os.makedirs(pretraining_data / "labels", exist_ok=True)
-            cohort.to_parquet(
-                pretraining_data / "labels" / (label_name + '.parquet')
-            )
+            # os.makedirs(pretraining_data / "labels", exist_ok=True)
+            cohort.to_parquet(labels_path / (label_name + '.parquet'), index=False)
             # labels = [label_name]
 
         # eg: label_name=inhospital_mortality
@@ -155,18 +175,17 @@ def main():
         
         else:
             # no split here
-            file_path = pretraining_data / "labels" / (label_name + '.parquet')
+            file_path = labels_path / (label_name + ".parquet")
             print("Loading labels from ", file_path)
-            labels = pd.read_parquet(
-                pretraining_data / "labels" / (label_name + '.parquet')
-            )
-            print(f"labels: {labels.head()}")
+            labels = pd.read_parquet(file_path)
+            print(f"labels head: {labels.head()}")
             # 
+            print(f"task type is {args.task_type}")
             typed_labels = [
                 meds.Label(
                     subject_id=label["subject_id"],
                     prediction_time=label["prediction_time"],
-                    boolean_value=label["boolean_value"],
+                    boolean_value=label["boolean_value"] if args.task_type=="binary" else None,
                 )
                 for label in labels.to_dict(orient="records")
             ]
@@ -213,3 +232,7 @@ python generate_motor_features.py \
   --min_subjects_per_batch 8 \
   --num_proc 100
 '''
+
+    #     --ontology_path \"$ONTOLOGY_PATH\" \
+    #     --output_root \"$OUTPUT_DIR\""
+    #  --model_type \"$MODEL_TYPE\" \
