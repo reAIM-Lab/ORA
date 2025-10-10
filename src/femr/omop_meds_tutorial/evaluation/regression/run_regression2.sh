@@ -171,9 +171,9 @@ for TASK_DIR in "$COHORT_BASE_DIR"*/; do
 
     CURRENT=$((CURRENT + 1))
 
-    echo "[$CURRENT/$TASK_COUNT] Processing task: $TASK_NAME"
-    echo "cohort_base_dir: $COHORT_BASE_DIR"
-    echo "Task directory: $TASK_DIR"
+    # echo "[$CURRENT/$TASK_COUNT] Processing task: $TASK_NAME"
+    # echo "cohort_base_dir: $COHORT_BASE_DIR"
+    # echo "Task directory: $TASK_DIR"
 
     GENERATE_CMD="python -u \"$GEN_FEATURES_PY\" \
         --pretraining_data \"$PRETRAINING_DATA\" \
@@ -212,7 +212,7 @@ done
 
 echo "All selected tasks processed."
 
-#export CUDA_VISIBLE_DEVICES=6
+#export CUDA_VISIBLE_DEVICES=5
 # bash run_regression2.sh \
 #   --pretraining_data   /user/zj2398/cache/mtpp_8k \
 #   --meds_reader        /user/zj2398/cache/mimic/meds_v0.6_reader \
@@ -245,6 +245,7 @@ echo "All selected tasks processed."
 #   --output_dir   /shared/share_mala/zj2398/mimic/regression/mtpp/ \
 #   --tasks "bilirubin,creatinine" \
 #   --regression 
+
 
 
 
