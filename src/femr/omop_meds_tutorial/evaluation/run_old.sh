@@ -115,24 +115,15 @@ while [ $# -gt 0 ]; do
             ;;
         *)
             # First non-option argument is the cohort base directory
-            if [ -z "$COHORT_BASE_DIR" ]; then
-                COHORT_BASE_DIR="$1"
-            else
-                echo "Error: Unexpected argument: $1" >&2
-                echo "Try '$SCRIPT_NAME --help' for more information." >&2
-                exit 1
-            fi
-            shift
-            ;;
     esac
 done
 
 # Check if cohort base directory was provided
-if [ -z "$COHORT_BASE_DIR" ]; then
-    echo "Error: Missing required argument COHORT_BASE_DIR" >&2
-    echo "Try '$SCRIPT_NAME --help' for more information." >&2
-    exit 1
-fi
+# if [ -z "$COHORT_BASE_DIR" ]; then
+#     echo "Error: Missing required argument COHORT_BASE_DIR" >&2
+#     echo "Try '$SCRIPT_NAME --help' for more information." >&2
+#     exit 1
+# fi
 
 # Use command line arguments if provided, otherwise use environment variables
 if [ -n "$PRETRAINING_DATA_ARG" ]; then
@@ -151,14 +142,8 @@ if [ -z "$PRETRAINING_DATA" ] || [ -z "$OMOP_MEDS_READER" ]; then
     exit 1
 fi
 
-# Check if the cohort base directory exists
-if [ ! -d "$COHORT_BASE_DIR" ]; then
-    echo "Error: Cohort base directory does not exist: $COHORT_BASE_DIR" >&2
-    exit 1
-fi
 
 echo "Using configuration:"
-echo "  COHORT_BASE_DIR: $COHORT_BASE_DIR"
 echo "  PRETRAINING_DATA: $PRETRAINING_DATA"
 echo "  OMOP_MEDS_READER: $OMOP_MEDS_READER"
 echo "  NUM_PROC: $NUM_PROC"
@@ -171,47 +156,17 @@ echo
 echo "Discovering prediction tasks..."
 TASK_COUNT=0
 
-for TASK_DIR in "$COHORT_BASE_DIR"*/; do
-    # Skip if not a directory
-    if [ ! -d "$TASK_DIR" ]; then
-        continue
-    fi
-
-    # Extract task name (directory name)
-    TASK_NAME=$(basename "$TASK_DIR")
-    TASK_COUNT=$((TASK_COUNT + 1))
-
-    echo "[$TASK_COUNT] Found task: $TASK_NAME"
-done
-
-if [ "$TASK_COUNT" -eq 0 ]; then
-    echo "No prediction tasks found in $COHORT_BASE_DIR"
-    exit 0
-fi
 
 # echo "Found $TASK_COUNT prediction tasks."
 # echo
 
 # Process tasks
+# COHORT_BASE_DIR=("celiac" "masld" "stroke")
+COHORT_BASE_DIR=$TASK_LIST 
 CURRENT=0
-for TASK_DIR in "$COHORT_BASE_DIR"*/; do
+for TASK_NAME in $COHORT_BASE_DIR; do
     # Skip if not a directory
-    if [ ! -d "$TASK_DIR" ]; then
-        continue
-    fi
-
     # Extract task name (directory name)
-    TASK_NAME=$(basename "$TASK_DIR")
-
-    # Check if task list is specified and if current task is in the list
-    if [ -n "$TASK_LIST" ]; then
-        # Convert comma-separated list to array and check if task is in it
-        if ! echo ",$TASK_LIST," | grep -q ",$TASK_NAME,"; then
-            SKIPPED=$((SKIPPED + 1))
-            echo "[$SKIPPED skipped] Skipping task: $TASK_NAME (not in specified task list)"
-            continue
-        fi
-    fi
 
     CURRENT=$((CURRENT + 1))
 
@@ -224,37 +179,37 @@ for TASK_DIR in "$COHORT_BASE_DIR"*/; do
     # Run the first command: generate MOTOR features
     echo "Running $MODEL_NAME feature generation for $TASK_NAME..."
 
-    # # # Build the command with conditional observation_window parameter
-    # GENERATE_CMD="python -u -m femr.omop_meds_tutorial.evaluation.generate_mtpp_features \
-    #   --pretraining_data \"$PRETRAINING_DATA\" \
-    #   --model_path \"$MODEL_PATH\" \
-    #   --model_name \"$MODEL_NAME\" \
-    #   --meds_reader \"$OMOP_MEDS_READER\" \
-    #   --num_proc \"$NUM_PROC\" \
-    #   --tokens_per_batch \"$TOKENS_PER_BATCH\" \
-    #   --device \"$DEVICE\" \
-    #   --min_subjects_per_batch \"$MIN_SUBJECTS_PER_BATCH\" \
-    #   --cohort_dir \"$TASK_DIR\" \
-    #   --ontology_path \"$ONTOLOGY_PATH\" \
-    #   --output_root \"$OUTPUT_DIR\" \
-    #   --task_type "binary" \
-    #   --loss_type "labeled_subjects" "
+    # # Build the command with conditional observation_window parameter
+    GENERATE_CMD="python -u -m femr.omop_meds_tutorial.evaluation.generate_features \
+      --pretraining_data \"$PRETRAINING_DATA\" \
+      --model_path \"$MODEL_PATH\" \
+      --model_name \"$MODEL_NAME\" \
+      --meds_reader \"$OMOP_MEDS_READER\" \
+      --num_proc \"$NUM_PROC\" \
+      --tokens_per_batch \"$TOKENS_PER_BATCH\" \
+      --task_name \"$TASK_NAME\" \
+      --device \"$DEVICE\" \
+      --min_subjects_per_batch \"$MIN_SUBJECTS_PER_BATCH\" \
+      --ontology_path \"$ONTOLOGY_PATH\" \
+      --output_root \"$OUTPUT_DIR\" \
+      --task_type "binary" \
+      --loss_type "labeled_subjects" "
 
-    # # Add linear_interpolation parameter if specified
-    # if [ "$USE_LINEAR_INTERPOLATION" = true ]; then
-    #     GENERATE_CMD="$GENERATE_CMD --linear_interpolation"
-    # fi
+    # Add linear_interpolation parameter if specified
+    if [ "$USE_LINEAR_INTERPOLATION" = true ]; then
+        GENERATE_CMD="$GENERATE_CMD --linear_interpolation"
+    fi
 
-    # # Add observation_window parameter if specified
-    # if [ -n "$OBSERVATION_WINDOW" ]; then
-    #     GENERATE_CMD="$GENERATE_CMD --observation_window \"$OBSERVATION_WINDOW\""
-    # fi
+    # Add observation_window parameter if specified
+    if [ -n "$OBSERVATION_WINDOW" ]; then
+        GENERATE_CMD="$GENERATE_CMD --observation_window \"$OBSERVATION_WINDOW\""
+    fi
 
-    # # Print the command
-    # echo "Executing command: $GENERATE_CMD"
+    # Print the command
+    echo "Executing command: $GENERATE_CMD"
 
-    # # # Execute the command
-    # eval $GENERATE_CMD
+    # # Execute the command
+    eval $GENERATE_CMD
 
     # Check if the first command succeeded
     if [ $? -ne 0 ]; then
@@ -300,17 +255,6 @@ for TASK_DIR in "$COHORT_BASE_DIR"*/; do
         MOTOR_OUTPUT_DIR="$OUTPUT_DIR/"results"/$TASK_NAME/$MODEL_NAME/"
     fi
 
-            # if args.observation_window:
-            #     label_output_dir = output_dir / label_name / f"{args.model_name}_{args.observation_window}"
-            # else:
-            #     label_output_dir = output_dir / label_name / f"{args.model_name}"
-
-    # if $TASK_NAME in ["ami","masld","stroke"]:
-    #     Base_dir = "/shared/share_mala/zj2398/mimic/patient_outcome_task/results"
-    # else:
-    #     Base_dir = 
-    
-    # MOTOR_PREDICTION_FOLDER = $OUTPUT_DIR/"results"/$TASK_NAME
     # Build the evaluation command
     EVAL_CMD="meds-evaluation-cli predictions_path=\"$MOTOR_PREDICTION_FOLDER\" \
       output_dir=\"$MOTOR_OUTPUT_DIR\""
@@ -335,8 +279,8 @@ echo "All tasks processed."
 
 
 # phenotype
-# export CUDA_VISIBLE_DEVICES=5
-# bash run_mtpp_cbs.sh \
+# export CUDA_VISIBLE_DEVICES=2
+# bash run.sh \
 #   --pretraining_data   /user/zj2398/cache/mtpp_8k \
 #   --meds_reader        /shared/share_mala/zj2398/mimic/meds_v0.6_reader \
 #   --num_proc           100 \
@@ -351,7 +295,9 @@ echo "All tasks processed."
 #   --output_dir   /shared/share_mala/zj2398/mimic/phenotype_task/ \
 #   /shared/share_mala/zj2398/mimic/phenotype_task/cohort/
 
-# export CUDA_VISIBLE_DEVICES=6
+
+
+# export CUDA_VISIBLE_DEVICES=4
 # bash run_mtpp_cbs.sh \
 #   --pretraining_data   /user/zj2398/cache/mtpp_8k \
 #   --meds_reader        /shared/share_mala/zj2398/mimic/meds_v0.6_reader \
@@ -367,54 +313,37 @@ echo "All tasks processed."
 #   --output_dir   /shared/share_mala/zj2398/mimic/patient_outcome_task/ \
 #   /shared/share_mala/zj2398/mimic/patient_outcome_task/cohort/
 
-# bash run_mtpp_cbs.sh \
+
+# old
+
+# bash run_old.sh \
 #   --pretraining_data   /user/zj2398/cache/mtpp_8k \
-#   --meds_reader        /shared/share_mala/zj2398/mimic/meds_v0.6_reader \
-#   --num_proc           64 \
-#   --model_path         /user/zj2398/cache/mtpp_8k/output_mean_all_shared/best_120735 \
+#   --meds_reader        /shared/share_mala/zj2398/mimic/data/meds_v0.6_reader \
+#   --num_proc           100 \
+#   --model_path         /shared/share_mala/zj2398/mimic/models/mtpp_8k/mtpp_mean_all/best_134150 \
+#   --model_name         mtpp \
 #   --tokens_per_batch   65536 \
 #   --device             cuda:0 \
+#   --task               masld \
 #   --min_subjects_per_batch 8 \
 #   --ontology_path       /user/zj2398/cache/mtpp_8k/ontology.pkl \
 #   --main_split_path     /user/zj2398/cache/mtpp_8k/main_split.csv \
-#   --model_name output_mean_all_shared_best  \
 #   --loss_type  labeled_subjects \
-#   --task celiac \
-#   /user/zj2398/cache/mimic/mimic-3.1-meds/phenotype_task/
+#   --output_dir   /shared/share_mala/zj2398/mimic/task/old_phenotype 
 
 
 
-
-# export CUDA_VISIBLE_DEVICES=3
-# bash run_mtpp_cbs.sh \
-#   --pretraining_data   /user/zj2398/cache/deephit_tpp_8k \
-#   --meds_reader        /shared/share_mala/zj2398/mimic/meds_v0.6_reader \
-#   --num_proc           64 \
-#   --model_path         /data2/processed_datasets/zj2398/femr/mimic/deephit_tpp/output_transformer/best_221573\
-#   --model_name         tpp \
+# bash run_old.sh \
+#   --pretraining_data   /shared/share_mala/zj2398/mimic/models/motor_8k \
+#   --meds_reader        /shared/share_mala/zj2398/mimic/data/meds_v0.6_reader \
+#   --num_proc           100 \
+#   --model_path         /shared/share_mala/zj2398/mimic/models/motor_8k/output/best_100620 \
+#   --model_name         motor \
 #   --tokens_per_batch   65536 \
 #   --device             cuda:0 \
+#   --task               stroke \
 #   --min_subjects_per_batch 8 \
-#   --ontology_path      /data2/processed_datasets/zj2398/femr/mimic/deephit_tpp/ontology.pkl \
-#   --main_split_path    /data2/processed_datasets/zj2398/femr/mimic/deephit_tpp/main_split.csv \
-#   --output_dir   /data2/processed_datasets/zj2398/femr/mimic/all_results/ \
-#   /data2/processed_datasets/mimic/phenotype_task/
-
-
-
-
-# bash run_mtpp_cbs.sh \
-#   --pretraining_data   /user/zj2398/cache/deephit_tpp_8k \
-#   --meds_reader        /shared/share_mala/zj2398/mimic/meds_v0.6_reader \
-#   --num_proc           64 \
-#   --model_path         /data2/processed_datasets/zj2398/femr/mimic/deephit_tpp/output_transformer/best_221573\
-#   --model_name         tpp \
-#   --tokens_per_batch   65536 \
-#   --device             cuda:0 \
-#   --min_subjects_per_batch 8 \
-#   --ontology_path       /user/zj2398/cache/deephit_tpp_8k/ontology.pkl \
-#   --main_split_path     /user/zj2398/cache/deephit_tpp_8k/main_split.csv \
-#   --model_name deephit_no_divide_mask_mean_um \
-#   --task stroke \
-#   /user/zj2398/cache/mimic/mimic-3.1-meds/phenotype_task/
-
+#   --ontology_path       /shared/share_mala/zj2398/mimic/models/motor_8k/ontology.pkl \
+#   --main_split_path     /shared/share_mala/zj2398/mimic/models/motor_8k/main_split.csv \
+#   --loss_type  labeled_subjects \
+#   --output_dir   /shared/share_mala/zj2398/mimic/task/old_phenotype 

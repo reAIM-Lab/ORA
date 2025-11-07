@@ -16,7 +16,7 @@ from sklearn.linear_model import LogisticRegressionCV
 import femr.splits
 import argparse
 from .generate_labels import LABEL_NAMES, create_omop_meds_tutorial_arg_parser
-from .generate_motor_features import get_model_name
+from .generate_features import get_model_name
 
 from pycox.models import DeepHitSingle
 from pycox.evaluation import EvalSurv
@@ -312,7 +312,7 @@ def main():
                 "auroc": roc_auc,
                 "aucpr": pr_auc
             }
-            if label_name in ["ami","masld","stroke"]:
+            if label_name in ["ami","masld","stroke","celiac"]:
                 tte_results = tte_evaluation(train_set,test_set,label_output_dir)
                 metrics['C-Index'] = (np.mean(tte_results['C-Index']), np.std(tte_results['C-Index']))
                 metrics['Int-Brier'] = (np.mean(tte_results['Int-Brier']), np.std(tte_results['Int-Brier']))

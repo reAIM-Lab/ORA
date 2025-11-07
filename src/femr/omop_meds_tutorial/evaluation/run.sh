@@ -224,8 +224,8 @@ for TASK_DIR in "$COHORT_BASE_DIR"*/; do
     # Run the first command: generate MOTOR features
     echo "Running $MODEL_NAME feature generation for $TASK_NAME..."
 
-    # Build the command with conditional observation_window parameter
-    GENERATE_CMD="python -u -m femr.omop_meds_tutorial.evaluation.generate_motor_features \
+    # # Build the command with conditional observation_window parameter
+    GENERATE_CMD="python -u -m femr.omop_meds_tutorial.evaluation.generate_features \
       --pretraining_data \"$PRETRAINING_DATA\" \
       --model_path \"$MODEL_PATH\" \
       --model_name \"$MODEL_NAME\" \
@@ -291,7 +291,7 @@ for TASK_DIR in "$COHORT_BASE_DIR"*/; do
         continue
     fi
 
-    # # Determine the MOTOR prediction folder path based on observation window
+    # Determine the MOTOR prediction folder path based on observation window
     if [ -n "$OBSERVATION_WINDOW" ]; then
         MOTOR_PREDICTION_FOLDER="$OUTPUT_DIR/"results"/$TASK_NAME/$MODEL_NAME_$OBSERVATION_WINDOW/test_predictions"
         MOTOR_OUTPUT_DIR="$OUTPUT_DIR/"results"/$TASK_NAME/$MODEL_NAME_$OBSERVATION_WINDOW/"
@@ -325,48 +325,56 @@ echo "All tasks processed."
 
 # phenotype
 # export CUDA_VISIBLE_DEVICES=5
-
-
-# bash run_motor_cbs.sh  \
-#   --pretraining_data   /user/zj2398/cache/motor_mimic_8k \
+# bash run_mtpp_cbs.sh \
+#   --pretraining_data   /user/zj2398/cache/mtpp_8k \
 #   --meds_reader        /shared/share_mala/zj2398/mimic/meds_v0.6_reader \
 #   --num_proc           100 \
-#   --model_path         /user/zj2398/cache/motor_mimic_8k/output/best_100620 \
-#   --model_name         motor \
+#   --model_path         /user/zj2398/cache/mtpp_8k/mtpp_mean_all/best_134150 \
+#   --model_name         mtpp \
 #   --tokens_per_batch   65536 \
 #   --device             cuda:0 \
 #   --min_subjects_per_batch 8 \
-#   --ontology_path       /user/zj2398/cache/motor_mimic_8k/ontology.pkl \
-#   --main_split_path     /user/zj2398/cache/motor_mimic_8k/main_split.csv \
+#   --ontology_path       /user/zj2398/cache/mtpp_8k/ontology.pkl \
+#   --main_split_path     /user/zj2398/cache/mtpp_8k/main_split.csv \
+#   --loss_type  labeled_subjects \
 #   --output_dir   /shared/share_mala/zj2398/mimic/phenotype_task/ \
 #   /shared/share_mala/zj2398/mimic/phenotype_task/cohort/
 
-# bash run_motor_cbs.sh  \
-#   --pretraining_data   /user/zj2398/cache/motor_mimic_8k \
+# export CUDA_VISIBLE_DEVICES=6
+# bash run_mtpp_cbs.sh \
+#   --pretraining_data   /user/zj2398/cache/mtpp_8k \
 #   --meds_reader        /shared/share_mala/zj2398/mimic/meds_v0.6_reader \
 #   --num_proc           100 \
-#   --model_path         /user/zj2398/cache/motor_mimic_8k/output/best_100620 \
-#   --model_name         motor \
+#   --model_path         /user/zj2398/cache/mtpp_8k/mtpp_mean_all/best_134150 \
+#   --model_name         mtpp \
 #   --tokens_per_batch   65536 \
 #   --device             cuda:0 \
 #   --min_subjects_per_batch 8 \
-#   --ontology_path       /user/zj2398/cache/motor_mimic_8k/ontology.pkl \
-#   --main_split_path     /user/zj2398/cache/motor_mimic_8k/main_split.csv \
+#   --ontology_path       /user/zj2398/cache/mtpp_8k/ontology.pkl \
+#   --main_split_path     /user/zj2398/cache/mtpp_8k/main_split.csv \
+#   --loss_type  labeled_subjects \
 #   --output_dir   /shared/share_mala/zj2398/mimic/patient_outcome_task/ \
 #   /shared/share_mala/zj2398/mimic/patient_outcome_task/cohort/
 
-# export CUDA_VISIBLE_DEVICES=3
-# bash run_motor_cbs.sh \
-#   --pretraining_data   /user/zj2398/cache/motor_mimic_8k \
+
+# old
+
+# bash run_mtpp_cbs.sh \
+#   --pretraining_data   /user/zj2398/cache/mtpp_8k \
 #   --meds_reader        /shared/share_mala/zj2398/mimic/meds_v0.6_reader \
-#   --num_proc           64 \
-#   --model_path         /user/zj2398/cache/motor_mimic_8k/output/best_100620 \
+#   --num_proc           100 \
+#   --model_path         /user/zj2398/cache/mtpp_8k/mtpp_mean_all/best_134150 \
+#   --model_name         mtpp \
 #   --tokens_per_batch   65536 \
 #   --device             cuda:0 \
 #   --min_subjects_per_batch 8 \
-#   --ontology_path       /user/zj2398/cache/motor_mimic_8k/ontology.pkl \
-#   --main_split_path     /user/zj2398/cache/motor_mimic_8k/main_split.csv \
-#   --model_name motor \
+#   --ontology_path       /user/zj2398/cache/mtpp_8k/ontology.pkl \
+#   --main_split_path     /user/zj2398/cache/mtpp_8k/main_split.csv \
 #   --loss_type  labeled_subjects \
-#   /user/zj2398/cache/mimic/mimic-3.1-meds/phenotype_task/
+#   --output_dir   /shared/share_mala/zj2398/mimic/phenotype_task/ \
+#   /shared/share_mala/zj2398/mimic/phenotype_task/cohort/
+
+
+
+
 
