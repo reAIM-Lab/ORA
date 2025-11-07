@@ -6,7 +6,6 @@ from typing import Optional
 
 import femr.transforms
 import meds_reader
-# import femr.models_tpp.transformer_mtpp
 import femr.models.architecture.embedding
 import pandas as pd
 import pickle
@@ -17,7 +16,7 @@ from femr.omop_meds_tutorial.evaluation.generate_labels import (  # type: ignore
         create_omop_meds_tutorial_arg_parser,
         LABEL_NAMES,
     )
-#  from .generate_labels import create_omop_meds_tutorial_arg_parser, LABEL_NAMES
+# from .generate_labels import create_omop_meds_tutorial_arg_parser, LABEL_NAMES
 
 
 def create_arg_parser():
@@ -118,11 +117,6 @@ def read_recursive_parquet(root_dir):
     return df
 
 
-# def get_motor_features_name(label_name: str, observation_window: Optional[int] = None) -> str:
-#     if observation_window:
-#         return label_name + '_motor_' + str(observation_window)
-#     return label_name + '_motor'
-
 def get_model_name(label_name: str, model_name: str, observation_window: Optional[int] = None) -> str:
     if observation_window:
         return label_name + f'_{model_name}_' + str(observation_window)
@@ -167,9 +161,8 @@ def main():
         if len(cohort) > 0 and isinstance(cohort.prediction_time.iloc[0], datetime.date):
             cohort["prediction_time"] = pd.to_datetime(cohort["prediction_time"])
 
-            # os.makedirs(pretraining_data / "labels", exist_ok=True)
-            cohort.to_parquet(labels_path / (label_name + '.parquet'), index=False)
-            # labels = [label_name]
+        # os.makedirs(pretraining_data / "labels", exist_ok=True)
+        cohort.to_parquet(labels_path / (label_name + '.parquet'), index=False)
 
         # eg: label_name=inhospital_mortality
         # for label_name in labels:
@@ -181,7 +174,6 @@ def main():
                 f"The features for {label_name} already exist at {feature_output_path}, it will be skipped!"
             )
             # continue
-        
         else:
             # no split here
             file_path = labels_path / (label_name + ".parquet")
@@ -198,7 +190,7 @@ def main():
                 for label in labels.to_dict(orient="records")
             ]
             print(f"typed_labels length: {len(typed_labels)}")
-            # total_flops = femr.models.architecture.transformer femr.models_tpp.transformer.TotalFlops()
+            # total_flops = femr.models.transformer.TotalFlops()
             start_time: datetime.datetime = datetime.datetime.now()
             features = femr.models.architecture.embedding.compute_features(
                 db=database,
@@ -221,23 +213,22 @@ def main():
             # with open(training_metrics_file, "w") as output_file:
             #     training_metrics = {
             #         "duration_in_seconds": (datetime.datetime.now() - start_time).total_seconds(),
-            #         "total_flops": total_flops.total_flops,
+            #         # "total_flops": total_flops.total_flops,
             #     }
             #     json.dump(training_metrics, output_file)
 
 if __name__ == "__main__":
     main()
 
-# '''
-# export CUDA_VISIBLE_DEVICES=3
-# python generate_motor_features.py \
-#   --pretraining_data /data/processed_datasets/processed_datasets/zj2398/femr/mimic/motor_mimic_bin_100 \
-#   --meds_reader /data/raw_data/mimic/files/mimiciv/meds_v0.6/3.1/MEDS_cohort-reader \
-#   --model_path /data/processed_datasets/processed_datasets/zj2398/femr/mimic/motor_mimic_bin_100/output/checkpoint-20123 \
-#   --device cuda:0 \
-#   --tokens_per_batch 8192*8 \
-#   --cohort_dir /user/zj2398/cache/mimic/mimic-3.1-meds/patient_outcome_tasks/task \
-#   --min_subjects_per_batch 8 \
-#   --num_proc 100
-# '''
-
+'''
+export CUDA_VISIBLE_DEVICES=3
+python generate_motor_features.py \
+  --pretraining_data /data/processed_datasets/processed_datasets/zj2398/femr/mimic/motor_mimic_bin_100 \
+  --meds_reader /data/raw_data/mimic/files/mimiciv/meds_v0.6/3.1/MEDS_cohort-reader \
+  --model_path /data/processed_datasets/processed_datasets/zj2398/femr/mimic/motor_mimic_bin_100/output/checkpoint-20123 \
+  --device cuda:0 \
+  --tokens_per_batch 8192*8 \
+  --cohort_dir /user/zj2398/cache/mimic/mimic-3.1-meds/patient_outcome_tasks/task \
+  --min_subjects_per_batch 8 \
+  --num_proc 100
+'''

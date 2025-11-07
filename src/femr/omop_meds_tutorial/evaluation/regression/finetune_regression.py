@@ -19,7 +19,7 @@ from sklearn.linear_model import LogisticRegressionCV
 from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 import femr.splits
 import argparse
-from femr.omop_meds_tutorial.evaluation.generate_motor_features import get_model_name
+from src.femr.omop_meds_tutorial.evaluation.generate_features import get_model_name
 from sklearn.linear_model import LinearRegression
 
 from femr.omop_meds_tutorial.evaluation.generate_labels import (  # type: ignore
