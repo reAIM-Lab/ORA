@@ -4933,3 +4933,1180 @@ resampling_seed: 0
 Completed processing of task: stroke
 ----------------------------------------
 All tasks processed.
+Using configuration:
+  COHORT_BASE_DIR: /data2/processed_datasets/mimic/phenotype_task/
+  PRETRAINING_DATA: /user/zj2398/cache/deephit_tpp_8k
+  OMOP_MEDS_READER: /shared/share_mala/zj2398/mimic/meds_v0.6_reader
+  NUM_PROC: 64
+  TOKENS_PER_BATCH: 65536
+  OBSERVATION_WINDOW: Not specified
+  USE_LINEAR_INTERPOLATION: false
+
+Discovering prediction tasks...
+[1] Found task: ami
+[2] Found task: masld
+[3] Found task: stroke
+[1/3] Processing task: ami
+cohort_base_dir: /data2/processed_datasets/mimic/phenotype_task/
+Task directory: /data2/processed_datasets/mimic/phenotype_task/ami/
+Running transformer_tpp feature generation for ami...
+Running transformer_tpp fine-tuning for ami...
+Executing command: python -u -m femr.omop_meds_tutorial.evaluation.finetune_motor_kuvira       --cohort_label "ami"       --model_name "transformer_tpp"       --main_split_path "/data2/processed_datasets/zj2398/femr/mimic/deephit_tpp/main_split.csv"       --meds_reader "/shared/share_mala/zj2398/mimic/meds_v0.6_reader"       --model_path "/data2/processed_datasets/zj2398/femr/mimic/deephit_tpp/output_transformer/best_221573"       --output_root "/data2/processed_datasets/zj2398/femr/mimic/all_results/classification"
+/data/anaconda3/envs/motor_chao/bin/python: Error while finding module specification for 'femr.omop_meds_tutorial.evaluation.finetune_motor_kuvira' (ModuleNotFoundError: No module named 'femr')
+Error: transformer_tpp fine-tuning failed for task ami
+[2/3] Processing task: masld
+cohort_base_dir: /data2/processed_datasets/mimic/phenotype_task/
+Task directory: /data2/processed_datasets/mimic/phenotype_task/masld/
+Running transformer_tpp feature generation for masld...
+Running transformer_tpp fine-tuning for masld...
+Executing command: python -u -m femr.omop_meds_tutorial.evaluation.finetune_motor_kuvira       --cohort_label "masld"       --model_name "transformer_tpp"       --main_split_path "/data2/processed_datasets/zj2398/femr/mimic/deephit_tpp/main_split.csv"       --meds_reader "/shared/share_mala/zj2398/mimic/meds_v0.6_reader"       --model_path "/data2/processed_datasets/zj2398/femr/mimic/deephit_tpp/output_transformer/best_221573"       --output_root "/data2/processed_datasets/zj2398/femr/mimic/all_results/classification"
+/data/anaconda3/envs/motor_chao/bin/python: Error while finding module specification for 'femr.omop_meds_tutorial.evaluation.finetune_motor_kuvira' (ModuleNotFoundError: No module named 'femr')
+Error: transformer_tpp fine-tuning failed for task masld
+[3/3] Processing task: stroke
+cohort_base_dir: /data2/processed_datasets/mimic/phenotype_task/
+Task directory: /data2/processed_datasets/mimic/phenotype_task/stroke/
+Running transformer_tpp feature generation for stroke...
+Running transformer_tpp fine-tuning for stroke...
+Executing command: python -u -m femr.omop_meds_tutorial.evaluation.finetune_motor_kuvira       --cohort_label "stroke"       --model_name "transformer_tpp"       --main_split_path "/data2/processed_datasets/zj2398/femr/mimic/deephit_tpp/main_split.csv"       --meds_reader "/shared/share_mala/zj2398/mimic/meds_v0.6_reader"       --model_path "/data2/processed_datasets/zj2398/femr/mimic/deephit_tpp/output_transformer/best_221573"       --output_root "/data2/processed_datasets/zj2398/femr/mimic/all_results/classification"
+/data/anaconda3/envs/motor_chao/bin/python: Error while finding module specification for 'femr.omop_meds_tutorial.evaluation.finetune_motor_kuvira' (ModuleNotFoundError: No module named 'femr')
+Error: transformer_tpp fine-tuning failed for task stroke
+All tasks processed.
+Using configuration:
+  COHORT_BASE_DIR: /data2/processed_datasets/mimic/phenotype_task/
+  PRETRAINING_DATA: /user/zj2398/cache/deephit_tpp_8k
+  OMOP_MEDS_READER: /shared/share_mala/zj2398/mimic/meds_v0.6_reader
+  NUM_PROC: 64
+  TOKENS_PER_BATCH: 65536
+  OBSERVATION_WINDOW: Not specified
+  USE_LINEAR_INTERPOLATION: false
+
+Discovering prediction tasks...
+[1] Found task: ami
+[2] Found task: masld
+[3] Found task: stroke
+[1/3] Processing task: ami
+cohort_base_dir: /data2/processed_datasets/mimic/phenotype_task/
+Task directory: /data2/processed_datasets/mimic/phenotype_task/ami/
+Running transformer_tpp feature generation for ami...
+Running transformer_tpp fine-tuning for ami...
+Executing command: python finetune_motor_kuvira.py       --cohort_label "ami"       --model_name "transformer_tpp"       --main_split_path "/data2/processed_datasets/zj2398/femr/mimic/deephit_tpp/main_split.csv"       --meds_reader "/shared/share_mala/zj2398/mimic/meds_v0.6_reader"       --model_path "/data2/processed_datasets/zj2398/femr/mimic/deephit_tpp/output_transformer/best_221573"       --output_root "/data2/processed_datasets/zj2398/femr/mimic/all_results/classification"
+Traceback (most recent call last):
+  File "/home/zj2398@mc.cumc.columbia.edu/femr/femr_chao_meds_v3/src/femr/omop_meds_tutorial/evaluation/finetune_motor_kuvira.py", line 9, in <module>
+    import femr.featurizers
+ModuleNotFoundError: No module named 'femr'
+Error: transformer_tpp fine-tuning failed for task ami
+[2/3] Processing task: masld
+cohort_base_dir: /data2/processed_datasets/mimic/phenotype_task/
+Task directory: /data2/processed_datasets/mimic/phenotype_task/masld/
+Running transformer_tpp feature generation for masld...
+Running transformer_tpp fine-tuning for masld...
+Executing command: python finetune_motor_kuvira.py       --cohort_label "masld"       --model_name "transformer_tpp"       --main_split_path "/data2/processed_datasets/zj2398/femr/mimic/deephit_tpp/main_split.csv"       --meds_reader "/shared/share_mala/zj2398/mimic/meds_v0.6_reader"       --model_path "/data2/processed_datasets/zj2398/femr/mimic/deephit_tpp/output_transformer/best_221573"       --output_root "/data2/processed_datasets/zj2398/femr/mimic/all_results/classification"
+Traceback (most recent call last):
+  File "/home/zj2398@mc.cumc.columbia.edu/femr/femr_chao_meds_v3/src/femr/omop_meds_tutorial/evaluation/finetune_motor_kuvira.py", line 9, in <module>
+    import femr.featurizers
+ModuleNotFoundError: No module named 'femr'
+Error: transformer_tpp fine-tuning failed for task masld
+[3/3] Processing task: stroke
+cohort_base_dir: /data2/processed_datasets/mimic/phenotype_task/
+Task directory: /data2/processed_datasets/mimic/phenotype_task/stroke/
+Running transformer_tpp feature generation for stroke...
+Running transformer_tpp fine-tuning for stroke...
+Executing command: python finetune_motor_kuvira.py       --cohort_label "stroke"       --model_name "transformer_tpp"       --main_split_path "/data2/processed_datasets/zj2398/femr/mimic/deephit_tpp/main_split.csv"       --meds_reader "/shared/share_mala/zj2398/mimic/meds_v0.6_reader"       --model_path "/data2/processed_datasets/zj2398/femr/mimic/deephit_tpp/output_transformer/best_221573"       --output_root "/data2/processed_datasets/zj2398/femr/mimic/all_results/classification"
+Traceback (most recent call last):
+  File "/home/zj2398@mc.cumc.columbia.edu/femr/femr_chao_meds_v3/src/femr/omop_meds_tutorial/evaluation/finetune_motor_kuvira.py", line 9, in <module>
+    import femr.featurizers
+ModuleNotFoundError: No module named 'femr'
+Error: transformer_tpp fine-tuning failed for task stroke
+All tasks processed.
+Using configuration:
+  COHORT_BASE_DIR: /data2/processed_datasets/mimic/phenotype_task/
+  PRETRAINING_DATA: /user/zj2398/cache/deephit_tpp_8k
+  OMOP_MEDS_READER: /shared/share_mala/zj2398/mimic/meds_v0.6_reader
+  NUM_PROC: 64
+  TOKENS_PER_BATCH: 65536
+  OBSERVATION_WINDOW: Not specified
+  USE_LINEAR_INTERPOLATION: false
+
+Discovering prediction tasks...
+[1] Found task: ami
+[2] Found task: masld
+[3] Found task: stroke
+[1/3] Processing task: ami
+cohort_base_dir: /data2/processed_datasets/mimic/phenotype_task/
+Task directory: /data2/processed_datasets/mimic/phenotype_task/ami/
+Running transformer_tpp feature generation for ami...
+Running transformer_tpp fine-tuning for ami...
+Executing command: python finetune_motor_kuvira.py       --cohort_label "ami"       --model_name "transformer_tpp"       --main_split_path "/data2/processed_datasets/zj2398/femr/mimic/deephit_tpp/main_split.csv"       --meds_reader "/shared/share_mala/zj2398/mimic/meds_v0.6_reader"       --model_path "/data2/processed_datasets/zj2398/femr/mimic/deephit_tpp/output_transformer/best_221573"       --output_root "/data2/processed_datasets/zj2398/femr/mimic/all_results/classification"
+Traceback (most recent call last):
+  File "/home/zj2398@mc.cumc.columbia.edu/femr/femr_chao_meds_v3/src/femr/omop_meds_tutorial/evaluation/finetune_motor_kuvira.py", line 9, in <module>
+    import femr.featurizers
+ModuleNotFoundError: No module named 'femr'
+Error: transformer_tpp fine-tuning failed for task ami
+[2/3] Processing task: masld
+cohort_base_dir: /data2/processed_datasets/mimic/phenotype_task/
+Task directory: /data2/processed_datasets/mimic/phenotype_task/masld/
+Running transformer_tpp feature generation for masld...
+Running transformer_tpp fine-tuning for masld...
+Executing command: python finetune_motor_kuvira.py       --cohort_label "masld"       --model_name "transformer_tpp"       --main_split_path "/data2/processed_datasets/zj2398/femr/mimic/deephit_tpp/main_split.csv"       --meds_reader "/shared/share_mala/zj2398/mimic/meds_v0.6_reader"       --model_path "/data2/processed_datasets/zj2398/femr/mimic/deephit_tpp/output_transformer/best_221573"       --output_root "/data2/processed_datasets/zj2398/femr/mimic/all_results/classification"
+Traceback (most recent call last):
+  File "/home/zj2398@mc.cumc.columbia.edu/femr/femr_chao_meds_v3/src/femr/omop_meds_tutorial/evaluation/finetune_motor_kuvira.py", line 9, in <module>
+    import femr.featurizers
+ModuleNotFoundError: No module named 'femr'
+Error: transformer_tpp fine-tuning failed for task masld
+[3/3] Processing task: stroke
+cohort_base_dir: /data2/processed_datasets/mimic/phenotype_task/
+Task directory: /data2/processed_datasets/mimic/phenotype_task/stroke/
+Running transformer_tpp feature generation for stroke...
+Running transformer_tpp fine-tuning for stroke...
+Executing command: python finetune_motor_kuvira.py       --cohort_label "stroke"       --model_name "transformer_tpp"       --main_split_path "/data2/processed_datasets/zj2398/femr/mimic/deephit_tpp/main_split.csv"       --meds_reader "/shared/share_mala/zj2398/mimic/meds_v0.6_reader"       --model_path "/data2/processed_datasets/zj2398/femr/mimic/deephit_tpp/output_transformer/best_221573"       --output_root "/data2/processed_datasets/zj2398/femr/mimic/all_results/classification"
+Traceback (most recent call last):
+  File "/home/zj2398@mc.cumc.columbia.edu/femr/femr_chao_meds_v3/src/femr/omop_meds_tutorial/evaluation/finetune_motor_kuvira.py", line 9, in <module>
+    import femr.featurizers
+ModuleNotFoundError: No module named 'femr'
+Error: transformer_tpp fine-tuning failed for task stroke
+All tasks processed.
+Using configuration:
+  COHORT_BASE_DIR: /data2/processed_datasets/mimic/phenotype_task/
+  PRETRAINING_DATA: /user/zj2398/cache/deephit_tpp_8k
+  OMOP_MEDS_READER: /shared/share_mala/zj2398/mimic/meds_v0.6_reader
+  NUM_PROC: 64
+  TOKENS_PER_BATCH: 65536
+  OBSERVATION_WINDOW: Not specified
+  USE_LINEAR_INTERPOLATION: false
+
+Discovering prediction tasks...
+[1] Found task: ami
+[2] Found task: masld
+[3] Found task: stroke
+[1/3] Processing task: ami
+cohort_base_dir: /data2/processed_datasets/mimic/phenotype_task/
+Task directory: /data2/processed_datasets/mimic/phenotype_task/ami/
+Running transformer_tpp feature generation for ami...
+Running transformer_tpp fine-tuning for ami...
+Executing command: python -u -m femr.omop_meds_tutorial.evaluation.finetune_motor       --cohort_label "ami"       --model_name "transformer_tpp"       --main_split_path "/data2/processed_datasets/zj2398/femr/mimic/deephit_tpp/main_split.csv"       --meds_reader "/shared/share_mala/zj2398/mimic/meds_v0.6_reader"       --model_path "/data2/processed_datasets/zj2398/femr/mimic/deephit_tpp/output_transformer/best_221573"       --output_root "/data2/processed_datasets/zj2398/femr/mimic/all_results/classification"
+/data/anaconda3/envs/motor_chao/bin/python: Error while finding module specification for 'femr.omop_meds_tutorial.evaluation.finetune_motor' (ModuleNotFoundError: No module named 'femr')
+Error: transformer_tpp fine-tuning failed for task ami
+[2/3] Processing task: masld
+cohort_base_dir: /data2/processed_datasets/mimic/phenotype_task/
+Task directory: /data2/processed_datasets/mimic/phenotype_task/masld/
+Running transformer_tpp feature generation for masld...
+Running transformer_tpp fine-tuning for masld...
+Executing command: python -u -m femr.omop_meds_tutorial.evaluation.finetune_motor       --cohort_label "masld"       --model_name "transformer_tpp"       --main_split_path "/data2/processed_datasets/zj2398/femr/mimic/deephit_tpp/main_split.csv"       --meds_reader "/shared/share_mala/zj2398/mimic/meds_v0.6_reader"       --model_path "/data2/processed_datasets/zj2398/femr/mimic/deephit_tpp/output_transformer/best_221573"       --output_root "/data2/processed_datasets/zj2398/femr/mimic/all_results/classification"
+/data/anaconda3/envs/motor_chao/bin/python: Error while finding module specification for 'femr.omop_meds_tutorial.evaluation.finetune_motor' (ModuleNotFoundError: No module named 'femr')
+Error: transformer_tpp fine-tuning failed for task masld
+[3/3] Processing task: stroke
+cohort_base_dir: /data2/processed_datasets/mimic/phenotype_task/
+Task directory: /data2/processed_datasets/mimic/phenotype_task/stroke/
+Running transformer_tpp feature generation for stroke...
+Running transformer_tpp fine-tuning for stroke...
+Executing command: python -u -m femr.omop_meds_tutorial.evaluation.finetune_motor       --cohort_label "stroke"       --model_name "transformer_tpp"       --main_split_path "/data2/processed_datasets/zj2398/femr/mimic/deephit_tpp/main_split.csv"       --meds_reader "/shared/share_mala/zj2398/mimic/meds_v0.6_reader"       --model_path "/data2/processed_datasets/zj2398/femr/mimic/deephit_tpp/output_transformer/best_221573"       --output_root "/data2/processed_datasets/zj2398/femr/mimic/all_results/classification"
+/data/anaconda3/envs/motor_chao/bin/python: Error while finding module specification for 'femr.omop_meds_tutorial.evaluation.finetune_motor' (ModuleNotFoundError: No module named 'femr')
+Error: transformer_tpp fine-tuning failed for task stroke
+All tasks processed.
+Using configuration:
+  COHORT_BASE_DIR: /data2/processed_datasets/mimic/phenotype_task/
+  PRETRAINING_DATA: /user/zj2398/cache/deephit_tpp_8k
+  OMOP_MEDS_READER: /shared/share_mala/zj2398/mimic/meds_v0.6_reader
+  NUM_PROC: 64
+  TOKENS_PER_BATCH: 65536
+  OBSERVATION_WINDOW: Not specified
+  USE_LINEAR_INTERPOLATION: false
+
+Discovering prediction tasks...
+[1] Found task: ami
+[2] Found task: masld
+[3] Found task: stroke
+[1/3] Processing task: ami
+cohort_base_dir: /data2/processed_datasets/mimic/phenotype_task/
+Task directory: /data2/processed_datasets/mimic/phenotype_task/ami/
+Running transformer_tpp feature generation for ami...
+Running transformer_tpp fine-tuning for ami...
+Executing command: python -u -m femr.omop_meds_tutorial.evaluation.finetune_motor       --cohort_label "ami"       --model_name "transformer_tpp"       --main_split_path "/data2/processed_datasets/zj2398/femr/mimic/deephit_tpp/main_split.csv"       --meds_reader "/shared/share_mala/zj2398/mimic/meds_v0.6_reader"       --model_path "/data2/processed_datasets/zj2398/femr/mimic/deephit_tpp/output_transformer/best_221573"       --output_root "/data2/processed_datasets/zj2398/femr/mimic/all_results/classification"
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/zj2398@mc.cumc.columbia.edu/femr/femr_chao_meds_v3/src/femr/omop_meds_tutorial/evaluation/finetune_motor.py", line 21, in <module>
+    from pycox.models import DeepHitSingle
+ModuleNotFoundError: No module named 'pycox'
+Error: transformer_tpp fine-tuning failed for task ami
+[2/3] Processing task: masld
+cohort_base_dir: /data2/processed_datasets/mimic/phenotype_task/
+Task directory: /data2/processed_datasets/mimic/phenotype_task/masld/
+Running transformer_tpp feature generation for masld...
+Running transformer_tpp fine-tuning for masld...
+Executing command: python -u -m femr.omop_meds_tutorial.evaluation.finetune_motor       --cohort_label "masld"       --model_name "transformer_tpp"       --main_split_path "/data2/processed_datasets/zj2398/femr/mimic/deephit_tpp/main_split.csv"       --meds_reader "/shared/share_mala/zj2398/mimic/meds_v0.6_reader"       --model_path "/data2/processed_datasets/zj2398/femr/mimic/deephit_tpp/output_transformer/best_221573"       --output_root "/data2/processed_datasets/zj2398/femr/mimic/all_results/classification"
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/zj2398@mc.cumc.columbia.edu/femr/femr_chao_meds_v3/src/femr/omop_meds_tutorial/evaluation/finetune_motor.py", line 21, in <module>
+    from pycox.models import DeepHitSingle
+ModuleNotFoundError: No module named 'pycox'
+Error: transformer_tpp fine-tuning failed for task masld
+[3/3] Processing task: stroke
+cohort_base_dir: /data2/processed_datasets/mimic/phenotype_task/
+Task directory: /data2/processed_datasets/mimic/phenotype_task/stroke/
+Running transformer_tpp feature generation for stroke...
+Running transformer_tpp fine-tuning for stroke...
+Executing command: python -u -m femr.omop_meds_tutorial.evaluation.finetune_motor       --cohort_label "stroke"       --model_name "transformer_tpp"       --main_split_path "/data2/processed_datasets/zj2398/femr/mimic/deephit_tpp/main_split.csv"       --meds_reader "/shared/share_mala/zj2398/mimic/meds_v0.6_reader"       --model_path "/data2/processed_datasets/zj2398/femr/mimic/deephit_tpp/output_transformer/best_221573"       --output_root "/data2/processed_datasets/zj2398/femr/mimic/all_results/classification"
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/zj2398@mc.cumc.columbia.edu/femr/femr_chao_meds_v3/src/femr/omop_meds_tutorial/evaluation/finetune_motor.py", line 21, in <module>
+    from pycox.models import DeepHitSingle
+ModuleNotFoundError: No module named 'pycox'
+Error: transformer_tpp fine-tuning failed for task stroke
+All tasks processed.
+Using configuration:
+  COHORT_BASE_DIR: /data2/processed_datasets/mimic/phenotype_task/
+  PRETRAINING_DATA: /user/zj2398/cache/deephit_tpp_8k
+  OMOP_MEDS_READER: /shared/share_mala/zj2398/mimic/meds_v0.6_reader
+  NUM_PROC: 64
+  TOKENS_PER_BATCH: 65536
+  OBSERVATION_WINDOW: Not specified
+  USE_LINEAR_INTERPOLATION: false
+
+Discovering prediction tasks...
+[1] Found task: ami
+[2] Found task: masld
+[3] Found task: stroke
+[1/3] Processing task: ami
+cohort_base_dir: /data2/processed_datasets/mimic/phenotype_task/
+Task directory: /data2/processed_datasets/mimic/phenotype_task/ami/
+Running transformer_tpp feature generation for ami...
+Running transformer_tpp fine-tuning for ami...
+Executing command: python -u -m femr.omop_meds_tutorial.evaluation.finetune_motor       --cohort_label "ami"       --model_name "transformer_tpp"       --main_split_path "/data2/processed_datasets/zj2398/femr/mimic/deephit_tpp/main_split.csv"       --meds_reader "/shared/share_mala/zj2398/mimic/meds_v0.6_reader"       --model_path "/data2/processed_datasets/zj2398/femr/mimic/deephit_tpp/output_transformer/best_221573"       --output_root "/data2/processed_datasets/zj2398/femr/mimic/all_results/classification"
+Using the user defined label at: /data2/processed_datasets/zj2398/femr/mimic/all_results/classification/labels/ami.parquet
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/zj2398@mc.cumc.columbia.edu/femr/femr_chao_meds_v3/src/femr/omop_meds_tutorial/evaluation/finetune_motor.py", line 326, in <module>
+    main()
+  File "/home/zj2398@mc.cumc.columbia.edu/femr/femr_chao_meds_v3/src/femr/omop_meds_tutorial/evaluation/finetune_motor.py", line 177, in main
+    with meds_reader.SubjectDatabase(args.meds_reader, num_threads=32) as database:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/anaconda3/envs/motor_chao/lib/python3.11/site-packages/meds_reader/__init__.py", line 200, in __init__
+    self._database = _meds_reader.SubjectDatabase(path_to_database)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+RuntimeError: filesystem error: cannot get file size: No such file or directory [/shared/share_mala/zj2398/mimic/meds_v0.6_reader/subject_id]
+Error: transformer_tpp fine-tuning failed for task ami
+[2/3] Processing task: masld
+cohort_base_dir: /data2/processed_datasets/mimic/phenotype_task/
+Task directory: /data2/processed_datasets/mimic/phenotype_task/masld/
+Running transformer_tpp feature generation for masld...
+Running transformer_tpp fine-tuning for masld...
+Executing command: python -u -m femr.omop_meds_tutorial.evaluation.finetune_motor       --cohort_label "masld"       --model_name "transformer_tpp"       --main_split_path "/data2/processed_datasets/zj2398/femr/mimic/deephit_tpp/main_split.csv"       --meds_reader "/shared/share_mala/zj2398/mimic/meds_v0.6_reader"       --model_path "/data2/processed_datasets/zj2398/femr/mimic/deephit_tpp/output_transformer/best_221573"       --output_root "/data2/processed_datasets/zj2398/femr/mimic/all_results/classification"
+Using the user defined label at: /data2/processed_datasets/zj2398/femr/mimic/all_results/classification/labels/masld.parquet
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/zj2398@mc.cumc.columbia.edu/femr/femr_chao_meds_v3/src/femr/omop_meds_tutorial/evaluation/finetune_motor.py", line 326, in <module>
+    main()
+  File "/home/zj2398@mc.cumc.columbia.edu/femr/femr_chao_meds_v3/src/femr/omop_meds_tutorial/evaluation/finetune_motor.py", line 177, in main
+    with meds_reader.SubjectDatabase(args.meds_reader, num_threads=32) as database:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/anaconda3/envs/motor_chao/lib/python3.11/site-packages/meds_reader/__init__.py", line 200, in __init__
+    self._database = _meds_reader.SubjectDatabase(path_to_database)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+RuntimeError: filesystem error: cannot get file size: No such file or directory [/shared/share_mala/zj2398/mimic/meds_v0.6_reader/subject_id]
+Error: transformer_tpp fine-tuning failed for task masld
+[3/3] Processing task: stroke
+cohort_base_dir: /data2/processed_datasets/mimic/phenotype_task/
+Task directory: /data2/processed_datasets/mimic/phenotype_task/stroke/
+Running transformer_tpp feature generation for stroke...
+Running transformer_tpp fine-tuning for stroke...
+Executing command: python -u -m femr.omop_meds_tutorial.evaluation.finetune_motor       --cohort_label "stroke"       --model_name "transformer_tpp"       --main_split_path "/data2/processed_datasets/zj2398/femr/mimic/deephit_tpp/main_split.csv"       --meds_reader "/shared/share_mala/zj2398/mimic/meds_v0.6_reader"       --model_path "/data2/processed_datasets/zj2398/femr/mimic/deephit_tpp/output_transformer/best_221573"       --output_root "/data2/processed_datasets/zj2398/femr/mimic/all_results/classification"
+Using the user defined label at: /data2/processed_datasets/zj2398/femr/mimic/all_results/classification/labels/stroke.parquet
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/zj2398@mc.cumc.columbia.edu/femr/femr_chao_meds_v3/src/femr/omop_meds_tutorial/evaluation/finetune_motor.py", line 326, in <module>
+    main()
+  File "/home/zj2398@mc.cumc.columbia.edu/femr/femr_chao_meds_v3/src/femr/omop_meds_tutorial/evaluation/finetune_motor.py", line 177, in main
+    with meds_reader.SubjectDatabase(args.meds_reader, num_threads=32) as database:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/anaconda3/envs/motor_chao/lib/python3.11/site-packages/meds_reader/__init__.py", line 200, in __init__
+    self._database = _meds_reader.SubjectDatabase(path_to_database)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+RuntimeError: filesystem error: cannot get file size: No such file or directory [/shared/share_mala/zj2398/mimic/meds_v0.6_reader/subject_id]
+Error: transformer_tpp fine-tuning failed for task stroke
+All tasks processed.
+Using configuration:
+  COHORT_BASE_DIR: /data2/processed_datasets/mimic/phenotype_task/
+  PRETRAINING_DATA: /data2/processed_datasets/zj2398/femr/mimic/deephit_tpp
+  OMOP_MEDS_READER: /data/raw_data/mimic/files/mimiciv/meds_v0.6/3.1/MEDS_cohort-reader
+  NUM_PROC: 64
+  TOKENS_PER_BATCH: 65536
+  OBSERVATION_WINDOW: Not specified
+  USE_LINEAR_INTERPOLATION: false
+
+Discovering prediction tasks...
+[1] Found task: ami
+[2] Found task: masld
+[3] Found task: stroke
+[1/3] Processing task: ami
+cohort_base_dir: /data2/processed_datasets/mimic/phenotype_task/
+Task directory: /data2/processed_datasets/mimic/phenotype_task/ami/
+Running transformer_tpp feature generation for ami...
+Running transformer_tpp fine-tuning for ami...
+Executing command: python -u -m femr.omop_meds_tutorial.evaluation.finetune_motor       --cohort_label "ami"       --model_name "transformer_tpp"       --main_split_path "/data2/processed_datasets/zj2398/femr/mimic/deephit_tpp/main_split.csv"       --meds_reader "/data/raw_data/mimic/files/mimiciv/meds_v0.6/3.1/MEDS_cohort-reader"       --model_path "/data2/processed_datasets/zj2398/femr/mimic/deephit_tpp/output_transformer/best_221573"       --output_root "/data2/processed_datasets/zj2398/femr/mimic/all_results/classification"
+Using the user defined label at: /data2/processed_datasets/zj2398/femr/mimic/all_results/classification/labels/ami.parquet
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/zj2398@mc.cumc.columbia.edu/femr/femr_chao_meds_v3/src/femr/omop_meds_tutorial/evaluation/finetune_motor.py", line 326, in <module>
+    main()
+  File "/home/zj2398@mc.cumc.columbia.edu/femr/femr_chao_meds_v3/src/femr/omop_meds_tutorial/evaluation/finetune_motor.py", line 190, in main
+    labels = pd.read_parquet(output_root /args.model_name/ "labels" / (label_name + '.parquet'))
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/anaconda3/envs/motor_chao/lib/python3.11/site-packages/pandas/io/parquet.py", line 669, in read_parquet
+    return impl.read(
+           ^^^^^^^^^^
+  File "/data/anaconda3/envs/motor_chao/lib/python3.11/site-packages/pandas/io/parquet.py", line 258, in read
+    path_or_handle, handles, filesystem = _get_path_or_handle(
+                                          ^^^^^^^^^^^^^^^^^^^^
+  File "/data/anaconda3/envs/motor_chao/lib/python3.11/site-packages/pandas/io/parquet.py", line 141, in _get_path_or_handle
+    handles = get_handle(
+              ^^^^^^^^^^^
+  File "/data/anaconda3/envs/motor_chao/lib/python3.11/site-packages/pandas/io/common.py", line 882, in get_handle
+    handle = open(handle, ioargs.mode)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/data2/processed_datasets/zj2398/femr/mimic/all_results/classification/transformer_tpp/labels/ami.parquet'
+Error: transformer_tpp fine-tuning failed for task ami
+[2/3] Processing task: masld
+cohort_base_dir: /data2/processed_datasets/mimic/phenotype_task/
+Task directory: /data2/processed_datasets/mimic/phenotype_task/masld/
+Running transformer_tpp feature generation for masld...
+Running transformer_tpp fine-tuning for masld...
+Executing command: python -u -m femr.omop_meds_tutorial.evaluation.finetune_motor       --cohort_label "masld"       --model_name "transformer_tpp"       --main_split_path "/data2/processed_datasets/zj2398/femr/mimic/deephit_tpp/main_split.csv"       --meds_reader "/data/raw_data/mimic/files/mimiciv/meds_v0.6/3.1/MEDS_cohort-reader"       --model_path "/data2/processed_datasets/zj2398/femr/mimic/deephit_tpp/output_transformer/best_221573"       --output_root "/data2/processed_datasets/zj2398/femr/mimic/all_results/classification"
+Using the user defined label at: /data2/processed_datasets/zj2398/femr/mimic/all_results/classification/labels/masld.parquet
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/zj2398@mc.cumc.columbia.edu/femr/femr_chao_meds_v3/src/femr/omop_meds_tutorial/evaluation/finetune_motor.py", line 326, in <module>
+    main()
+  File "/home/zj2398@mc.cumc.columbia.edu/femr/femr_chao_meds_v3/src/femr/omop_meds_tutorial/evaluation/finetune_motor.py", line 190, in main
+    labels = pd.read_parquet(output_root /args.model_name/ "labels" / (label_name + '.parquet'))
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/anaconda3/envs/motor_chao/lib/python3.11/site-packages/pandas/io/parquet.py", line 669, in read_parquet
+    return impl.read(
+           ^^^^^^^^^^
+  File "/data/anaconda3/envs/motor_chao/lib/python3.11/site-packages/pandas/io/parquet.py", line 258, in read
+    path_or_handle, handles, filesystem = _get_path_or_handle(
+                                          ^^^^^^^^^^^^^^^^^^^^
+  File "/data/anaconda3/envs/motor_chao/lib/python3.11/site-packages/pandas/io/parquet.py", line 141, in _get_path_or_handle
+    handles = get_handle(
+              ^^^^^^^^^^^
+  File "/data/anaconda3/envs/motor_chao/lib/python3.11/site-packages/pandas/io/common.py", line 882, in get_handle
+    handle = open(handle, ioargs.mode)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/data2/processed_datasets/zj2398/femr/mimic/all_results/classification/transformer_tpp/labels/masld.parquet'
+Error: transformer_tpp fine-tuning failed for task masld
+[3/3] Processing task: stroke
+cohort_base_dir: /data2/processed_datasets/mimic/phenotype_task/
+Task directory: /data2/processed_datasets/mimic/phenotype_task/stroke/
+Running transformer_tpp feature generation for stroke...
+Running transformer_tpp fine-tuning for stroke...
+Executing command: python -u -m femr.omop_meds_tutorial.evaluation.finetune_motor       --cohort_label "stroke"       --model_name "transformer_tpp"       --main_split_path "/data2/processed_datasets/zj2398/femr/mimic/deephit_tpp/main_split.csv"       --meds_reader "/data/raw_data/mimic/files/mimiciv/meds_v0.6/3.1/MEDS_cohort-reader"       --model_path "/data2/processed_datasets/zj2398/femr/mimic/deephit_tpp/output_transformer/best_221573"       --output_root "/data2/processed_datasets/zj2398/femr/mimic/all_results/classification"
+Using the user defined label at: /data2/processed_datasets/zj2398/femr/mimic/all_results/classification/labels/stroke.parquet
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/zj2398@mc.cumc.columbia.edu/femr/femr_chao_meds_v3/src/femr/omop_meds_tutorial/evaluation/finetune_motor.py", line 326, in <module>
+    main()
+  File "/home/zj2398@mc.cumc.columbia.edu/femr/femr_chao_meds_v3/src/femr/omop_meds_tutorial/evaluation/finetune_motor.py", line 190, in main
+    labels = pd.read_parquet(output_root /args.model_name/ "labels" / (label_name + '.parquet'))
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/anaconda3/envs/motor_chao/lib/python3.11/site-packages/pandas/io/parquet.py", line 669, in read_parquet
+    return impl.read(
+           ^^^^^^^^^^
+  File "/data/anaconda3/envs/motor_chao/lib/python3.11/site-packages/pandas/io/parquet.py", line 258, in read
+    path_or_handle, handles, filesystem = _get_path_or_handle(
+                                          ^^^^^^^^^^^^^^^^^^^^
+  File "/data/anaconda3/envs/motor_chao/lib/python3.11/site-packages/pandas/io/parquet.py", line 141, in _get_path_or_handle
+    handles = get_handle(
+              ^^^^^^^^^^^
+  File "/data/anaconda3/envs/motor_chao/lib/python3.11/site-packages/pandas/io/common.py", line 882, in get_handle
+    handle = open(handle, ioargs.mode)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/data2/processed_datasets/zj2398/femr/mimic/all_results/classification/transformer_tpp/labels/stroke.parquet'
+Error: transformer_tpp fine-tuning failed for task stroke
+All tasks processed.
+Using configuration:
+  COHORT_BASE_DIR: /data2/processed_datasets/mimic/phenotype_task/
+  PRETRAINING_DATA: /data2/processed_datasets/zj2398/femr/mimic/deephit_tpp
+  OMOP_MEDS_READER: /data/raw_data/mimic/files/mimiciv/meds_v0.6/3.1/MEDS_cohort-reader
+  NUM_PROC: 64
+  TOKENS_PER_BATCH: 65536
+  OBSERVATION_WINDOW: Not specified
+  USE_LINEAR_INTERPOLATION: false
+
+Discovering prediction tasks...
+[1] Found task: ami
+[2] Found task: masld
+[3] Found task: stroke
+[1/3] Processing task: ami
+cohort_base_dir: /data2/processed_datasets/mimic/phenotype_task/
+Task directory: /data2/processed_datasets/mimic/phenotype_task/ami/
+Running transformer_tpp feature generation for ami...
+Running transformer_tpp fine-tuning for ami...
+Executing command: python -u -m femr.omop_meds_tutorial.evaluation.finetune_motor       --cohort_label "ami"       --model_name "transformer_tpp"       --main_split_path "/data2/processed_datasets/zj2398/femr/mimic/deephit_tpp/main_split.csv"       --meds_reader "/data/raw_data/mimic/files/mimiciv/meds_v0.6/3.1/MEDS_cohort-reader"       --model_path "/data2/processed_datasets/zj2398/femr/mimic/deephit_tpp/output_transformer/best_221573"       --output_root "/data2/processed_datasets/zj2398/femr/mimic/all_results/classification"
+Using the user defined label at: /data2/processed_datasets/zj2398/femr/mimic/all_results/classification/labels/ami.parquet
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/zj2398@mc.cumc.columbia.edu/femr/femr_chao_meds_v3/src/femr/omop_meds_tutorial/evaluation/finetune_motor.py", line 326, in <module>
+    main()
+  File "/home/zj2398@mc.cumc.columbia.edu/femr/femr_chao_meds_v3/src/femr/omop_meds_tutorial/evaluation/finetune_motor.py", line 194, in main
+    with open(features_path / f"{motor_features_name}.pkl", 'rb') as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/data2/processed_datasets/zj2398/femr/mimic/all_results/classification/transformer_tpp/features/ami_transformer_tpp.pkl'
+Error: transformer_tpp fine-tuning failed for task ami
+[2/3] Processing task: masld
+cohort_base_dir: /data2/processed_datasets/mimic/phenotype_task/
+Task directory: /data2/processed_datasets/mimic/phenotype_task/masld/
+Running transformer_tpp feature generation for masld...
+Running transformer_tpp fine-tuning for masld...
+Executing command: python -u -m femr.omop_meds_tutorial.evaluation.finetune_motor       --cohort_label "masld"       --model_name "transformer_tpp"       --main_split_path "/data2/processed_datasets/zj2398/femr/mimic/deephit_tpp/main_split.csv"       --meds_reader "/data/raw_data/mimic/files/mimiciv/meds_v0.6/3.1/MEDS_cohort-reader"       --model_path "/data2/processed_datasets/zj2398/femr/mimic/deephit_tpp/output_transformer/best_221573"       --output_root "/data2/processed_datasets/zj2398/femr/mimic/all_results/classification"
+Using the user defined label at: /data2/processed_datasets/zj2398/femr/mimic/all_results/classification/labels/masld.parquet
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/zj2398@mc.cumc.columbia.edu/femr/femr_chao_meds_v3/src/femr/omop_meds_tutorial/evaluation/finetune_motor.py", line 326, in <module>
+    main()
+  File "/home/zj2398@mc.cumc.columbia.edu/femr/femr_chao_meds_v3/src/femr/omop_meds_tutorial/evaluation/finetune_motor.py", line 194, in main
+    with open(features_path / f"{motor_features_name}.pkl", 'rb') as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/data2/processed_datasets/zj2398/femr/mimic/all_results/classification/transformer_tpp/features/masld_transformer_tpp.pkl'
+Error: transformer_tpp fine-tuning failed for task masld
+[3/3] Processing task: stroke
+cohort_base_dir: /data2/processed_datasets/mimic/phenotype_task/
+Task directory: /data2/processed_datasets/mimic/phenotype_task/stroke/
+Running transformer_tpp feature generation for stroke...
+Running transformer_tpp fine-tuning for stroke...
+Executing command: python -u -m femr.omop_meds_tutorial.evaluation.finetune_motor       --cohort_label "stroke"       --model_name "transformer_tpp"       --main_split_path "/data2/processed_datasets/zj2398/femr/mimic/deephit_tpp/main_split.csv"       --meds_reader "/data/raw_data/mimic/files/mimiciv/meds_v0.6/3.1/MEDS_cohort-reader"       --model_path "/data2/processed_datasets/zj2398/femr/mimic/deephit_tpp/output_transformer/best_221573"       --output_root "/data2/processed_datasets/zj2398/femr/mimic/all_results/classification"
+Using the user defined label at: /data2/processed_datasets/zj2398/femr/mimic/all_results/classification/labels/stroke.parquet
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/zj2398@mc.cumc.columbia.edu/femr/femr_chao_meds_v3/src/femr/omop_meds_tutorial/evaluation/finetune_motor.py", line 326, in <module>
+    main()
+  File "/home/zj2398@mc.cumc.columbia.edu/femr/femr_chao_meds_v3/src/femr/omop_meds_tutorial/evaluation/finetune_motor.py", line 194, in main
+    with open(features_path / f"{motor_features_name}.pkl", 'rb') as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/data2/processed_datasets/zj2398/femr/mimic/all_results/classification/transformer_tpp/features/stroke_transformer_tpp.pkl'
+Error: transformer_tpp fine-tuning failed for task stroke
+All tasks processed.
+Using configuration:
+  COHORT_BASE_DIR: /data2/processed_datasets/mimic/phenotype_task/
+  PRETRAINING_DATA: /data2/processed_datasets/zj2398/femr/mimic/deephit_tpp
+  OMOP_MEDS_READER: /data/raw_data/mimic/files/mimiciv/meds_v0.6/3.1/MEDS_cohort-reader
+  NUM_PROC: 64
+  TOKENS_PER_BATCH: 65536
+  OBSERVATION_WINDOW: Not specified
+  USE_LINEAR_INTERPOLATION: false
+
+Discovering prediction tasks...
+[1] Found task: ami
+[2] Found task: masld
+[3] Found task: stroke
+[1/3] Processing task: ami
+cohort_base_dir: /data2/processed_datasets/mimic/phenotype_task/
+Task directory: /data2/processed_datasets/mimic/phenotype_task/ami/
+Running transformer_tpp feature generation for ami...
+Running transformer_tpp fine-tuning for ami...
+Executing command: python -u -m femr.omop_meds_tutorial.evaluation.finetune_motor       --cohort_label "ami"       --model_name "transformer_tpp"       --main_split_path "/data2/processed_datasets/zj2398/femr/mimic/deephit_tpp/main_split.csv"       --meds_reader "/data/raw_data/mimic/files/mimiciv/meds_v0.6/3.1/MEDS_cohort-reader"       --model_path "/data2/processed_datasets/zj2398/femr/mimic/deephit_tpp/output_transformer/best_221573"       --output_root "/data2/processed_datasets/zj2398/femr/mimic/all_results/classification"
+Using the user defined label at: /data2/processed_datasets/zj2398/femr/mimic/all_results/classification/labels/ami.parquet
+label_name is ami
+Saving features and labels to parquet
+Total labels: 139261
+Total train features labels: 124734
+Total test features labels: 14527
+/data/anaconda3/envs/motor_chao/lib/python3.11/site-packages/sklearn/linear_model/_logistic.py:473: ConvergenceWarning: lbfgs failed to converge after 100 iteration(s) (status=1):
+STOP: TOTAL NO. OF ITERATIONS REACHED LIMIT
+
+Increase the number of iterations to improve the convergence (max_iter=100).
+You might also want to scale the data as shown in:
+    https://scikit-learn.org/stable/modules/preprocessing.html
+Please also refer to the documentation for alternative solver options:
+    https://scikit-learn.org/stable/modules/linear_model.html#logistic-regression
+  n_iter_i = _check_optimize_result(
+/data/anaconda3/envs/motor_chao/lib/python3.11/site-packages/sklearn/linear_model/_logistic.py:473: ConvergenceWarning: lbfgs failed to converge after 100 iteration(s) (status=1):
+STOP: TOTAL NO. OF ITERATIONS REACHED LIMIT
+
+Increase the number of iterations to improve the convergence (max_iter=100).
+You might also want to scale the data as shown in:
+    https://scikit-learn.org/stable/modules/preprocessing.html
+Please also refer to the documentation for alternative solver options:
+    https://scikit-learn.org/stable/modules/linear_model.html#logistic-regression
+  n_iter_i = _check_optimize_result(
+/data/anaconda3/envs/motor_chao/lib/python3.11/site-packages/sklearn/linear_model/_logistic.py:473: ConvergenceWarning: lbfgs failed to converge after 100 iteration(s) (status=1):
+STOP: TOTAL NO. OF ITERATIONS REACHED LIMIT
+
+Increase the number of iterations to improve the convergence (max_iter=100).
+You might also want to scale the data as shown in:
+    https://scikit-learn.org/stable/modules/preprocessing.html
+Please also refer to the documentation for alternative solver options:
+    https://scikit-learn.org/stable/modules/linear_model.html#logistic-regression
+  n_iter_i = _check_optimize_result(
+/data/anaconda3/envs/motor_chao/lib/python3.11/site-packages/sklearn/linear_model/_logistic.py:473: ConvergenceWarning: lbfgs failed to converge after 100 iteration(s) (status=1):
+STOP: TOTAL NO. OF ITERATIONS REACHED LIMIT
+
+Increase the number of iterations to improve the convergence (max_iter=100).
+You might also want to scale the data as shown in:
+    https://scikit-learn.org/stable/modules/preprocessing.html
+Please also refer to the documentation for alternative solver options:
+    https://scikit-learn.org/stable/modules/linear_model.html#logistic-regression
+  n_iter_i = _check_optimize_result(
+/data/anaconda3/envs/motor_chao/lib/python3.11/site-packages/sklearn/linear_model/_logistic.py:473: ConvergenceWarning: lbfgs failed to converge after 100 iteration(s) (status=1):
+STOP: TOTAL NO. OF ITERATIONS REACHED LIMIT
+
+Increase the number of iterations to improve the convergence (max_iter=100).
+You might also want to scale the data as shown in:
+    https://scikit-learn.org/stable/modules/preprocessing.html
+Please also refer to the documentation for alternative solver options:
+    https://scikit-learn.org/stable/modules/linear_model.html#logistic-regression
+  n_iter_i = _check_optimize_result(
+ami 0.824327885981493
+0:	[1s / 1s],		train_loss: 0.1577,	val_loss: 0.1567
+1:	[0s / 1s],		train_loss: 0.1500,	val_loss: 0.1545
+2:	[0s / 2s],		train_loss: 0.1472,	val_loss: 0.1530
+3:	[0s / 3s],		train_loss: 0.1456,	val_loss: 0.1530
+4:	[0s / 3s],		train_loss: 0.1440,	val_loss: 0.1520
+5:	[0s / 4s],		train_loss: 0.1429,	val_loss: 0.1522
+6:	[0s / 4s],		train_loss: 0.1416,	val_loss: 0.1511
+7:	[0s / 5s],		train_loss: 0.1408,	val_loss: 0.1519
+8:	[0s / 6s],		train_loss: 0.1399,	val_loss: 0.1507
+9:	[0s / 6s],		train_loss: 0.1389,	val_loss: 0.1507
+10:	[0s / 7s],		train_loss: 0.1380,	val_loss: 0.1503
+11:	[0s / 7s],		train_loss: 0.1372,	val_loss: 0.1513
+12:	[0s / 8s],		train_loss: 0.1364,	val_loss: 0.1500
+13:	[0s / 8s],		train_loss: 0.1356,	val_loss: 0.1500
+14:	[0s / 9s],		train_loss: 0.1348,	val_loss: 0.1506
+15:	[0s / 9s],		train_loss: 0.1343,	val_loss: 0.1504
+16:	[0s / 10s],		train_loss: 0.1333,	val_loss: 0.1505
+17:	[0s / 10s],		train_loss: 0.1332,	val_loss: 0.1505
+18:	[0s / 11s],		train_loss: 0.1322,	val_loss: 0.1511
+19:	[0s / 12s],		train_loss: 0.1317,	val_loss: 0.1502
+20:	[0s / 12s],		train_loss: 0.1311,	val_loss: 0.1503
+Using configuration:
+  COHORT_BASE_DIR: /data2/processed_datasets/mimic/patient_outcome_tasks
+  PRETRAINING_DATA: /data2/processed_datasets/zj2398/femr/mimic/deephit_tpp
+  OMOP_MEDS_READER: /data/raw_data/mimic/files/mimiciv/meds_v0.6/3.1/MEDS_cohort-reader
+  NUM_PROC: 64
+  TOKENS_PER_BATCH: 65536
+  OBSERVATION_WINDOW: Not specified
+  USE_LINEAR_INTERPOLATION: false
+
+Discovering prediction tasks...
+[1] Found task: patient_outcome_tasks
+[1/1] Processing task: patient_outcome_tasks
+cohort_base_dir: /data2/processed_datasets/mimic/patient_outcome_tasks
+Task directory: /data2/processed_datasets/mimic/patient_outcome_tasks/
+Running transformer_tpp feature generation for patient_outcome_tasks...
+Running transformer_tpp fine-tuning for patient_outcome_tasks...
+Executing command: python -u -m femr.omop_meds_tutorial.evaluation.finetune_motor       --cohort_label "patient_outcome_tasks"       --model_name "transformer_tpp"       --main_split_path "/data2/processed_datasets/zj2398/femr/mimic/deephit_tpp/main_split.csv"       --meds_reader "/data/raw_data/mimic/files/mimiciv/meds_v0.6/3.1/MEDS_cohort-reader"       --model_path "/data2/processed_datasets/zj2398/femr/mimic/deephit_tpp/output_transformer/best_221573"       --output_root "/data2/processed_datasets/zj2398/femr/mimic/all_results/classification"
+21:	[0s / 13s],		train_loss: 0.1306,	val_loss: 0.1504
+22:	[0s / 13s],		train_loss: 0.1300,	val_loss: 0.1500
+23:	[0s / 14s],		train_loss: 0.1294,	val_loss: 0.1506
+24:	[0s / 14s],		train_loss: 0.1289,	val_loss: 0.1506
+25:	[0s / 15s],		train_loss: 0.1283,	val_loss: 0.1498
+26:	[0s / 16s],		train_loss: 0.1279,	val_loss: 0.1515
+27:	[0s / 16s],		train_loss: 0.1274,	val_loss: 0.1506
+28:	[0s / 17s],		train_loss: 0.1269,	val_loss: 0.1516
+29:	[0s / 18s],		train_loss: 0.1265,	val_loss: 0.1507
+30:	[0s / 18s],		train_loss: 0.1261,	val_loss: 0.1504
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/zj2398@mc.cumc.columbia.edu/femr/femr_chao_meds_v3/src/femr/omop_meds_tutorial/evaluation/finetune_motor.py", line 326, in <module>
+    main()
+  File "/home/zj2398@mc.cumc.columbia.edu/femr/femr_chao_meds_v3/src/femr/omop_meds_tutorial/evaluation/finetune_motor.py", line 173, in main
+    raise RuntimeError(f"The user provided label does not exist at {label_path}")
+RuntimeError: The user provided label does not exist at /data2/processed_datasets/zj2398/femr/mimic/all_results/classification/labels/patient_outcome_tasks.parquet
+31:	[0s / 19s],		train_loss: 0.1254,	val_loss: 0.1500
+Error: transformer_tpp fine-tuning failed for task patient_outcome_tasks
+All tasks processed.
+32:	[0s / 20s],		train_loss: 0.1251,	val_loss: 0.1517
+33:	[0s / 20s],		train_loss: 0.1247,	val_loss: 0.1519
+34:	[0s / 21s],		train_loss: 0.1243,	val_loss: 0.1514
+35:	[0s / 21s],		train_loss: 0.1241,	val_loss: 0.1517
+  0%|          | 0/100 [00:00<?, ?it/s]  0%|          | 0/100 [00:02<?, ?it/s]
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/zj2398@mc.cumc.columbia.edu/femr/femr_chao_meds_v3/src/femr/omop_meds_tutorial/evaluation/finetune_motor.py", line 326, in <module>
+    main()
+  File "/home/zj2398@mc.cumc.columbia.edu/femr/femr_chao_meds_v3/src/femr/omop_meds_tutorial/evaluation/finetune_motor.py", line 316, in main
+    tte_results = tte_evaluation(train_set,test_set,label_output_dir)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/zj2398@mc.cumc.columbia.edu/femr/femr_chao_meds_v3/src/femr/omop_meds_tutorial/evaluation/finetune_motor.py", line 155, in tte_evaluation
+    results['Int-Brier'].append(ev.integrated_brier_score(time_grid))
+                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/anaconda3/envs/motor_chao/lib/python3.11/site-packages/pycox/evaluation/eval_surv.py", line 256, in integrated_brier_score
+    return ipcw.integrated_brier_score(time_grid, self.durations, self.events, self.surv.values,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/anaconda3/envs/motor_chao/lib/python3.11/site-packages/pycox/evaluation/ipcw.py", line 86, in metric
+    integral = scipy.integrate.simps(scores, time_grid)
+               ^^^^^^^^^^^^^^^^^^^^^
+AttributeError: module 'scipy.integrate' has no attribute 'simps'. Did you mean: 'simpson'?
+Error: transformer_tpp fine-tuning failed for task ami
+[2/3] Processing task: masld
+cohort_base_dir: /data2/processed_datasets/mimic/phenotype_task/
+Task directory: /data2/processed_datasets/mimic/phenotype_task/masld/
+Running transformer_tpp feature generation for masld...
+Running transformer_tpp fine-tuning for masld...
+Executing command: python -u -m femr.omop_meds_tutorial.evaluation.finetune_motor       --cohort_label "masld"       --model_name "transformer_tpp"       --main_split_path "/data2/processed_datasets/zj2398/femr/mimic/deephit_tpp/main_split.csv"       --meds_reader "/data/raw_data/mimic/files/mimiciv/meds_v0.6/3.1/MEDS_cohort-reader"       --model_path "/data2/processed_datasets/zj2398/femr/mimic/deephit_tpp/output_transformer/best_221573"       --output_root "/data2/processed_datasets/zj2398/femr/mimic/all_results/classification"
+Using the user defined label at: /data2/processed_datasets/zj2398/femr/mimic/all_results/classification/labels/masld.parquet
+label_name is masld
+Saving features and labels to parquet
+Total labels: 139944
+Total train features labels: 125417
+Total test features labels: 14527
+masld 0.7060811163567747
+0:	[1s / 1s],		train_loss: 0.0722,	val_loss: 0.0689
+1:	[0s / 1s],		train_loss: 0.0674,	val_loss: 0.0685
+2:	[0s / 2s],		train_loss: 0.0661,	val_loss: 0.0679
+3:	[0s / 2s],		train_loss: 0.0653,	val_loss: 0.0679
+4:	[0s / 3s],		train_loss: 0.0635,	val_loss: 0.0673
+5:	[0s / 4s],		train_loss: 0.0626,	val_loss: 0.0669
+6:	[0s / 4s],		train_loss: 0.0621,	val_loss: 0.0670
+7:	[0s / 5s],		train_loss: 0.0611,	val_loss: 0.0669
+8:	[0s / 5s],		train_loss: 0.0599,	val_loss: 0.0660
+9:	[0s / 6s],		train_loss: 0.0597,	val_loss: 0.0662
+10:	[0s / 6s],		train_loss: 0.0593,	val_loss: 0.0664
+11:	[0s / 7s],		train_loss: 0.0587,	val_loss: 0.0664
+12:	[0s / 7s],		train_loss: 0.0580,	val_loss: 0.0661
+13:	[0s / 8s],		train_loss: 0.0577,	val_loss: 0.0660
+14:	[0s / 9s],		train_loss: 0.0569,	val_loss: 0.0661
+15:	[0s / 10s],		train_loss: 0.0566,	val_loss: 0.0656
+16:	[0s / 10s],		train_loss: 0.0564,	val_loss: 0.0658
+17:	[0s / 11s],		train_loss: 0.0559,	val_loss: 0.0660
+18:	[0s / 12s],		train_loss: 0.0551,	val_loss: 0.0657
+19:	[0s / 12s],		train_loss: 0.0546,	val_loss: 0.0660
+20:	[0s / 13s],		train_loss: 0.0540,	val_loss: 0.0660
+21:	[0s / 14s],		train_loss: 0.0540,	val_loss: 0.0665
+22:	[0s / 14s],		train_loss: 0.0540,	val_loss: 0.0654
+23:	[0s / 15s],		train_loss: 0.0531,	val_loss: 0.0657
+24:	[0s / 16s],		train_loss: 0.0526,	val_loss: 0.0662
+25:	[0s / 17s],		train_loss: 0.0525,	val_loss: 0.0664
+26:	[0s / 17s],		train_loss: 0.0519,	val_loss: 0.0661
+27:	[0s / 18s],		train_loss: 0.0519,	val_loss: 0.0664
+28:	[0s / 19s],		train_loss: 0.0517,	val_loss: 0.0664
+29:	[0s / 19s],		train_loss: 0.0519,	val_loss: 0.0667
+30:	[0s / 20s],		train_loss: 0.0509,	val_loss: 0.0662
+31:	[0s / 20s],		train_loss: 0.0509,	val_loss: 0.0663
+32:	[0s / 21s],		train_loss: 0.0505,	val_loss: 0.0662
+  0%|          | 0/100 [00:00<?, ?it/s]  0%|          | 0/100 [00:02<?, ?it/s]
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/zj2398@mc.cumc.columbia.edu/femr/femr_chao_meds_v3/src/femr/omop_meds_tutorial/evaluation/finetune_motor.py", line 326, in <module>
+    main()
+  File "/home/zj2398@mc.cumc.columbia.edu/femr/femr_chao_meds_v3/src/femr/omop_meds_tutorial/evaluation/finetune_motor.py", line 316, in main
+    tte_results = tte_evaluation(train_set,test_set,label_output_dir)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/zj2398@mc.cumc.columbia.edu/femr/femr_chao_meds_v3/src/femr/omop_meds_tutorial/evaluation/finetune_motor.py", line 155, in tte_evaluation
+    results['Int-Brier'].append(ev.integrated_brier_score(time_grid))
+                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/anaconda3/envs/motor_chao/lib/python3.11/site-packages/pycox/evaluation/eval_surv.py", line 256, in integrated_brier_score
+    return ipcw.integrated_brier_score(time_grid, self.durations, self.events, self.surv.values,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/anaconda3/envs/motor_chao/lib/python3.11/site-packages/pycox/evaluation/ipcw.py", line 86, in metric
+    integral = scipy.integrate.simps(scores, time_grid)
+               ^^^^^^^^^^^^^^^^^^^^^
+AttributeError: module 'scipy.integrate' has no attribute 'simps'. Did you mean: 'simpson'?
+Error: transformer_tpp fine-tuning failed for task masld
+[3/3] Processing task: stroke
+cohort_base_dir: /data2/processed_datasets/mimic/phenotype_task/
+Task directory: /data2/processed_datasets/mimic/phenotype_task/stroke/
+Running transformer_tpp feature generation for stroke...
+Running transformer_tpp fine-tuning for stroke...
+Executing command: python -u -m femr.omop_meds_tutorial.evaluation.finetune_motor       --cohort_label "stroke"       --model_name "transformer_tpp"       --main_split_path "/data2/processed_datasets/zj2398/femr/mimic/deephit_tpp/main_split.csv"       --meds_reader "/data/raw_data/mimic/files/mimiciv/meds_v0.6/3.1/MEDS_cohort-reader"       --model_path "/data2/processed_datasets/zj2398/femr/mimic/deephit_tpp/output_transformer/best_221573"       --output_root "/data2/processed_datasets/zj2398/femr/mimic/all_results/classification"
+Using the user defined label at: /data2/processed_datasets/zj2398/femr/mimic/all_results/classification/labels/stroke.parquet
+label_name is stroke
+Saving features and labels to parquet
+Total labels: 118748
+Total train features labels: 106371
+Total test features labels: 12377
+stroke 0.6986154586029716
+0:	[0s / 0s],		train_loss: 0.0580,	val_loss: 0.0554
+1:	[0s / 1s],		train_loss: 0.0528,	val_loss: 0.0541
+2:	[0s / 2s],		train_loss: 0.0514,	val_loss: 0.0534
+3:	[0s / 2s],		train_loss: 0.0503,	val_loss: 0.0536
+4:	[0s / 2s],		train_loss: 0.0494,	val_loss: 0.0527
+5:	[0s / 3s],		train_loss: 0.0483,	val_loss: 0.0524
+6:	[0s / 3s],		train_loss: 0.0476,	val_loss: 0.0526
+7:	[0s / 4s],		train_loss: 0.0471,	val_loss: 0.0522
+8:	[0s / 4s],		train_loss: 0.0463,	val_loss: 0.0529
+9:	[0s / 5s],		train_loss: 0.0457,	val_loss: 0.0525
+10:	[0s / 5s],		train_loss: 0.0451,	val_loss: 0.0522
+11:	[0s / 6s],		train_loss: 0.0447,	val_loss: 0.0525
+12:	[0s / 7s],		train_loss: 0.0443,	val_loss: 0.0526
+13:	[0s / 7s],		train_loss: 0.0437,	val_loss: 0.0524
+14:	[0s / 8s],		train_loss: 0.0432,	val_loss: 0.0525
+15:	[0s / 9s],		train_loss: 0.0428,	val_loss: 0.0523
+16:	[0s / 10s],		train_loss: 0.0423,	val_loss: 0.0525
+17:	[0s / 10s],		train_loss: 0.0420,	val_loss: 0.0530
+18:	[0s / 11s],		train_loss: 0.0417,	val_loss: 0.0526
+19:	[0s / 11s],		train_loss: 0.0411,	val_loss: 0.0520
+20:	[0s / 12s],		train_loss: 0.0408,	val_loss: 0.0527
+21:	[0s / 13s],		train_loss: 0.0405,	val_loss: 0.0525
+22:	[0s / 13s],		train_loss: 0.0402,	val_loss: 0.0523
+23:	[0s / 14s],		train_loss: 0.0398,	val_loss: 0.0523
+24:	[0s / 14s],		train_loss: 0.0393,	val_loss: 0.0528
+25:	[0s / 15s],		train_loss: 0.0389,	val_loss: 0.0530
+26:	[0s / 16s],		train_loss: 0.0387,	val_loss: 0.0536
+27:	[0s / 16s],		train_loss: 0.0385,	val_loss: 0.0528
+28:	[0s / 17s],		train_loss: 0.0381,	val_loss: 0.0529
+29:	[0s / 18s],		train_loss: 0.0377,	val_loss: 0.0527
+  0%|          | 0/100 [00:00<?, ?it/s]  0%|          | 0/100 [00:02<?, ?it/s]
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/zj2398@mc.cumc.columbia.edu/femr/femr_chao_meds_v3/src/femr/omop_meds_tutorial/evaluation/finetune_motor.py", line 326, in <module>
+    main()
+  File "/home/zj2398@mc.cumc.columbia.edu/femr/femr_chao_meds_v3/src/femr/omop_meds_tutorial/evaluation/finetune_motor.py", line 316, in main
+    tte_results = tte_evaluation(train_set,test_set,label_output_dir)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/zj2398@mc.cumc.columbia.edu/femr/femr_chao_meds_v3/src/femr/omop_meds_tutorial/evaluation/finetune_motor.py", line 155, in tte_evaluation
+    results['Int-Brier'].append(ev.integrated_brier_score(time_grid))
+                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/anaconda3/envs/motor_chao/lib/python3.11/site-packages/pycox/evaluation/eval_surv.py", line 256, in integrated_brier_score
+    return ipcw.integrated_brier_score(time_grid, self.durations, self.events, self.surv.values,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/anaconda3/envs/motor_chao/lib/python3.11/site-packages/pycox/evaluation/ipcw.py", line 86, in metric
+    integral = scipy.integrate.simps(scores, time_grid)
+               ^^^^^^^^^^^^^^^^^^^^^
+AttributeError: module 'scipy.integrate' has no attribute 'simps'. Did you mean: 'simpson'?
+Error: transformer_tpp fine-tuning failed for task stroke
+All tasks processed.
+Using configuration:
+  COHORT_BASE_DIR: /data2/processed_datasets/mimic/patient_outcome_tasks/
+  PRETRAINING_DATA: /data2/processed_datasets/zj2398/femr/mimic/deephit_tpp
+  OMOP_MEDS_READER: /data/raw_data/mimic/files/mimiciv/meds_v0.6/3.1/MEDS_cohort-reader
+  NUM_PROC: 64
+  TOKENS_PER_BATCH: 65536
+  OBSERVATION_WINDOW: Not specified
+  USE_LINEAR_INTERPOLATION: false
+
+Discovering prediction tasks...
+[1] Found task: in_hospital_mortality
+[2] Found task: long_los
+[3] Found task: readmission
+[1/3] Processing task: in_hospital_mortality
+cohort_base_dir: /data2/processed_datasets/mimic/patient_outcome_tasks/
+Task directory: /data2/processed_datasets/mimic/patient_outcome_tasks/in_hospital_mortality/
+Running transformer_tpp feature generation for in_hospital_mortality...
+Running transformer_tpp fine-tuning for in_hospital_mortality...
+Executing command: python -u -m femr.omop_meds_tutorial.evaluation.finetune_motor       --cohort_label "in_hospital_mortality"       --model_name "transformer_tpp"       --main_split_path "/data2/processed_datasets/zj2398/femr/mimic/deephit_tpp/main_split.csv"       --meds_reader "/data/raw_data/mimic/files/mimiciv/meds_v0.6/3.1/MEDS_cohort-reader"       --model_path "/data2/processed_datasets/zj2398/femr/mimic/deephit_tpp/output_transformer/best_221573"       --output_root "/data2/processed_datasets/zj2398/femr/mimic/all_results/classification"
+Using the user defined label at: /data2/processed_datasets/zj2398/femr/mimic/all_results/classification/labels/in_hospital_mortality.parquet
+label_name is in_hospital_mortality
+Saving features and labels to parquet
+Total labels: 331592
+Total train features labels: 298453
+Total test features labels: 33139
+Using configuration:
+  COHORT_BASE_DIR: /data2/processed_datasets/mimic/phenotype_task/
+  PRETRAINING_DATA: /data2/processed_datasets/zj2398/femr/mimic/deephit_tpp
+  OMOP_MEDS_READER: /data/raw_data/mimic/files/mimiciv/meds_v0.6/3.1/MEDS_cohort-reader
+  NUM_PROC: 64
+  TOKENS_PER_BATCH: 65536
+  OBSERVATION_WINDOW: Not specified
+  USE_LINEAR_INTERPOLATION: false
+
+Discovering prediction tasks...
+[1] Found task: ami
+[2] Found task: masld
+[3] Found task: stroke
+[1/3] Processing task: ami
+cohort_base_dir: /data2/processed_datasets/mimic/phenotype_task/
+Task directory: /data2/processed_datasets/mimic/phenotype_task/ami/
+Running transformer_tpp feature generation for ami...
+Running transformer_tpp fine-tuning for ami...
+Executing command: python -u -m femr.omop_meds_tutorial.evaluation.finetune_motor       --cohort_label "ami"       --model_name "transformer_tpp"       --main_split_path "/data2/processed_datasets/zj2398/femr/mimic/deephit_tpp/main_split.csv"       --meds_reader "/data/raw_data/mimic/files/mimiciv/meds_v0.6/3.1/MEDS_cohort-reader"       --model_path "/data2/processed_datasets/zj2398/femr/mimic/deephit_tpp/output_transformer/best_221573"       --output_root "/data2/processed_datasets/zj2398/femr/mimic/all_results/classification"
+Using the user defined label at: /data2/processed_datasets/zj2398/femr/mimic/all_results/classification/labels/ami.parquet
+label_name is ami
+Saving features and labels to parquet
+Total labels: 139261
+Total train features labels: 124734
+Total test features labels: 14527
+/data/anaconda3/envs/motor_chao/lib/python3.11/site-packages/sklearn/linear_model/_logistic.py:473: ConvergenceWarning: lbfgs failed to converge after 100 iteration(s) (status=1):
+STOP: TOTAL NO. of ITERATIONS REACHED LIMIT
+
+Increase the number of iterations to improve the convergence (max_iter=100).
+You might also want to scale the data as shown in:
+    https://scikit-learn.org/stable/modules/preprocessing.html
+Please also refer to the documentation for alternative solver options:
+    https://scikit-learn.org/stable/modules/linear_model.html#logistic-regression
+  n_iter_i = _check_optimize_result(
+/data/anaconda3/envs/motor_chao/lib/python3.11/site-packages/sklearn/linear_model/_logistic.py:473: ConvergenceWarning: lbfgs failed to converge after 100 iteration(s) (status=1):
+STOP: TOTAL NO. of ITERATIONS REACHED LIMIT
+
+Increase the number of iterations to improve the convergence (max_iter=100).
+You might also want to scale the data as shown in:
+    https://scikit-learn.org/stable/modules/preprocessing.html
+Please also refer to the documentation for alternative solver options:
+    https://scikit-learn.org/stable/modules/linear_model.html#logistic-regression
+  n_iter_i = _check_optimize_result(
+in_hospital_mortality 0.9624462455333634
+/data/anaconda3/envs/motor_chao/lib/python3.11/site-packages/sklearn/linear_model/_logistic.py:473: ConvergenceWarning: lbfgs failed to converge after 100 iteration(s) (status=1):
+STOP: TOTAL NO. of ITERATIONS REACHED LIMIT
+
+Increase the number of iterations to improve the convergence (max_iter=100).
+You might also want to scale the data as shown in:
+    https://scikit-learn.org/stable/modules/preprocessing.html
+Please also refer to the documentation for alternative solver options:
+    https://scikit-learn.org/stable/modules/linear_model.html#logistic-regression
+  n_iter_i = _check_optimize_result(
+Running meds-evaluation for in_hospital_mortality...
+Executing command: meds-evaluation-cli predictions_path="/data2/processed_datasets/zj2398/femr/mimic/all_results/classification/results/in_hospital_mortality/transformer_tpp/test_predictions"       output_dir="/data2/processed_datasets/zj2398/femr/mimic/all_results/classification/results/in_hospital_mortality/transformer_tpp/"
+2025-11-04 16:14:31.515 | INFO     | meds_evaluation.__main__:main:23 - Starting evaluation with config:
+predictions_path: /data2/processed_datasets/zj2398/femr/mimic/all_results/classification/results/in_hospital_mortality/transformer_tpp/test_predictions
+output_dir: /data2/processed_datasets/zj2398/femr/mimic/all_results/classification/results/in_hospital_mortality/transformer_tpp/
+samples_per_subject: 4
+resampling_seed: 0
+
+2025-11-04 16:14:31.516 | INFO     | meds_evaluation.__main__:main:26 - Loading model predictions dataframe '/data2/processed_datasets/zj2398/femr/mimic/all_results/classification/results/in_hospital_mortality/transformer_tpp/test_predictions'
+2025-11-04 16:14:31.602 | INFO     | meds_evaluation.__main__:main:34 - Running evaluation...
+2025-11-04 16:14:32.000 | INFO     | meds_evaluation.__main__:main:43 - Completed in 0:00:00.485410. Results saved to '/data2/processed_datasets/zj2398/femr/mimic/all_results/classification/results/in_hospital_mortality/transformer_tpp/results.json'.
+2025-11-04 16:14:32.001 | INFO     | meds_evaluation.__main__:main:48 - Running evaluation...
+2025-11-04 16:14:34.621 | INFO     | meds_evaluation.__main__:main:57 - Completed in 0:00:03.105637. Results saved to '/data2/processed_datasets/zj2398/femr/mimic/all_results/classification/results/in_hospital_mortality/transformer_tpp/results_boot.json'.
+Completed processing of task: in_hospital_mortality
+----------------------------------------
+[2/3] Processing task: long_los
+cohort_base_dir: /data2/processed_datasets/mimic/patient_outcome_tasks/
+Task directory: /data2/processed_datasets/mimic/patient_outcome_tasks/long_los/
+Running transformer_tpp feature generation for long_los...
+Running transformer_tpp fine-tuning for long_los...
+Executing command: python -u -m femr.omop_meds_tutorial.evaluation.finetune_motor       --cohort_label "long_los"       --model_name "transformer_tpp"       --main_split_path "/data2/processed_datasets/zj2398/femr/mimic/deephit_tpp/main_split.csv"       --meds_reader "/data/raw_data/mimic/files/mimiciv/meds_v0.6/3.1/MEDS_cohort-reader"       --model_path "/data2/processed_datasets/zj2398/femr/mimic/deephit_tpp/output_transformer/best_221573"       --output_root "/data2/processed_datasets/zj2398/femr/mimic/all_results/classification"
+Using the user defined label at: /data2/processed_datasets/zj2398/femr/mimic/all_results/classification/labels/long_los.parquet
+ami 0.8243738453013981
+label_name is long_los
+0:	[1s / 1s],		train_loss: 0.1577,	val_loss: 0.1567
+1:	[0s / 1s],		train_loss: 0.1500,	val_loss: 0.1545
+2:	[0s / 2s],		train_loss: 0.1472,	val_loss: 0.1530
+3:	[0s / 2s],		train_loss: 0.1456,	val_loss: 0.1530
+4:	[0s / 3s],		train_loss: 0.1440,	val_loss: 0.1520
+5:	[0s / 4s],		train_loss: 0.1429,	val_loss: 0.1522
+Saving features and labels to parquet
+6:	[0s / 4s],		train_loss: 0.1416,	val_loss: 0.1511
+7:	[0s / 5s],		train_loss: 0.1408,	val_loss: 0.1519
+8:	[0s / 5s],		train_loss: 0.1399,	val_loss: 0.1507
+9:	[0s / 6s],		train_loss: 0.1389,	val_loss: 0.1507
+10:	[0s / 6s],		train_loss: 0.1380,	val_loss: 0.1503
+11:	[0s / 7s],		train_loss: 0.1372,	val_loss: 0.1513
+12:	[0s / 7s],		train_loss: 0.1364,	val_loss: 0.1500
+13:	[0s / 8s],		train_loss: 0.1356,	val_loss: 0.1500
+14:	[0s / 9s],		train_loss: 0.1348,	val_loss: 0.1506
+15:	[0s / 9s],		train_loss: 0.1343,	val_loss: 0.1504
+16:	[0s / 10s],		train_loss: 0.1333,	val_loss: 0.1505
+17:	[0s / 10s],		train_loss: 0.1332,	val_loss: 0.1505
+18:	[0s / 11s],		train_loss: 0.1322,	val_loss: 0.1511
+Total labels: 331593
+Total train features labels: 298449
+Total test features labels: 33144
+19:	[0s / 11s],		train_loss: 0.1317,	val_loss: 0.1502
+20:	[0s / 12s],		train_loss: 0.1311,	val_loss: 0.1503
+21:	[0s / 13s],		train_loss: 0.1306,	val_loss: 0.1504
+22:	[1s / 14s],		train_loss: 0.1300,	val_loss: 0.1500
+23:	[1s / 15s],		train_loss: 0.1294,	val_loss: 0.1506
+24:	[1s / 17s],		train_loss: 0.1289,	val_loss: 0.1506
+25:	[1s / 18s],		train_loss: 0.1283,	val_loss: 0.1498
+26:	[0s / 19s],		train_loss: 0.1279,	val_loss: 0.1515
+27:	[0s / 20s],		train_loss: 0.1274,	val_loss: 0.1506
+28:	[1s / 21s],		train_loss: 0.1269,	val_loss: 0.1516
+29:	[0s / 22s],		train_loss: 0.1265,	val_loss: 0.1507
+30:	[0s / 23s],		train_loss: 0.1261,	val_loss: 0.1504
+/data/anaconda3/envs/motor_chao/lib/python3.11/site-packages/sklearn/linear_model/_logistic.py:473: ConvergenceWarning: lbfgs failed to converge after 100 iteration(s) (status=1):
+STOP: TOTAL NO. of ITERATIONS REACHED LIMIT
+
+Increase the number of iterations to improve the convergence (max_iter=100).
+You might also want to scale the data as shown in:
+    https://scikit-learn.org/stable/modules/preprocessing.html
+Please also refer to the documentation for alternative solver options:
+    https://scikit-learn.org/stable/modules/linear_model.html#logistic-regression
+  n_iter_i = _check_optimize_result(
+31:	[0s / 23s],		train_loss: 0.1254,	val_loss: 0.1500
+32:	[0s / 24s],		train_loss: 0.1251,	val_loss: 0.1517
+33:	[0s / 25s],		train_loss: 0.1247,	val_loss: 0.1519
+34:	[0s / 26s],		train_loss: 0.1243,	val_loss: 0.1514
+35:	[0s / 26s],		train_loss: 0.1241,	val_loss: 0.1517
+  0%|          | 0/100 [00:00<?, ?it/s]  1%|          | 1/100 [00:03<05:06,  3.09s/it]  2%|▏         | 2/100 [00:03<02:31,  1.55s/it]  3%|▎         | 3/100 [00:03<01:36,  1.00it/s]  4%|▍         | 4/100 [00:04<01:11,  1.35it/s]  5%|▌         | 5/100 [00:04<01:00,  1.57it/s]  6%|▌         | 6/100 [00:05<00:52,  1.79it/s]  7%|▋         | 7/100 [00:05<00:43,  2.13it/s]  8%|▊         | 8/100 [00:05<00:37,  2.43it/s]  9%|▉         | 9/100 [00:05<00:33,  2.69it/s] 10%|█         | 10/100 [00:06<00:32,  2.76it/s] 11%|█         | 11/100 [00:06<00:31,  2.82it/s] 12%|█▏        | 12/100 [00:06<00:30,  2.87it/s] 13%|█▎        | 13/100 [00:07<00:31,  2.73it/s] 14%|█▍        | 14/100 [00:07<00:30,  2.81it/s] 15%|█▌        | 15/100 [00:08<00:30,  2.83it/s] 16%|█▌        | 16/100 [00:08<00:31,  2.63it/s] 17%|█▋        | 17/100 [00:08<00:30,  2.73it/s] 18%|█▊        | 18/100 [00:09<00:29,  2.77it/s] 19%|█▉        | 19/100 [00:09<00:28,  2.85it/s] 20%|██        | 20/100 [00:09<00:27,  2.89it/s] 21%|██        | 21/100 [00:10<00:27,  2.92it/s] 22%|██▏       | 22/100 [00:10<00:26,  2.91it/s] 23%|██▎       | 23/100 [00:10<00:26,  2.94it/s] 24%|██▍       | 24/100 [00:11<00:25,  2.97it/s] 25%|██▌       | 25/100 [00:11<00:25,  2.96it/s] 26%|██▌       | 26/100 [00:11<00:25,  2.95it/s] 27%|██▋       | 27/100 [00:12<00:24,  2.98it/s] 28%|██▊       | 28/100 [00:12<00:24,  2.99it/s] 29%|██▉       | 29/100 [00:12<00:23,  2.98it/s] 30%|███       | 30/100 [00:13<00:23,  2.96it/s] 31%|███       | 31/100 [00:13<00:23,  2.96it/s]/data/anaconda3/envs/motor_chao/lib/python3.11/site-packages/sklearn/linear_model/_logistic.py:473: ConvergenceWarning: lbfgs failed to converge after 100 iteration(s) (status=1):
+STOP: TOTAL NO. of ITERATIONS REACHED LIMIT
+
+Increase the number of iterations to improve the convergence (max_iter=100).
+You might also want to scale the data as shown in:
+    https://scikit-learn.org/stable/modules/preprocessing.html
+Please also refer to the documentation for alternative solver options:
+    https://scikit-learn.org/stable/modules/linear_model.html#logistic-regression
+  n_iter_i = _check_optimize_result(
+ 32%|███▏      | 32/100 [00:13<00:22,  2.98it/s] 33%|███▎      | 33/100 [00:14<00:23,  2.83it/s] 34%|███▍      | 34/100 [00:14<00:22,  2.88it/s] 35%|███▌      | 35/100 [00:15<00:24,  2.67it/s] 36%|███▌      | 36/100 [00:15<00:23,  2.76it/s] 37%|███▋      | 37/100 [00:15<00:22,  2.83it/s] 38%|███▊      | 38/100 [00:16<00:21,  2.85it/s] 39%|███▉      | 39/100 [00:16<00:21,  2.88it/s] 40%|████      | 40/100 [00:16<00:20,  2.90it/s] 41%|████      | 41/100 [00:17<00:20,  2.93it/s] 42%|████▏     | 42/100 [00:17<00:19,  2.92it/s] 43%|████▎     | 43/100 [00:17<00:19,  2.95it/s] 44%|████▍     | 44/100 [00:18<00:19,  2.94it/s] 45%|████▌     | 45/100 [00:18<00:18,  2.96it/s] 46%|████▌     | 46/100 [00:18<00:18,  2.99it/s] 47%|████▋     | 47/100 [00:19<00:17,  3.02it/s] 48%|████▊     | 48/100 [00:19<00:17,  3.02it/s] 49%|████▉     | 49/100 [00:19<00:17,  3.00it/s] 50%|█████     | 50/100 [00:20<00:16,  3.02it/s] 51%|█████     | 51/100 [00:20<00:16,  2.96it/s] 52%|█████▏    | 52/100 [00:20<00:16,  2.94it/s] 53%|█████▎    | 53/100 [00:21<00:16,  2.91it/s] 54%|█████▍    | 54/100 [00:21<00:16,  2.78it/s] 55%|█████▌    | 55/100 [00:21<00:15,  2.83it/s] 56%|█████▌    | 56/100 [00:22<00:15,  2.87it/s] 57%|█████▋    | 57/100 [00:22<00:15,  2.72it/s] 58%|█████▊    | 58/100 [00:22<00:15,  2.73it/s] 59%|█████▉    | 59/100 [00:23<00:15,  2.64it/s] 60%|██████    | 60/100 [00:23<00:14,  2.80it/s] 61%|██████    | 61/100 [00:23<00:13,  2.96it/s] 62%|██████▏   | 62/100 [00:24<00:13,  2.76it/s] 63%|██████▎   | 63/100 [00:24<00:13,  2.76it/s] 64%|██████▍   | 64/100 [00:25<00:13,  2.76it/s] 65%|██████▌   | 65/100 [00:25<00:12,  2.78it/s] 66%|██████▌   | 66/100 [00:25<00:12,  2.82it/s] 67%|██████▋   | 67/100 [00:26<00:11,  2.83it/s] 68%|██████▊   | 68/100 [00:26<00:13,  2.35it/s] 69%|██████▉   | 69/100 [00:27<00:12,  2.52it/s] 70%|███████   | 70/100 [00:27<00:11,  2.54it/s] 71%|███████   | 71/100 [00:27<00:12,  2.36it/s] 72%|███████▏  | 72/100 [00:28<00:11,  2.49it/s] 73%|███████▎  | 73/100 [00:28<00:10,  2.59it/s] 74%|███████▍  | 74/100 [00:29<00:09,  2.66it/s] 75%|███████▌  | 75/100 [00:29<00:09,  2.73it/s]/data/anaconda3/envs/motor_chao/lib/python3.11/site-packages/sklearn/linear_model/_logistic.py:473: ConvergenceWarning: lbfgs failed to converge after 100 iteration(s) (status=1):
+STOP: TOTAL NO. of ITERATIONS REACHED LIMIT
+
+Increase the number of iterations to improve the convergence (max_iter=100).
+You might also want to scale the data as shown in:
+    https://scikit-learn.org/stable/modules/preprocessing.html
+Please also refer to the documentation for alternative solver options:
+    https://scikit-learn.org/stable/modules/linear_model.html#logistic-regression
+  n_iter_i = _check_optimize_result(
+ 76%|███████▌  | 76/100 [00:29<00:08,  2.79it/s] 77%|███████▋  | 77/100 [00:30<00:08,  2.63it/s] 78%|███████▊  | 78/100 [00:30<00:08,  2.68it/s] 79%|███████▉  | 79/100 [00:30<00:08,  2.51it/s] 80%|████████  | 80/100 [00:31<00:07,  2.64it/s] 81%|████████  | 81/100 [00:31<00:06,  2.72it/s] 82%|████████▏ | 82/100 [00:31<00:06,  2.79it/s] 83%|████████▎ | 83/100 [00:32<00:06,  2.82it/s] 84%|████████▍ | 84/100 [00:32<00:05,  2.84it/s] 85%|████████▌ | 85/100 [00:32<00:05,  2.87it/s] 86%|████████▌ | 86/100 [00:33<00:05,  2.76it/s] 87%|████████▋ | 87/100 [00:33<00:04,  2.83it/s] 88%|████████▊ | 88/100 [00:33<00:03,  3.02it/s] 89%|████████▉ | 89/100 [00:34<00:03,  2.99it/s] 90%|█████████ | 90/100 [00:34<00:03,  3.00it/s] 91%|█████████ | 91/100 [00:35<00:03,  2.99it/s] 92%|█████████▏| 92/100 [00:35<00:02,  2.82it/s] 93%|█████████▎| 93/100 [00:35<00:02,  2.84it/s] 94%|█████████▍| 94/100 [00:36<00:02,  2.87it/s] 95%|█████████▌| 95/100 [00:36<00:01,  2.91it/s] 96%|█████████▌| 96/100 [00:36<00:01,  2.93it/s] 97%|█████████▋| 97/100 [00:37<00:01,  2.95it/s] 98%|█████████▊| 98/100 [00:37<00:00,  2.99it/s] 99%|█████████▉| 99/100 [00:37<00:00,  2.83it/s]100%|██████████| 100/100 [00:38<00:00,  2.74it/s]100%|██████████| 100/100 [00:38<00:00,  2.62it/s]
+C-Index: 0.74 (0.01)
+Int-Brier: 0.12 (0.00)
+Running meds-evaluation for ami...
+Executing command: meds-evaluation-cli predictions_path="/data2/processed_datasets/zj2398/femr/mimic/all_results/classification/results/ami/transformer_tpp/test_predictions"       output_dir="/data2/processed_datasets/zj2398/femr/mimic/all_results/classification/results/ami/transformer_tpp/"
+2025-11-04 16:15:52.894 | INFO     | meds_evaluation.__main__:main:23 - Starting evaluation with config:
+predictions_path: /data2/processed_datasets/zj2398/femr/mimic/all_results/classification/results/ami/transformer_tpp/test_predictions
+output_dir: /data2/processed_datasets/zj2398/femr/mimic/all_results/classification/results/ami/transformer_tpp/
+samples_per_subject: 4
+resampling_seed: 0
+
+2025-11-04 16:15:52.894 | INFO     | meds_evaluation.__main__:main:26 - Loading model predictions dataframe '/data2/processed_datasets/zj2398/femr/mimic/all_results/classification/results/ami/transformer_tpp/test_predictions'
+2025-11-04 16:15:52.959 | INFO     | meds_evaluation.__main__:main:34 - Running evaluation...
+2025-11-04 16:15:53.021 | INFO     | meds_evaluation.__main__:main:43 - Completed in 0:00:00.128106. Results saved to '/data2/processed_datasets/zj2398/femr/mimic/all_results/classification/results/ami/transformer_tpp/results.json'.
+2025-11-04 16:15:53.021 | INFO     | meds_evaluation.__main__:main:48 - Running evaluation...
+2025-11-04 16:15:54.524 | INFO     | meds_evaluation.__main__:main:57 - Completed in 0:00:01.631124. Results saved to '/data2/processed_datasets/zj2398/femr/mimic/all_results/classification/results/ami/transformer_tpp/results_boot.json'.
+Completed processing of task: ami
+----------------------------------------
+[2/3] Processing task: masld
+cohort_base_dir: /data2/processed_datasets/mimic/phenotype_task/
+Task directory: /data2/processed_datasets/mimic/phenotype_task/masld/
+Running transformer_tpp feature generation for masld...
+Running transformer_tpp fine-tuning for masld...
+Executing command: python -u -m femr.omop_meds_tutorial.evaluation.finetune_motor       --cohort_label "masld"       --model_name "transformer_tpp"       --main_split_path "/data2/processed_datasets/zj2398/femr/mimic/deephit_tpp/main_split.csv"       --meds_reader "/data/raw_data/mimic/files/mimiciv/meds_v0.6/3.1/MEDS_cohort-reader"       --model_path "/data2/processed_datasets/zj2398/femr/mimic/deephit_tpp/output_transformer/best_221573"       --output_root "/data2/processed_datasets/zj2398/femr/mimic/all_results/classification"
+/data/anaconda3/envs/motor_chao/lib/python3.11/site-packages/sklearn/linear_model/_logistic.py:473: ConvergenceWarning: lbfgs failed to converge after 100 iteration(s) (status=1):
+STOP: TOTAL NO. of ITERATIONS REACHED LIMIT
+
+Increase the number of iterations to improve the convergence (max_iter=100).
+You might also want to scale the data as shown in:
+    https://scikit-learn.org/stable/modules/preprocessing.html
+Please also refer to the documentation for alternative solver options:
+    https://scikit-learn.org/stable/modules/linear_model.html#logistic-regression
+  n_iter_i = _check_optimize_result(
+Using the user defined label at: /data2/processed_datasets/zj2398/femr/mimic/all_results/classification/labels/masld.parquet
+label_name is masld
+Saving features and labels to parquet
+Total labels: 139944
+Total train features labels: 125417
+Total test features labels: 14527
+/data/anaconda3/envs/motor_chao/lib/python3.11/site-packages/sklearn/linear_model/_logistic.py:473: ConvergenceWarning: lbfgs failed to converge after 100 iteration(s) (status=1):
+STOP: TOTAL NO. of ITERATIONS REACHED LIMIT
+
+Increase the number of iterations to improve the convergence (max_iter=100).
+You might also want to scale the data as shown in:
+    https://scikit-learn.org/stable/modules/preprocessing.html
+Please also refer to the documentation for alternative solver options:
+    https://scikit-learn.org/stable/modules/linear_model.html#logistic-regression
+  n_iter_i = _check_optimize_result(
+long_los 0.8386158221353068
+Running meds-evaluation for long_los...
+Executing command: meds-evaluation-cli predictions_path="/data2/processed_datasets/zj2398/femr/mimic/all_results/classification/results/long_los/transformer_tpp/test_predictions"       output_dir="/data2/processed_datasets/zj2398/femr/mimic/all_results/classification/results/long_los/transformer_tpp/"
+2025-11-04 16:16:23.131 | INFO     | meds_evaluation.__main__:main:23 - Starting evaluation with config:
+predictions_path: /data2/processed_datasets/zj2398/femr/mimic/all_results/classification/results/long_los/transformer_tpp/test_predictions
+output_dir: /data2/processed_datasets/zj2398/femr/mimic/all_results/classification/results/long_los/transformer_tpp/
+samples_per_subject: 4
+resampling_seed: 0
+
+2025-11-04 16:16:23.131 | INFO     | meds_evaluation.__main__:main:26 - Loading model predictions dataframe '/data2/processed_datasets/zj2398/femr/mimic/all_results/classification/results/long_los/transformer_tpp/test_predictions'
+2025-11-04 16:16:23.192 | INFO     | meds_evaluation.__main__:main:34 - Running evaluation...
+2025-11-04 16:16:23.518 | INFO     | meds_evaluation.__main__:main:43 - Completed in 0:00:00.387765. Results saved to '/data2/processed_datasets/zj2398/femr/mimic/all_results/classification/results/long_los/transformer_tpp/results.json'.
+2025-11-04 16:16:23.519 | INFO     | meds_evaluation.__main__:main:48 - Running evaluation...
+2025-11-04 16:16:25.519 | INFO     | meds_evaluation.__main__:main:57 - Completed in 0:00:02.388341. Results saved to '/data2/processed_datasets/zj2398/femr/mimic/all_results/classification/results/long_los/transformer_tpp/results_boot.json'.
+Completed processing of task: long_los
+----------------------------------------
+[3/3] Processing task: readmission
+cohort_base_dir: /data2/processed_datasets/mimic/patient_outcome_tasks/
+Task directory: /data2/processed_datasets/mimic/patient_outcome_tasks/readmission/
+Running transformer_tpp feature generation for readmission...
+Running transformer_tpp fine-tuning for readmission...
+Executing command: python -u -m femr.omop_meds_tutorial.evaluation.finetune_motor       --cohort_label "readmission"       --model_name "transformer_tpp"       --main_split_path "/data2/processed_datasets/zj2398/femr/mimic/deephit_tpp/main_split.csv"       --meds_reader "/data/raw_data/mimic/files/mimiciv/meds_v0.6/3.1/MEDS_cohort-reader"       --model_path "/data2/processed_datasets/zj2398/femr/mimic/deephit_tpp/output_transformer/best_221573"       --output_root "/data2/processed_datasets/zj2398/femr/mimic/all_results/classification"
+/data/anaconda3/envs/motor_chao/lib/python3.11/site-packages/sklearn/linear_model/_logistic.py:473: ConvergenceWarning: lbfgs failed to converge after 100 iteration(s) (status=1):
+STOP: TOTAL NO. of ITERATIONS REACHED LIMIT
+
+Increase the number of iterations to improve the convergence (max_iter=100).
+You might also want to scale the data as shown in:
+    https://scikit-learn.org/stable/modules/preprocessing.html
+Please also refer to the documentation for alternative solver options:
+    https://scikit-learn.org/stable/modules/linear_model.html#logistic-regression
+  n_iter_i = _check_optimize_result(
+Using the user defined label at: /data2/processed_datasets/zj2398/femr/mimic/all_results/classification/labels/readmission.parquet
+label_name is readmission
+masld 0.7063962290888208
+Saving features and labels to parquet
+0:	[8s / 8s],		train_loss: 0.0722,	val_loss: 0.0689
+1:	[0s / 9s],		train_loss: 0.0674,	val_loss: 0.0685
+2:	[0s / 9s],		train_loss: 0.0661,	val_loss: 0.0679
+Total labels: 418850
+Total train features labels: 376329
+Total test features labels: 42521
+3:	[0s / 10s],		train_loss: 0.0653,	val_loss: 0.0679
+4:	[0s / 10s],		train_loss: 0.0635,	val_loss: 0.0673
+5:	[0s / 11s],		train_loss: 0.0626,	val_loss: 0.0669
+6:	[0s / 11s],		train_loss: 0.0621,	val_loss: 0.0670
+7:	[1s / 13s],		train_loss: 0.0611,	val_loss: 0.0669
+8:	[0s / 13s],		train_loss: 0.0599,	val_loss: 0.0660
+9:	[0s / 14s],		train_loss: 0.0597,	val_loss: 0.0662
+10:	[0s / 14s],		train_loss: 0.0593,	val_loss: 0.0664
+11:	[0s / 15s],		train_loss: 0.0587,	val_loss: 0.0664
+12:	[0s / 15s],		train_loss: 0.0580,	val_loss: 0.0661
+13:	[0s / 16s],		train_loss: 0.0577,	val_loss: 0.0660
+14:	[0s / 16s],		train_loss: 0.0569,	val_loss: 0.0661
+15:	[0s / 17s],		train_loss: 0.0566,	val_loss: 0.0656
+16:	[0s / 17s],		train_loss: 0.0564,	val_loss: 0.0658
+17:	[0s / 18s],		train_loss: 0.0559,	val_loss: 0.0660
+18:	[0s / 19s],		train_loss: 0.0551,	val_loss: 0.0657
+19:	[0s / 19s],		train_loss: 0.0546,	val_loss: 0.0660
+/data/anaconda3/envs/motor_chao/lib/python3.11/site-packages/sklearn/linear_model/_logistic.py:473: ConvergenceWarning: lbfgs failed to converge after 100 iteration(s) (status=1):
+STOP: TOTAL NO. of ITERATIONS REACHED LIMIT
+
+Increase the number of iterations to improve the convergence (max_iter=100).
+You might also want to scale the data as shown in:
+    https://scikit-learn.org/stable/modules/preprocessing.html
+Please also refer to the documentation for alternative solver options:
+    https://scikit-learn.org/stable/modules/linear_model.html#logistic-regression
+  n_iter_i = _check_optimize_result(
+20:	[1s / 20s],		train_loss: 0.0540,	val_loss: 0.0660
+21:	[1s / 22s],		train_loss: 0.0540,	val_loss: 0.0665
+22:	[1s / 23s],		train_loss: 0.0540,	val_loss: 0.0654
+23:	[1s / 24s],		train_loss: 0.0531,	val_loss: 0.0657
+24:	[1s / 25s],		train_loss: 0.0526,	val_loss: 0.0662
+25:	[0s / 26s],		train_loss: 0.0525,	val_loss: 0.0664
+26:	[0s / 27s],		train_loss: 0.0519,	val_loss: 0.0661
+27:	[0s / 28s],		train_loss: 0.0519,	val_loss: 0.0664
+28:	[1s / 29s],		train_loss: 0.0517,	val_loss: 0.0664
+29:	[0s / 30s],		train_loss: 0.0519,	val_loss: 0.0667
+30:	[0s / 31s],		train_loss: 0.0509,	val_loss: 0.0662
+31:	[0s / 31s],		train_loss: 0.0509,	val_loss: 0.0663
+32:	[0s / 32s],		train_loss: 0.0505,	val_loss: 0.0662
+  0%|          | 0/100 [00:00<?, ?it/s]  1%|          | 1/100 [00:02<04:11,  2.54s/it]  2%|▏         | 2/100 [00:03<02:11,  1.34s/it]  3%|▎         | 3/100 [00:03<01:28,  1.09it/s]  4%|▍         | 4/100 [00:03<01:06,  1.45it/s]  5%|▌         | 5/100 [00:04<00:53,  1.77it/s]  6%|▌         | 6/100 [00:04<00:45,  2.07it/s]  7%|▋         | 7/100 [00:04<00:40,  2.30it/s]  8%|▊         | 8/100 [00:05<00:39,  2.33it/s]  9%|▉         | 9/100 [00:05<00:36,  2.49it/s] 10%|█         | 10/100 [00:05<00:34,  2.62it/s] 11%|█         | 11/100 [00:06<00:33,  2.67it/s] 12%|█▏        | 12/100 [00:06<00:32,  2.75it/s] 13%|█▎        | 13/100 [00:06<00:30,  2.82it/s] 14%|█▍        | 14/100 [00:07<00:29,  2.89it/s] 15%|█▌        | 15/100 [00:07<00:32,  2.66it/s] 16%|█▌        | 16/100 [00:08<00:31,  2.63it/s] 17%|█▋        | 17/100 [00:08<00:33,  2.50it/s] 18%|█▊        | 18/100 [00:08<00:31,  2.63it/s] 19%|█▉        | 19/100 [00:09<00:29,  2.75it/s] 20%|██        | 20/100 [00:09<00:28,  2.81it/s] 21%|██        | 21/100 [00:09<00:27,  2.89it/s] 22%|██▏       | 22/100 [00:10<00:26,  2.92it/s] 23%|██▎       | 23/100 [00:10<00:26,  2.95it/s] 24%|██▍       | 24/100 [00:10<00:25,  2.96it/s] 25%|██▌       | 25/100 [00:11<00:24,  3.06it/s] 26%|██▌       | 26/100 [00:11<00:24,  3.01it/s] 27%|██▋       | 27/100 [00:11<00:24,  2.97it/s] 28%|██▊       | 28/100 [00:12<00:24,  2.98it/s] 29%|██▉       | 29/100 [00:12<00:23,  2.97it/s] 30%|███       | 30/100 [00:12<00:24,  2.84it/s] 31%|███       | 31/100 [00:13<00:24,  2.84it/s] 32%|███▏      | 32/100 [00:13<00:23,  2.90it/s] 33%|███▎      | 33/100 [00:13<00:21,  3.05it/s] 34%|███▍      | 34/100 [00:14<00:21,  3.03it/s] 35%|███▌      | 35/100 [00:14<00:21,  3.00it/s] 36%|███▌      | 36/100 [00:14<00:21,  2.96it/s] 37%|███▋      | 37/100 [00:15<00:21,  2.93it/s] 38%|███▊      | 38/100 [00:15<00:20,  2.96it/s] 39%|███▉      | 39/100 [00:15<00:20,  2.97it/s] 40%|████      | 40/100 [00:16<00:20,  2.98it/s] 41%|████      | 41/100 [00:16<00:18,  3.14it/s] 42%|████▏     | 42/100 [00:16<00:17,  3.24it/s] 43%|████▎     | 43/100 [00:17<00:17,  3.32it/s] 44%|████▍     | 44/100 [00:17<00:17,  3.21it/s]/data/anaconda3/envs/motor_chao/lib/python3.11/site-packages/sklearn/linear_model/_logistic.py:473: ConvergenceWarning: lbfgs failed to converge after 100 iteration(s) (status=1):
+STOP: TOTAL NO. of ITERATIONS REACHED LIMIT
+
+Increase the number of iterations to improve the convergence (max_iter=100).
+You might also want to scale the data as shown in:
+    https://scikit-learn.org/stable/modules/preprocessing.html
+Please also refer to the documentation for alternative solver options:
+    https://scikit-learn.org/stable/modules/linear_model.html#logistic-regression
+  n_iter_i = _check_optimize_result(
+ 45%|████▌     | 45/100 [00:17<00:17,  3.17it/s] 46%|████▌     | 46/100 [00:18<00:17,  3.10it/s] 47%|████▋     | 47/100 [00:18<00:17,  3.08it/s] 48%|████▊     | 48/100 [00:18<00:16,  3.07it/s] 49%|████▉     | 49/100 [00:19<00:16,  3.06it/s] 50%|█████     | 50/100 [00:19<00:16,  3.02it/s] 51%|█████     | 51/100 [00:19<00:16,  3.01it/s] 52%|█████▏    | 52/100 [00:20<00:16,  2.99it/s] 53%|█████▎    | 53/100 [00:20<00:15,  2.98it/s] 54%|█████▍    | 54/100 [00:20<00:15,  2.97it/s] 55%|█████▌    | 55/100 [00:21<00:15,  2.86it/s] 56%|█████▌    | 56/100 [00:21<00:14,  3.04it/s] 57%|█████▋    | 57/100 [00:21<00:14,  2.92it/s] 58%|█████▊    | 58/100 [00:22<00:14,  2.87it/s] 59%|█████▉    | 59/100 [00:22<00:13,  3.00it/s] 60%|██████    | 60/100 [00:22<00:13,  3.03it/s] 61%|██████    | 61/100 [00:23<00:12,  3.00it/s] 62%|██████▏   | 62/100 [00:23<00:12,  3.00it/s] 63%|██████▎   | 63/100 [00:23<00:12,  3.00it/s] 64%|██████▍   | 64/100 [00:24<00:12,  2.98it/s] 65%|██████▌   | 65/100 [00:24<00:11,  2.95it/s] 66%|██████▌   | 66/100 [00:24<00:11,  2.98it/s] 67%|██████▋   | 67/100 [00:25<00:11,  2.96it/s] 68%|██████▊   | 68/100 [00:25<00:10,  2.99it/s] 69%|██████▉   | 69/100 [00:25<00:10,  3.05it/s] 70%|███████   | 70/100 [00:26<00:09,  3.02it/s] 71%|███████   | 71/100 [00:26<00:10,  2.81it/s] 72%|███████▏  | 72/100 [00:26<00:09,  2.84it/s] 73%|███████▎  | 73/100 [00:27<00:09,  2.86it/s] 74%|███████▍  | 74/100 [00:27<00:09,  2.61it/s] 75%|███████▌  | 75/100 [00:28<00:09,  2.68it/s] 76%|███████▌  | 76/100 [00:28<00:08,  2.75it/s] 77%|███████▋  | 77/100 [00:28<00:08,  2.80it/s] 78%|███████▊  | 78/100 [00:29<00:07,  2.85it/s] 79%|███████▉  | 79/100 [00:29<00:07,  2.86it/s] 80%|████████  | 80/100 [00:29<00:06,  2.89it/s] 81%|████████  | 81/100 [00:30<00:06,  2.88it/s] 82%|████████▏ | 82/100 [00:30<00:06,  2.92it/s] 83%|████████▎ | 83/100 [00:30<00:05,  2.92it/s] 84%|████████▍ | 84/100 [00:31<00:05,  2.94it/s] 85%|████████▌ | 85/100 [00:31<00:05,  2.75it/s] 86%|████████▌ | 86/100 [00:31<00:04,  2.93it/s] 87%|████████▋ | 87/100 [00:32<00:04,  2.94it/s] 88%|████████▊ | 88/100 [00:32<00:04,  2.96it/s] 89%|████████▉ | 89/100 [00:32<00:04,  2.73it/s] 90%|█████████ | 90/100 [00:33<00:03,  2.82it/s] 91%|█████████ | 91/100 [00:33<00:03,  2.90it/s] 92%|█████████▏| 92/100 [00:33<00:02,  2.90it/s] 93%|█████████▎| 93/100 [00:34<00:02,  2.92it/s] 94%|█████████▍| 94/100 [00:34<00:02,  2.78it/s] 95%|█████████▌| 95/100 [00:34<00:01,  2.87it/s] 96%|█████████▌| 96/100 [00:35<00:01,  2.66it/s]/data/anaconda3/envs/motor_chao/lib/python3.11/site-packages/sklearn/linear_model/_logistic.py:473: ConvergenceWarning: lbfgs failed to converge after 100 iteration(s) (status=1):
+STOP: TOTAL NO. of ITERATIONS REACHED LIMIT
+
+Increase the number of iterations to improve the convergence (max_iter=100).
+You might also want to scale the data as shown in:
+    https://scikit-learn.org/stable/modules/preprocessing.html
+Please also refer to the documentation for alternative solver options:
+    https://scikit-learn.org/stable/modules/linear_model.html#logistic-regression
+  n_iter_i = _check_optimize_result(
+ 97%|█████████▋| 97/100 [00:35<00:01,  2.75it/s] 98%|█████████▊| 98/100 [00:36<00:00,  2.83it/s] 99%|█████████▉| 99/100 [00:36<00:00,  2.86it/s]100%|██████████| 100/100 [00:36<00:00,  2.91it/s]100%|██████████| 100/100 [00:36<00:00,  2.72it/s]
+C-Index: 0.64 (0.01)
+Int-Brier: 0.07 (0.00)
+Running meds-evaluation for masld...
+Executing command: meds-evaluation-cli predictions_path="/data2/processed_datasets/zj2398/femr/mimic/all_results/classification/results/masld/transformer_tpp/test_predictions"       output_dir="/data2/processed_datasets/zj2398/femr/mimic/all_results/classification/results/masld/transformer_tpp/"
+2025-11-04 16:17:52.867 | INFO     | meds_evaluation.__main__:main:23 - Starting evaluation with config:
+predictions_path: /data2/processed_datasets/zj2398/femr/mimic/all_results/classification/results/masld/transformer_tpp/test_predictions
+output_dir: /data2/processed_datasets/zj2398/femr/mimic/all_results/classification/results/masld/transformer_tpp/
+samples_per_subject: 4
+resampling_seed: 0
+
+2025-11-04 16:17:52.868 | INFO     | meds_evaluation.__main__:main:26 - Loading model predictions dataframe '/data2/processed_datasets/zj2398/femr/mimic/all_results/classification/results/masld/transformer_tpp/test_predictions'
+2025-11-04 16:17:52.924 | INFO     | meds_evaluation.__main__:main:34 - Running evaluation...
+2025-11-04 16:17:52.997 | INFO     | meds_evaluation.__main__:main:43 - Completed in 0:00:00.130140. Results saved to '/data2/processed_datasets/zj2398/femr/mimic/all_results/classification/results/masld/transformer_tpp/results.json'.
+2025-11-04 16:17:52.997 | INFO     | meds_evaluation.__main__:main:48 - Running evaluation...
+2025-11-04 16:17:54.435 | INFO     | meds_evaluation.__main__:main:57 - Completed in 0:00:01.568503. Results saved to '/data2/processed_datasets/zj2398/femr/mimic/all_results/classification/results/masld/transformer_tpp/results_boot.json'.
+Completed processing of task: masld
+----------------------------------------
+[3/3] Processing task: stroke
+cohort_base_dir: /data2/processed_datasets/mimic/phenotype_task/
+Task directory: /data2/processed_datasets/mimic/phenotype_task/stroke/
+Running transformer_tpp feature generation for stroke...
+Running transformer_tpp fine-tuning for stroke...
+Executing command: python -u -m femr.omop_meds_tutorial.evaluation.finetune_motor       --cohort_label "stroke"       --model_name "transformer_tpp"       --main_split_path "/data2/processed_datasets/zj2398/femr/mimic/deephit_tpp/main_split.csv"       --meds_reader "/data/raw_data/mimic/files/mimiciv/meds_v0.6/3.1/MEDS_cohort-reader"       --model_path "/data2/processed_datasets/zj2398/femr/mimic/deephit_tpp/output_transformer/best_221573"       --output_root "/data2/processed_datasets/zj2398/femr/mimic/all_results/classification"
+Using the user defined label at: /data2/processed_datasets/zj2398/femr/mimic/all_results/classification/labels/stroke.parquet
+label_name is stroke
+Saving features and labels to parquet
+Total labels: 118748
+Total train features labels: 106371
+Total test features labels: 12377
+/data/anaconda3/envs/motor_chao/lib/python3.11/site-packages/sklearn/linear_model/_logistic.py:473: ConvergenceWarning: lbfgs failed to converge after 100 iteration(s) (status=1):
+STOP: TOTAL NO. of ITERATIONS REACHED LIMIT
+
+Increase the number of iterations to improve the convergence (max_iter=100).
+You might also want to scale the data as shown in:
+    https://scikit-learn.org/stable/modules/preprocessing.html
+Please also refer to the documentation for alternative solver options:
+    https://scikit-learn.org/stable/modules/linear_model.html#logistic-regression
+  n_iter_i = _check_optimize_result(
+stroke 0.6984896039868493
+0:	[1s / 1s],		train_loss: 0.0580,	val_loss: 0.0554
+1:	[0s / 1s],		train_loss: 0.0528,	val_loss: 0.0541
+2:	[0s / 2s],		train_loss: 0.0514,	val_loss: 0.0534
+3:	[0s / 2s],		train_loss: 0.0503,	val_loss: 0.0536
+4:	[0s / 3s],		train_loss: 0.0494,	val_loss: 0.0527
+5:	[0s / 3s],		train_loss: 0.0483,	val_loss: 0.0524
+6:	[0s / 4s],		train_loss: 0.0476,	val_loss: 0.0526
+7:	[0s / 4s],		train_loss: 0.0471,	val_loss: 0.0522
+8:	[0s / 5s],		train_loss: 0.0463,	val_loss: 0.0529
+9:	[0s / 5s],		train_loss: 0.0457,	val_loss: 0.0525
+10:	[0s / 5s],		train_loss: 0.0451,	val_loss: 0.0522
+11:	[0s / 6s],		train_loss: 0.0447,	val_loss: 0.0525
+12:	[0s / 6s],		train_loss: 0.0443,	val_loss: 0.0526
+13:	[0s / 7s],		train_loss: 0.0437,	val_loss: 0.0524
+14:	[0s / 7s],		train_loss: 0.0432,	val_loss: 0.0525
+15:	[0s / 8s],		train_loss: 0.0428,	val_loss: 0.0523
+16:	[0s / 8s],		train_loss: 0.0423,	val_loss: 0.0525
+/data/anaconda3/envs/motor_chao/lib/python3.11/site-packages/sklearn/linear_model/_logistic.py:473: ConvergenceWarning: lbfgs failed to converge after 100 iteration(s) (status=1):
+STOP: TOTAL NO. of ITERATIONS REACHED LIMIT
+
+Increase the number of iterations to improve the convergence (max_iter=100).
+You might also want to scale the data as shown in:
+    https://scikit-learn.org/stable/modules/preprocessing.html
+Please also refer to the documentation for alternative solver options:
+    https://scikit-learn.org/stable/modules/linear_model.html#logistic-regression
+  n_iter_i = _check_optimize_result(
+17:	[0s / 9s],		train_loss: 0.0420,	val_loss: 0.0530
+18:	[0s / 9s],		train_loss: 0.0417,	val_loss: 0.0526
+19:	[0s / 9s],		train_loss: 0.0411,	val_loss: 0.0520
+20:	[0s / 10s],		train_loss: 0.0408,	val_loss: 0.0527
+21:	[0s / 10s],		train_loss: 0.0405,	val_loss: 0.0525
+22:	[0s / 11s],		train_loss: 0.0402,	val_loss: 0.0523
+23:	[0s / 11s],		train_loss: 0.0398,	val_loss: 0.0523
+24:	[0s / 12s],		train_loss: 0.0393,	val_loss: 0.0528
+25:	[0s / 12s],		train_loss: 0.0389,	val_loss: 0.0530
+26:	[0s / 13s],		train_loss: 0.0387,	val_loss: 0.0536
+27:	[0s / 13s],		train_loss: 0.0385,	val_loss: 0.0528
+28:	[0s / 14s],		train_loss: 0.0381,	val_loss: 0.0529
+29:	[0s / 14s],		train_loss: 0.0377,	val_loss: 0.0527
+  0%|          | 0/100 [00:00<?, ?it/s]  1%|          | 1/100 [00:02<03:29,  2.12s/it]  2%|▏         | 2/100 [00:02<01:39,  1.01s/it]  3%|▎         | 3/100 [00:02<01:05,  1.49it/s]  4%|▍         | 4/100 [00:02<00:49,  1.96it/s]  5%|▌         | 5/100 [00:03<00:38,  2.46it/s]  6%|▌         | 6/100 [00:03<00:32,  2.85it/s]  7%|▋         | 7/100 [00:03<00:30,  3.08it/s]  8%|▊         | 8/100 [00:03<00:28,  3.23it/s]  9%|▉         | 9/100 [00:04<00:26,  3.40it/s] 10%|█         | 10/100 [00:04<00:25,  3.54it/s] 11%|█         | 11/100 [00:04<00:24,  3.60it/s] 12%|█▏        | 12/100 [00:04<00:23,  3.69it/s] 13%|█▎        | 13/100 [00:05<00:23,  3.73it/s] 14%|█▍        | 14/100 [00:05<00:22,  3.77it/s] 15%|█▌        | 15/100 [00:05<00:22,  3.78it/s] 16%|█▌        | 16/100 [00:05<00:22,  3.74it/s] 17%|█▋        | 17/100 [00:06<00:22,  3.76it/s] 18%|█▊        | 18/100 [00:06<00:21,  3.75it/s] 19%|█▉        | 19/100 [00:06<00:21,  3.74it/s] 20%|██        | 20/100 [00:07<00:23,  3.42it/s] 21%|██        | 21/100 [00:07<00:21,  3.68it/s] 22%|██▏       | 22/100 [00:07<00:20,  3.74it/s] 23%|██▎       | 23/100 [00:07<00:20,  3.78it/s] 24%|██▍       | 24/100 [00:08<00:21,  3.58it/s] 25%|██▌       | 25/100 [00:08<00:20,  3.63it/s] 26%|██▌       | 26/100 [00:08<00:20,  3.70it/s] 27%|██▋       | 27/100 [00:09<00:20,  3.56it/s] 28%|██▊       | 28/100 [00:09<00:19,  3.63it/s] 29%|██▉       | 29/100 [00:09<00:19,  3.72it/s] 30%|███       | 30/100 [00:09<00:18,  3.70it/s] 31%|███       | 31/100 [00:10<00:18,  3.69it/s] 32%|███▏      | 32/100 [00:10<00:18,  3.75it/s] 33%|███▎      | 33/100 [00:10<00:17,  3.76it/s] 34%|███▍      | 34/100 [00:10<00:17,  3.74it/s] 35%|███▌      | 35/100 [00:11<00:17,  3.75it/s] 36%|███▌      | 36/100 [00:11<00:17,  3.73it/s] 37%|███▋      | 37/100 [00:11<00:16,  3.76it/s] 38%|███▊      | 38/100 [00:11<00:16,  3.81it/s] 39%|███▉      | 39/100 [00:12<00:15,  3.82it/s] 40%|████      | 40/100 [00:12<00:15,  3.82it/s] 41%|████      | 41/100 [00:12<00:15,  3.84it/s] 42%|████▏     | 42/100 [00:12<00:15,  3.82it/s] 43%|████▎     | 43/100 [00:13<00:15,  3.69it/s]readmission 0.7441279660750874
+ 44%|████▍     | 44/100 [00:13<00:14,  3.74it/s] 45%|████▌     | 45/100 [00:13<00:13,  3.94it/s] 46%|████▌     | 46/100 [00:14<00:14,  3.79it/s] 47%|████▋     | 47/100 [00:14<00:13,  3.81it/s] 48%|████▊     | 48/100 [00:14<00:14,  3.66it/s] 49%|████▉     | 49/100 [00:14<00:13,  3.77it/s] 50%|█████     | 50/100 [00:15<00:12,  4.00it/s] 51%|█████     | 51/100 [00:15<00:11,  4.21it/s] 52%|█████▏    | 52/100 [00:15<00:12,  3.78it/s] 53%|█████▎    | 53/100 [00:15<00:11,  3.97it/s] 54%|█████▍    | 54/100 [00:16<00:11,  3.96it/s]Running meds-evaluation for readmission...
+Executing command: meds-evaluation-cli predictions_path="/data2/processed_datasets/zj2398/femr/mimic/all_results/classification/results/readmission/transformer_tpp/test_predictions"       output_dir="/data2/processed_datasets/zj2398/femr/mimic/all_results/classification/results/readmission/transformer_tpp/"
+ 55%|█████▌    | 55/100 [00:16<00:11,  4.07it/s] 56%|█████▌    | 56/100 [00:16<00:11,  3.80it/s] 57%|█████▋    | 57/100 [00:16<00:11,  3.78it/s] 58%|█████▊    | 58/100 [00:17<00:11,  3.80it/s] 59%|█████▉    | 59/100 [00:17<00:10,  3.80it/s]2025-11-04 16:18:59.222 | INFO     | meds_evaluation.__main__:main:23 - Starting evaluation with config:
+predictions_path: /data2/processed_datasets/zj2398/femr/mimic/all_results/classification/results/readmission/transformer_tpp/test_predictions
+output_dir: /data2/processed_datasets/zj2398/femr/mimic/all_results/classification/results/readmission/transformer_tpp/
+samples_per_subject: 4
+resampling_seed: 0
+
+2025-11-04 16:18:59.222 | INFO     | meds_evaluation.__main__:main:26 - Loading model predictions dataframe '/data2/processed_datasets/zj2398/femr/mimic/all_results/classification/results/readmission/transformer_tpp/test_predictions'
+2025-11-04 16:18:59.271 | INFO     | meds_evaluation.__main__:main:34 - Running evaluation...
+ 60%|██████    | 60/100 [00:17<00:10,  3.84it/s]2025-11-04 16:18:59.580 | INFO     | meds_evaluation.__main__:main:43 - Completed in 0:00:00.358401. Results saved to '/data2/processed_datasets/zj2398/femr/mimic/all_results/classification/results/readmission/transformer_tpp/results.json'.
+2025-11-04 16:18:59.580 | INFO     | meds_evaluation.__main__:main:48 - Running evaluation...
+ 61%|██████    | 61/100 [00:17<00:11,  3.52it/s] 62%|██████▏   | 62/100 [00:18<00:10,  3.65it/s] 63%|██████▎   | 63/100 [00:18<00:09,  3.74it/s] 64%|██████▍   | 64/100 [00:18<00:09,  3.82it/s] 65%|██████▌   | 65/100 [00:18<00:09,  3.87it/s] 66%|██████▌   | 66/100 [00:19<00:08,  3.87it/s] 67%|██████▋   | 67/100 [00:19<00:08,  3.85it/s] 68%|██████▊   | 68/100 [00:19<00:08,  3.85it/s] 69%|██████▉   | 69/100 [00:20<00:08,  3.85it/s] 70%|███████   | 70/100 [00:20<00:07,  3.81it/s] 71%|███████   | 71/100 [00:20<00:07,  3.85it/s] 72%|███████▏  | 72/100 [00:20<00:07,  3.88it/s] 73%|███████▎  | 73/100 [00:21<00:06,  3.91it/s] 74%|███████▍  | 74/100 [00:21<00:06,  3.93it/s]2025-11-04 16:19:03.268 | INFO     | meds_evaluation.__main__:main:57 - Completed in 0:00:04.046862. Results saved to '/data2/processed_datasets/zj2398/femr/mimic/all_results/classification/results/readmission/transformer_tpp/results_boot.json'.
+ 75%|███████▌  | 75/100 [00:21<00:06,  3.91it/s]Completed processing of task: readmission
+----------------------------------------
+All tasks processed.
+ 76%|███████▌  | 76/100 [00:21<00:06,  3.54it/s] 77%|███████▋  | 77/100 [00:22<00:06,  3.64it/s] 78%|███████▊  | 78/100 [00:22<00:05,  3.72it/s] 79%|███████▉  | 79/100 [00:22<00:05,  3.75it/s] 80%|████████  | 80/100 [00:22<00:05,  3.80it/s] 81%|████████  | 81/100 [00:23<00:04,  3.83it/s] 82%|████████▏ | 82/100 [00:23<00:04,  3.62it/s] 83%|████████▎ | 83/100 [00:23<00:04,  3.70it/s] 84%|████████▍ | 84/100 [00:24<00:04,  3.76it/s] 85%|████████▌ | 85/100 [00:24<00:04,  3.32it/s] 86%|████████▌ | 86/100 [00:24<00:03,  3.64it/s] 87%|████████▋ | 87/100 [00:24<00:03,  3.89it/s] 88%|████████▊ | 88/100 [00:25<00:03,  3.90it/s] 89%|████████▉ | 89/100 [00:25<00:02,  3.91it/s] 90%|█████████ | 90/100 [00:25<00:02,  3.93it/s] 91%|█████████ | 91/100 [00:25<00:02,  3.97it/s] 92%|█████████▏| 92/100 [00:26<00:01,  4.00it/s] 93%|█████████▎| 93/100 [00:26<00:01,  4.01it/s] 94%|█████████▍| 94/100 [00:26<00:01,  3.99it/s] 95%|█████████▌| 95/100 [00:26<00:01,  3.99it/s] 96%|█████████▌| 96/100 [00:27<00:01,  3.95it/s] 97%|█████████▋| 97/100 [00:27<00:00,  3.95it/s] 98%|█████████▊| 98/100 [00:27<00:00,  3.91it/s] 99%|█████████▉| 99/100 [00:27<00:00,  3.92it/s]100%|██████████| 100/100 [00:28<00:00,  3.96it/s]100%|██████████| 100/100 [00:28<00:00,  3.56it/s]
+C-Index: 0.57 (0.02)
+Int-Brier: 0.04 (0.00)
+Running meds-evaluation for stroke...
+Executing command: meds-evaluation-cli predictions_path="/data2/processed_datasets/zj2398/femr/mimic/all_results/classification/results/stroke/transformer_tpp/test_predictions"       output_dir="/data2/processed_datasets/zj2398/femr/mimic/all_results/classification/results/stroke/transformer_tpp/"
+2025-11-04 16:19:14.396 | INFO     | meds_evaluation.__main__:main:23 - Starting evaluation with config:
+predictions_path: /data2/processed_datasets/zj2398/femr/mimic/all_results/classification/results/stroke/transformer_tpp/test_predictions
+output_dir: /data2/processed_datasets/zj2398/femr/mimic/all_results/classification/results/stroke/transformer_tpp/
+samples_per_subject: 4
+resampling_seed: 0
+
+2025-11-04 16:19:14.396 | INFO     | meds_evaluation.__main__:main:26 - Loading model predictions dataframe '/data2/processed_datasets/zj2398/femr/mimic/all_results/classification/results/stroke/transformer_tpp/test_predictions'
+2025-11-04 16:19:14.461 | INFO     | meds_evaluation.__main__:main:34 - Running evaluation...
+2025-11-04 16:19:14.514 | INFO     | meds_evaluation.__main__:main:43 - Completed in 0:00:00.118915. Results saved to '/data2/processed_datasets/zj2398/femr/mimic/all_results/classification/results/stroke/transformer_tpp/results.json'.
+2025-11-04 16:19:14.515 | INFO     | meds_evaluation.__main__:main:48 - Running evaluation...
+2025-11-04 16:19:15.748 | INFO     | meds_evaluation.__main__:main:57 - Completed in 0:00:01.352506. Results saved to '/data2/processed_datasets/zj2398/femr/mimic/all_results/classification/results/stroke/transformer_tpp/results_boot.json'.
+Completed processing of task: stroke
+----------------------------------------
+All tasks processed.
