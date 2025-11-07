@@ -384,19 +384,6 @@ echo "All tasks processed."
 
 
 
-# bash run_mtpp_cbs.sh \
-#   --pretraining_data   /user/zj2398/cache/mtpp_8k \
-#   --meds_reader        /shared/share_mala/zj2398/mimic/meds_v0.6_reader \
-#   --num_proc           64 \
-#   --model_path         /user/zj2398/cache/mtpp_8k/output_no_divide_mask_L_num/best_120735 \
-#   --tokens_per_batch   65536 \
-#   --device             cuda:0 \
-#   --min_subjects_per_batch 8 \
-#   --ontology_path       /user/zj2398/cache/mtpp_8k/ontology.pkl \
-#   --main_split_path     /user/zj2398/cache/mtpp_8k/main_split.csv \
-#   --model_name deephit_no_divide_mask_L_num  \
-#   --task celiac \
-#   /user/zj2398/cache/mimic/mimic-3.1-meds/phenotype_task/
 
 # export CUDA_VISIBLE_DEVICES=3
 # bash run_mtpp_cbs.sh \
@@ -410,8 +397,11 @@ echo "All tasks processed."
 #   --min_subjects_per_batch 8 \
 #   --ontology_path      /data2/processed_datasets/zj2398/femr/mimic/deephit_tpp/ontology.pkl \
 #   --main_split_path    /data2/processed_datasets/zj2398/femr/mimic/deephit_tpp/main_split.csv \
-#   --output_dir   /data2/processed_datasets/zj2398/femr/mimic/deephit_tpp/results/tpp \
+#   --output_dir   /data2/processed_datasets/zj2398/femr/mimic/all_results/ \
 #   /data2/processed_datasets/mimic/phenotype_task/
+
+
+
 
 # bash run_mtpp_cbs.sh \
 #   --pretraining_data   /user/zj2398/cache/deephit_tpp_8k \
