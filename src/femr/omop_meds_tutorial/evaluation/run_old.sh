@@ -179,7 +179,7 @@ for TASK_NAME in $COHORT_BASE_DIR; do
     # Run the first command: generate MOTOR features
     echo "Running $MODEL_NAME feature generation for $TASK_NAME..."
 
-    # # Build the command with conditional observation_window parameter
+    # Build the command with conditional observation_window parameter
     GENERATE_CMD="python -u -m femr.omop_meds_tutorial.evaluation.generate_features \
       --pretraining_data \"$PRETRAINING_DATA\" \
       --model_path \"$MODEL_PATH\" \
@@ -297,7 +297,7 @@ echo "All tasks processed."
 
 
 
-# export CUDA_VISIBLE_DEVICES=4
+# export CUDA_VISIBLE_DEVICES=1
 # bash run_mtpp_cbs.sh \
 #   --pretraining_data   /user/zj2398/cache/mtpp_8k \
 #   --meds_reader        /shared/share_mala/zj2398/mimic/meds_v0.6_reader \
@@ -324,7 +324,7 @@ echo "All tasks processed."
 #   --model_name         mtpp \
 #   --tokens_per_batch   65536 \
 #   --device             cuda:0 \
-#   --task               masld \
+#   --task               celiac \
 #   --min_subjects_per_batch 8 \
 #   --ontology_path       /user/zj2398/cache/mtpp_8k/ontology.pkl \
 #   --main_split_path     /user/zj2398/cache/mtpp_8k/main_split.csv \
@@ -341,7 +341,7 @@ echo "All tasks processed."
 #   --model_name         motor \
 #   --tokens_per_batch   65536 \
 #   --device             cuda:0 \
-#   --task               stroke \
+#   --task               masld \
 #   --min_subjects_per_batch 8 \
 #   --ontology_path       /shared/share_mala/zj2398/mimic/models/motor_8k/ontology.pkl \
 #   --main_split_path     /shared/share_mala/zj2398/mimic/models/motor_8k/main_split.csv \

@@ -230,7 +230,7 @@ def main():
             train_features_list = [feature for feature in train_data["features"]]
             test_features_list = [feature for feature in test_data["features"]]
 
-            if label_name in ["ami","masld","stroke"]:
+            if label_name in ["ami","masld","stroke","celiac"]:
                 train_set = pd.DataFrame({
                     "subject_id" : train_data["subject_ids"],
                     "prediction_time" : train_data["prediction_times"],
