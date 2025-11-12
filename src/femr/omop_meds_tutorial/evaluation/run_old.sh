@@ -208,7 +208,7 @@ for TASK_NAME in $COHORT_BASE_DIR; do
     # Print the command
     echo "Executing command: $GENERATE_CMD"
 
-    # # Execute the command
+    # Execute the command
     eval $GENERATE_CMD
 
     # Check if the first command succeeded
@@ -297,7 +297,7 @@ echo "All tasks processed."
 
 
 
-# export CUDA_VISIBLE_DEVICES=1
+# export CUDA_VISIBLE_DEVICES=3
 # bash run_mtpp_cbs.sh \
 #   --pretraining_data   /user/zj2398/cache/mtpp_8k \
 #   --meds_reader        /shared/share_mala/zj2398/mimic/meds_v0.6_reader \
@@ -332,12 +332,28 @@ echo "All tasks processed."
 #   --output_dir   /shared/share_mala/zj2398/mimic/task/old_phenotype 
 
 
-
+# tpp
 # bash run_old.sh \
-#   --pretraining_data   /shared/share_mala/zj2398/mimic/models/motor_8k \
+#   --pretraining_data   /shared/share_mala/zj2398/models/tpp_8k  \
 #   --meds_reader        /shared/share_mala/zj2398/mimic/data/meds_v0.6_reader \
 #   --num_proc           100 \
-#   --model_path         /shared/share_mala/zj2398/mimic/models/motor_8k/output/best_100620 \
+#   --model_path         /shared/share_mala/zj2398/models/tpp_8k/transformer/best_221573 \
+#   --model_name         tpp \
+#   --tokens_per_batch   65536 \
+#   --device             cuda:0 \
+#   --task               stroke \
+#   --min_subjects_per_batch 8 \
+#   --ontology_path       /user/zj2398/cache/mtpp_8k/ontology.pkl \
+#   --main_split_path     /user/zj2398/cache/mtpp_8k/main_split.csv \
+#   --loss_type  labeled_subjects \
+#   --output_dir   /shared/share_mala/zj2398/mimic/task/old_phenotype 
+
+
+# bash run_old.sh \
+#   --pretraining_data   /shared/share_mala/zj2398/models/motor_8k \
+#   --meds_reader        /shared/share_mala/zj2398/mimic/data/meds_v0.6_reader \
+#   --num_proc           100 \
+#   --model_path         /shared/share_mala/zj2398/models/motor_8k/output/best_100620 \
 #   --model_name         motor \
 #   --tokens_per_batch   65536 \
 #   --device             cuda:0 \
