@@ -6,14 +6,13 @@ from tqdm import tqdm
 import pandas as pd
 import numpy as np
 import torch
+from pathlib import Path
+import json
+import os
 
 np.random.seed(42)
 torch.manual_seed(42)
 
-base = '/user/zj2398/cache/mtpp_8k/results/'
-# phenotype_list = ['masld']
-phenotype_list = ['stroke']
-model = 'deephit_no_divide_mask_mean_all'
 
 # base = '/data/processed_datasets/processed_datasets/mimic/phenotype/'
 # phenotype = 'masld'
@@ -21,33 +20,31 @@ model = 'deephit_no_divide_mask_mean_all'
 
 # path = base + phenotype + '/' + model + '/features_with_label/'
 
-# Use 10% for validation
-for phenotype in phenotype_list:
-    path = base + phenotype + '/' + model + '/features_with_label/'
-    train = pd.read_parquet(path + 'train.parquet')
-    val = train.sample(frac = 0.1, replace = False)
-    train = train.drop(val.index)
-    test = pd.read_parquet(path + 'test.parquet')
-    # print(train)
-    train['time_to_event_days'].max()/365
-    train[~train.boolean_value].time_to_event_days.plot.hist(bins = 1000)
+def tte_evaluation(train_set,test_set,task,model_name):
+    print(f"task is {task}, model is {model_name} initial length {len(train_set)},{len(test_set)}")
+    train_set = train_set[train_set["time_to_event"]<=330]
+    test_set = test_set[test_set["time_to_event"]<=330]
+    print(f"after length {len(train_set)},{len(test_set)}")
+    val = train_set.sample(frac = 0.1, replace = False)
+    train_set = train_set.drop(val.index)
+    # train[~train.boolean_value].time_to_event_days.plot.hist(bins = 1000)
 
     # Transform labels
     num_durations = 100
     labtrans = DeepHitSingle.label_transform(num_durations)
-    get_target = lambda df: (df['time_to_event_days'].values, df['censor_label'].values) 
+    get_target = lambda df: (df['time_to_event'].values, df['tte_label'].values) 
 
     # Extract features and labels
-    x_train = np.stack(train.features.values)
-    y_train = labtrans.fit_transform(*get_target(train))
+    x_train = np.stack(train_set.features.values)
+    y_train = labtrans.fit_transform(*get_target(train_set))
     train = (x_train, y_train)
 
     x_val = np.stack(val.features.values)
-    y_val = labtrans.fit_transform(*get_target(val))
+    y_val = labtrans.transform(*get_target(val))
     val = (x_val, y_val)
 
-    x_test = np.stack(test.features.values)
-    durations_test, events_test = get_target(test)
+    x_test = np.stack(test_set.features.values)
+    durations_test, events_test = get_target(test_set)
 
     # Define one layer NN for Deephit
     in_features = x_train.shape[1]
@@ -75,3 +72,25 @@ for phenotype in phenotype_list:
     # Display
     for metric in results:
         print('{}: {:.2f} ({:.2f})'.format(metric, np.mean(results[metric]), np.std(results[metric])))
+    return results
+
+
+old_phenotype_dir = Path("/shared/share_mala/zj2398/mimic/task/old_phenotype")
+# old_phenotype_path
+for task in ["celiac","masld","stroke"]:
+    old_phenotype_path = old_phenotype_dir/"results"/task
+    for subdir in old_phenotype_path.iterdir():
+        train_path = subdir/"features_with_label"/"train.parquet"
+        test_path = subdir/"features_with_label"/"test.parquet"
+        train_parquet = pd.read_parquet(train_path)
+        test_parquet = pd.read_parquet(test_path)
+        # print(train_parquet)
+        # print(test_parquet)
+        tte_results = tte_evaluation(train_parquet,test_parquet,task,subdir.name)
+        metrics = []
+        metrics['C-Index'] = (np.mean(tte_results['C-Index']), np.std(tte_results['C-Index']))
+        metrics['Int-Brier'] = (np.mean(tte_results['Int-Brier']), np.std(tte_results['Int-Brier']))
+        save_path = old_phenotype_dir/"results_1st_year"/task/subdir.name/"tte.json"
+        os.makedirs(save_path,exist_ok=True)
+        with open(save_path,"w") as f:
+            json.dump(metrics,f)
