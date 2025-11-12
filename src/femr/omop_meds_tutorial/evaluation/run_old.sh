@@ -347,3 +347,22 @@ echo "All tasks processed."
 #   --main_split_path     /shared/share_mala/zj2398/mimic/models/motor_8k/main_split.csv \
 #   --loss_type  labeled_subjects \
 #   --output_dir   /shared/share_mala/zj2398/mimic/task/old_phenotype 
+
+
+# kuvira deephit
+# export CUDA_VISIBLE_DEVICES=2
+# bash run_old.sh \
+#   --pretraining_data   /data2/processed_datasets/zj2398/femr/mimic/deephit_tpp \
+#   --meds_reader        /data/raw_data/mimic/files/mimiciv/meds_v0.6/3.1/MEDS_cohort-reader \
+#   --num_proc           64 \
+#   --model_path         /data2/processed_datasets/zj2398/femr/mimic/deephit_tpp/output_transformer/best_221573\
+#   --model_name         transformer_tpp \
+#   --tokens_per_batch   65536 \
+#   --device             cuda:0 \
+#   --task               stroke \
+#   --min_subjects_per_batch 8 \
+#   --ontology_path      /data2/processed_datasets/zj2398/femr/mimic/deephit_tpp/ontology.pkl \
+#   --main_split_path    /data2/processed_datasets/zj2398/femr/mimic/deephit_tpp/main_split.csv \
+#   --output_dir   /data2/processed_datasets/zj2398/femr/mimic/deephit_tpp/old_phenotype 
+
+#   /data2/processed_datasets/mimic/phenotype_task/

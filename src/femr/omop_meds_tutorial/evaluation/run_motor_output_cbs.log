@@ -349,3 +349,236 @@ cohort_base_dir: masld
 Task directory: 
 Running mtpp feature generation for masld...
 Executing command: python -u -m femr.omop_meds_tutorial.evaluation.generate_features       --pretraining_data "/user/zj2398/cache/mtpp_8k"       --model_path "/shared/share_mala/zj2398/mimic/models/mtpp_8k/mtpp_mean_all/best_134150"       --model_name "mtpp"       --meds_reader "/shared/share_mala/zj2398/mimic/data/meds_v0.6_reader"       --num_proc "100"       --tokens_per_batch "65536"       --task_name "masld"       --device "cuda:0"       --min_subjects_per_batch "8"       --ontology_path "/user/zj2398/cache/mtpp_8k/ontology.pkl"       --output_root "/shared/share_mala/zj2398/mimic/task/old_phenotype"       --task_type binary       --loss_type labeled_subjects 
+Using configuration:
+  PRETRAINING_DATA: /data2/processed_datasets/zj2398/femr/mimic/deephit_tpp
+  OMOP_MEDS_READER: /data/raw_data/mimic/files/mimiciv/meds_v0.6/3.1/MEDS_cohort-reader
+  NUM_PROC: 64
+  TOKENS_PER_BATCH: 65536
+  OBSERVATION_WINDOW: Not specified
+  USE_LINEAR_INTERPOLATION: false
+
+Discovering prediction tasks...
+[1/0] Processing task: masld
+cohort_base_dir: masld
+Task directory: 
+Running transformer_tpp feature generation for masld...
+Executing command: python -u -m femr.omop_meds_tutorial.evaluation.generate_features       --pretraining_data "/data2/processed_datasets/zj2398/femr/mimic/deephit_tpp"       --model_path "/data2/processed_datasets/zj2398/femr/mimic/deephit_tpp/output_transformer/best_221573"       --model_name "transformer_tpp"       --meds_reader "/data/raw_data/mimic/files/mimiciv/meds_v0.6/3.1/MEDS_cohort-reader"       --num_proc "64"       --tokens_per_batch "65536"       --task_name "masld"       --device "cuda:0"       --min_subjects_per_batch "8"       --ontology_path "/data2/processed_datasets/zj2398/femr/mimic/deephit_tpp/ontology.pkl"       --output_root "/data2/processed_datasets/zj2398/femr/mimic/deephit_tpp/old_phenotype"       --task_type binary       --loss_type labeled_subjects 
+Loading labels from  /data2/processed_datasets/zj2398/femr/mimic/deephit_tpp/old_phenotype/transformer_tpp/labels/masld.parquet
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/zj2398@mc.cumc.columbia.edu/femr/femr_chao_meds_v3/src/femr/omop_meds_tutorial/evaluation/generate_features.py", line 229, in <module>
+    main()
+  File "/home/zj2398@mc.cumc.columbia.edu/femr/femr_chao_meds_v3/src/femr/omop_meds_tutorial/evaluation/generate_features.py", line 189, in main
+    labels = pd.read_parquet(file_path)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/anaconda3/envs/motor_chao/lib/python3.11/site-packages/pandas/io/parquet.py", line 669, in read_parquet
+    return impl.read(
+           ^^^^^^^^^^
+  File "/data/anaconda3/envs/motor_chao/lib/python3.11/site-packages/pandas/io/parquet.py", line 258, in read
+    path_or_handle, handles, filesystem = _get_path_or_handle(
+                                          ^^^^^^^^^^^^^^^^^^^^
+  File "/data/anaconda3/envs/motor_chao/lib/python3.11/site-packages/pandas/io/parquet.py", line 141, in _get_path_or_handle
+    handles = get_handle(
+              ^^^^^^^^^^^
+  File "/data/anaconda3/envs/motor_chao/lib/python3.11/site-packages/pandas/io/common.py", line 882, in get_handle
+    handle = open(handle, ioargs.mode)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/data2/processed_datasets/zj2398/femr/mimic/deephit_tpp/old_phenotype/transformer_tpp/labels/masld.parquet'
+Error: transformer_tpp feature generation failed for task masld
+All tasks processed.
+Using configuration:
+  PRETRAINING_DATA: /data2/processed_datasets/zj2398/femr/mimic/deephit_tpp
+  OMOP_MEDS_READER: /data/raw_data/mimic/files/mimiciv/meds_v0.6/3.1/MEDS_cohort-reader
+  NUM_PROC: 64
+  TOKENS_PER_BATCH: 65536
+  OBSERVATION_WINDOW: Not specified
+  USE_LINEAR_INTERPOLATION: false
+
+Discovering prediction tasks...
+[1/0] Processing task: masld
+cohort_base_dir: masld
+Task directory: 
+Running transformer_tpp feature generation for masld...
+Executing command: python -u -m femr.omop_meds_tutorial.evaluation.generate_features       --pretraining_data "/data2/processed_datasets/zj2398/femr/mimic/deephit_tpp"       --model_path "/data2/processed_datasets/zj2398/femr/mimic/deephit_tpp/output_transformer/best_221573"       --model_name "transformer_tpp"       --meds_reader "/data/raw_data/mimic/files/mimiciv/meds_v0.6/3.1/MEDS_cohort-reader"       --num_proc "64"       --tokens_per_batch "65536"       --task_name "masld"       --device "cuda:0"       --min_subjects_per_batch "8"       --ontology_path "/data2/processed_datasets/zj2398/femr/mimic/deephit_tpp/ontology.pkl"       --output_root "/data2/processed_datasets/zj2398/femr/mimic/deephit_tpp/old_phenotype"       --task_type binary       --loss_type labeled_subjects 
+Loading labels from  /data2/processed_datasets/zj2398/femr/mimic/deephit_tpp/old_phenotype/transformer_tpp/labels/masld.parquet
+labels head:    subject_id     prediction_time  ...  censor_label  time_to_event_days
+0    10314359 2128-02-24 12:40:00  ...         False          143.472222
+1    10314359 2128-03-13 13:09:00  ...         False          125.452083
+2    10314439 2125-01-12 12:33:00  ...         False          166.477083
+3    10314439 2125-05-04 00:52:00  ...         False           54.963889
+4    10314601 2207-09-22 17:37:00  ...         False          799.943750
+
+[5 rows x 5 columns]
+task type is binary
+typed_labels length: 209133
+Loading model from /data2/processed_datasets/zj2398/femr/mimic/deephit_tpp/output_transformer/best_221573
+use_linear_interpolation: False
+loss type is labeled_subjects
+starting loading model
+the hidden size is 768
+create loss type is labeled_subjects
+the report is LoadReport(renamed_keys=[], dropped_keys=['task_model.final_layer.bias', 'task_model.final_layer.weight', 'task_model.norm.weight', 'task_model.task_layer.bias', 'task_model.task_layer.weight'], missing_keys=[], unexpected_keys=[])
+The maximum context length is 8192.0,  8 subjects and 65536 tokens per batch
+max_length: 8192
+Using configuration:
+  PRETRAINING_DATA: /data2/processed_datasets/zj2398/femr/mimic/deephit_tpp
+  OMOP_MEDS_READER: /data/raw_data/mimic/files/mimiciv/meds_v0.6/3.1/MEDS_cohort-reader
+  NUM_PROC: 64
+  TOKENS_PER_BATCH: 65536
+  OBSERVATION_WINDOW: Not specified
+  USE_LINEAR_INTERPOLATION: false
+
+Discovering prediction tasks...
+[1/0] Processing task: celiac
+cohort_base_dir: celiac
+Task directory: 
+Running transformer_tpp feature generation for celiac...
+Executing command: python -u -m femr.omop_meds_tutorial.evaluation.generate_features       --pretraining_data "/data2/processed_datasets/zj2398/femr/mimic/deephit_tpp"       --model_path "/data2/processed_datasets/zj2398/femr/mimic/deephit_tpp/output_transformer/best_221573"       --model_name "transformer_tpp"       --meds_reader "/data/raw_data/mimic/files/mimiciv/meds_v0.6/3.1/MEDS_cohort-reader"       --num_proc "64"       --tokens_per_batch "65536"       --task_name "celiac"       --device "cuda:0"       --min_subjects_per_batch "8"       --ontology_path "/data2/processed_datasets/zj2398/femr/mimic/deephit_tpp/ontology.pkl"       --output_root "/data2/processed_datasets/zj2398/femr/mimic/deephit_tpp/old_phenotype"       --task_type binary       --loss_type labeled_subjects 
+Loading labels from  /data2/processed_datasets/zj2398/femr/mimic/deephit_tpp/old_phenotype/transformer_tpp/labels/celiac.parquet
+labels head:    subject_id     prediction_time  ...  censor_label  time_to_event_days
+0    14395835 2130-05-18 05:50:00  ...         False         2289.216667
+1    14395835 2132-03-22 20:55:00  ...         False         1614.588194
+2    14395835 2135-08-28 14:34:00  ...         False          360.852778
+3    14395835 2135-09-08 06:31:00  ...         False          350.188194
+4    14396009 2140-03-12 20:34:00  ...         False           91.143056
+
+[5 rows x 5 columns]
+task type is binary
+Using configuration:
+  PRETRAINING_DATA: /data2/processed_datasets/zj2398/femr/mimic/deephit_tpp
+  OMOP_MEDS_READER: /data/raw_data/mimic/files/mimiciv/meds_v0.6/3.1/MEDS_cohort-reader
+  NUM_PROC: 64
+  TOKENS_PER_BATCH: 65536
+  OBSERVATION_WINDOW: Not specified
+  USE_LINEAR_INTERPOLATION: false
+
+Discovering prediction tasks...
+[1/0] Processing task: stroke
+cohort_base_dir: stroke
+Task directory: 
+Running transformer_tpp feature generation for stroke...
+Executing command: python -u -m femr.omop_meds_tutorial.evaluation.generate_features       --pretraining_data "/data2/processed_datasets/zj2398/femr/mimic/deephit_tpp"       --model_path "/data2/processed_datasets/zj2398/femr/mimic/deephit_tpp/output_transformer/best_221573"       --model_name "transformer_tpp"       --meds_reader "/data/raw_data/mimic/files/mimiciv/meds_v0.6/3.1/MEDS_cohort-reader"       --num_proc "64"       --tokens_per_batch "65536"       --task_name "stroke"       --device "cuda:0"       --min_subjects_per_batch "8"       --ontology_path "/data2/processed_datasets/zj2398/femr/mimic/deephit_tpp/ontology.pkl"       --output_root "/data2/processed_datasets/zj2398/femr/mimic/deephit_tpp/old_phenotype"       --task_type binary       --loss_type labeled_subjects 
+typed_labels length: 214715
+Loading model from /data2/processed_datasets/zj2398/femr/mimic/deephit_tpp/output_transformer/best_221573
+use_linear_interpolation: False
+loss type is labeled_subjects
+starting loading model
+the hidden size is 768
+create loss type is labeled_subjects
+the report is LoadReport(renamed_keys=[], dropped_keys=['task_model.final_layer.bias', 'task_model.final_layer.weight', 'task_model.norm.weight', 'task_model.task_layer.bias', 'task_model.task_layer.weight'], missing_keys=[], unexpected_keys=[])
+The maximum context length is 8192.0,  8 subjects and 65536 tokens per batch
+max_length: 8192
+Loading labels from  /data2/processed_datasets/zj2398/femr/mimic/deephit_tpp/old_phenotype/transformer_tpp/labels/stroke.parquet
+labels head:    subject_id     prediction_time  ...  censor_label  time_to_event_days
+0    12202104 2162-07-02 15:43:00  ...         False         1616.178472
+1    12202104 2162-07-02 18:03:00  ...         False         1616.081250
+2    12202104 2166-12-02 12:22:00  ...         False            2.318056
+3    12202104 2166-12-02 18:22:00  ...         False            2.068056
+4    12202365 2166-08-04 14:57:00  ...         False          107.377083
+
+[5 rows x 5 columns]
+task type is binary
+typed_labels length: 314140
+Loading model from /data2/processed_datasets/zj2398/femr/mimic/deephit_tpp/output_transformer/best_221573
+use_linear_interpolation: False
+loss type is labeled_subjects
+starting loading model
+the hidden size is 768
+create loss type is labeled_subjects
+the report is LoadReport(renamed_keys=[], dropped_keys=['task_model.final_layer.bias', 'task_model.final_layer.weight', 'task_model.norm.weight', 'task_model.task_layer.bias', 'task_model.task_layer.weight'], missing_keys=[], unexpected_keys=[])
+The maximum context length is 8192.0,  8 subjects and 65536 tokens per batch
+max_length: 8192
+Got batches 6537
+Got batches 4320
+Got batches 5200
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/zj2398@mc.cumc.columbia.edu/femr/femr_chao_meds_v3/src/femr/omop_meds_tutorial/evaluation/generate_features.py", line 229, in <module>
+    main()
+  File "/home/zj2398@mc.cumc.columbia.edu/femr/femr_chao_meds_v3/src/femr/omop_meds_tutorial/evaluation/generate_features.py", line 203, in main
+    features = femr.models.architecture.embedding.compute_features(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/zj2398@mc.cumc.columbia.edu/femr/femr_chao_meds_v3/src/femr/models/architecture/embedding.py", line 1397, in compute_features
+    batches = processor.convert_dataset(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/zj2398@mc.cumc.columbia.edu/femr/femr_chao_meds_v3/src/femr/models/processor.py", line 618, in convert_dataset
+    batch_dataset = datasets.Dataset.from_generator(
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/anaconda3/envs/motor_chao/lib/python3.11/site-packages/datasets/arrow_dataset.py", line 1174, in from_generator
+    return GeneratorDatasetInputStream(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/anaconda3/envs/motor_chao/lib/python3.11/site-packages/datasets/io/generator.py", line 29, in __init__
+    self.builder = Generator(
+                   ^^^^^^^^^^
+  File "/data/anaconda3/envs/motor_chao/lib/python3.11/site-packages/datasets/builder.py", line 384, in __init__
+    os.makedirs(self._cache_dir_root, exist_ok=True)
+  File "<frozen os>", line 215, in makedirs
+  File "<frozen os>", line 215, in makedirs
+  File "<frozen os>", line 215, in makedirs
+  [Previous line repeated 1 more time]
+  File "<frozen os>", line 225, in makedirs
+PermissionError: [Errno 13] Permission denied: '/shared'
+Error: transformer_tpp feature generation failed for task masld
+All tasks processed.
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/zj2398@mc.cumc.columbia.edu/femr/femr_chao_meds_v3/src/femr/omop_meds_tutorial/evaluation/generate_features.py", line 229, in <module>
+    main()
+  File "/home/zj2398@mc.cumc.columbia.edu/femr/femr_chao_meds_v3/src/femr/omop_meds_tutorial/evaluation/generate_features.py", line 203, in main
+    features = femr.models.architecture.embedding.compute_features(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/zj2398@mc.cumc.columbia.edu/femr/femr_chao_meds_v3/src/femr/models/architecture/embedding.py", line 1397, in compute_features
+    batches = processor.convert_dataset(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/zj2398@mc.cumc.columbia.edu/femr/femr_chao_meds_v3/src/femr/models/processor.py", line 618, in convert_dataset
+    batch_dataset = datasets.Dataset.from_generator(
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/anaconda3/envs/motor_chao/lib/python3.11/site-packages/datasets/arrow_dataset.py", line 1174, in from_generator
+    return GeneratorDatasetInputStream(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/anaconda3/envs/motor_chao/lib/python3.11/site-packages/datasets/io/generator.py", line 29, in __init__
+    self.builder = Generator(
+                   ^^^^^^^^^^
+  File "/data/anaconda3/envs/motor_chao/lib/python3.11/site-packages/datasets/builder.py", line 384, in __init__
+    os.makedirs(self._cache_dir_root, exist_ok=True)
+  File "<frozen os>", line 215, in makedirs
+  File "<frozen os>", line 215, in makedirs
+  File "<frozen os>", line 215, in makedirs
+  [Previous line repeated 1 more time]
+  File "<frozen os>", line 225, in makedirs
+PermissionError: [Errno 13] Permission denied: '/shared'
+Error: transformer_tpp feature generation failed for task stroke
+All tasks processed.
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/zj2398@mc.cumc.columbia.edu/femr/femr_chao_meds_v3/src/femr/omop_meds_tutorial/evaluation/generate_features.py", line 229, in <module>
+    main()
+  File "/home/zj2398@mc.cumc.columbia.edu/femr/femr_chao_meds_v3/src/femr/omop_meds_tutorial/evaluation/generate_features.py", line 203, in main
+    features = femr.models.architecture.embedding.compute_features(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/zj2398@mc.cumc.columbia.edu/femr/femr_chao_meds_v3/src/femr/models/architecture/embedding.py", line 1397, in compute_features
+    batches = processor.convert_dataset(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/zj2398@mc.cumc.columbia.edu/femr/femr_chao_meds_v3/src/femr/models/processor.py", line 618, in convert_dataset
+    batch_dataset = datasets.Dataset.from_generator(
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/anaconda3/envs/motor_chao/lib/python3.11/site-packages/datasets/arrow_dataset.py", line 1174, in from_generator
+    return GeneratorDatasetInputStream(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/anaconda3/envs/motor_chao/lib/python3.11/site-packages/datasets/io/generator.py", line 29, in __init__
+    self.builder = Generator(
+                   ^^^^^^^^^^
+  File "/data/anaconda3/envs/motor_chao/lib/python3.11/site-packages/datasets/builder.py", line 384, in __init__
+    os.makedirs(self._cache_dir_root, exist_ok=True)
+  File "<frozen os>", line 215, in makedirs
+  File "<frozen os>", line 215, in makedirs
+  File "<frozen os>", line 215, in makedirs
+  [Previous line repeated 1 more time]
+  File "<frozen os>", line 225, in makedirs
+PermissionError: [Errno 13] Permission denied: '/shared'
+Error: transformer_tpp feature generation failed for task celiac
+All tasks processed.
