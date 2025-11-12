@@ -342,11 +342,11 @@ def join_labels(features: Mapping[str, np.ndarray], labels: pd.DataFrame,label_n
         boolean_label.append(label.boolean_value)
         prediction_times.append(label.prediction_time)
 
-        if label_name in ["ami","masld","stroke"]:
+        if label_name in ["ami","masld","stroke","celiac"]:
             tte_label.append(label.tte_label)
             time_to_event.append(label.time_to_event_days)
 
-    if label_name in ["ami","masld","stroke"]:
+    if label_name in ["ami","masld","stroke","celiac"]:
         # print(np.array(tte_label).shape)
         # print(np.array(time_to_event).shape)
         # print(np.array(boolean_label).shape)

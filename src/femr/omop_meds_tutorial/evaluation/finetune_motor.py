@@ -109,7 +109,7 @@ def logistic_regression(train_set,test_data,label_output_dir):
     pr_auc = sklearn.metrics.auc(recall, precision)
     return roc_auc,pr_auc
 
-def tte_evaluation(train_set,test_set,label_output_dir):
+def tte_evaluation(train_set,test_set):
     val = train_set.sample(frac = 0.1, replace = False)
     train_set = train_set.drop(val.index)
     # train[~train.boolean_value].time_to_event_days.plot.hist(bins = 1000)
@@ -230,7 +230,7 @@ def main():
             train_features_list = [feature for feature in train_data["features"]]
             test_features_list = [feature for feature in test_data["features"]]
 
-            if label_name in ["ami","masld","stroke"]:
+            if label_name in ["ami","masld","stroke","celiac"]:
                 train_set = pd.DataFrame({
                     "subject_id" : train_data["subject_ids"],
                     "prediction_time" : train_data["prediction_times"],
@@ -313,7 +313,7 @@ def main():
                 "aucpr": pr_auc
             }
             if label_name in ["ami","masld","stroke","celiac"]:
-                tte_results = tte_evaluation(train_set,test_set,label_output_dir)
+                tte_results = tte_evaluation(train_set,test_set)
                 metrics['C-Index'] = (np.mean(tte_results['C-Index']), np.std(tte_results['C-Index']))
                 metrics['Int-Brier'] = (np.mean(tte_results['Int-Brier']), np.std(tte_results['Int-Brier']))
             with open(test_result_file, "w") as f:
