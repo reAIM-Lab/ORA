@@ -154,7 +154,7 @@ def _prefit_motor_map(
                     task_time_stats[i][1] += 1
                 task_time_stats[i][2].add(1, time.total_seconds())
     # print(f"after subject {subject.subject_id}, task_time_stats: {task_time_stats}")
-    print(f"prefit_motor_map is done")
+    # print(f"prefit_motor_map is done")
     return (task_event_times, task_time_stats)
 
 
@@ -199,7 +199,7 @@ class TPP_Task(Task):
 
         # print(f"tasks: {tasks}")
         # apply _prefit_motor_map(subjects, tasks=tasks, ontology=tokenizer.ontology) and then use _prefit_motor_agg to aggregate the results
-        print("before functools.reduce")
+        # print("before functools.reduce")
         task_length_samples, stats = functools.reduce(
             _prefit_motor_agg, db.map(functools.partial(_prefit_motor_map, tasks=tasks, ontology=tokenizer.ontology))
         )

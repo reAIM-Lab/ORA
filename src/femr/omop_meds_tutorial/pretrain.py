@@ -57,6 +57,13 @@ def create_arg_parser():
         type=float,
         default=1e-5
     )
+
+    arg_parser.add_argument(
+        "--hf_run_name",
+        dest="hf_run_name",
+        type=str,
+        default="new_run"
+    )
     arg_parser.add_argument(
         "--n_layers",
         dest="n_layers",
@@ -213,7 +220,7 @@ def main():
         )
 
     config = femr.models.config.FEMRModelConfig.from_task_configs(model_config, task.get_task_config())
-    # print(f"The config is {config}")
+    print(f"The config is {config}")
 
     # Unified model wrapper supports both architectures
     model = femr.models.architecture.embedding.FEMRModel(config, loss_type=args.loss_type,linear_interpolation=args.linear_interpolation)
@@ -221,7 +228,7 @@ def main():
 
 
     print(f"Model param count: {count_parameters(model)}")
-    # print(f"model config is {model_config}") d
+    print(f"model config is {model_config}") 
 
     learning_rate = args.learning_rate
     # output_dir = 'tmp_trainer_' + sys.argv[1]
@@ -234,13 +241,13 @@ def main():
         learning_rate=learning_rate,
         output_dir=output_dir,
         remove_unused_columns=False,
-        # bf16=True,
+        bf16=True,
 
         weight_decay=0.1,
         adam_beta2=0.95,
-        report_to="none",
-        # report_to=["wandb"],
-        run_name="motor_bf16_attention_only",
+        # report_to="none",
+        report_to=["wandb"],
+        run_name=args.hf_run_name,
         # run_name="motor_pretrain_mimic",
         num_train_epochs=args.n_epochs,
         ddp_find_unused_parameters=False,
@@ -295,6 +302,17 @@ if __name__ == "__main__":
 40 hours
 export CUDA_VISIBLE_DEVICES=0
 
+mimic 
+
+gsb
+
+python pretrain_motor.py \
+  --pretraining_data /user/zj2398/cache/motor_mimic_8k \
+  --meds_reader /user/zj2398/cache/hf_ehr/mimic/meds_v0.6_reader \
+  --output_dir /user/zj2398/cache/motor_mimic_8k/output_test \
+  --model transformer \
+  --loss_type mtpp 
+
 python pretrain_motor.py \
   --pretraining_data /user/zj2398/cache/mtpp_8k \
   --meds_reader /user/zj2398/cache/hf_ehr/mimic/meds_v0.6_reader \
@@ -317,47 +335,19 @@ CUDA_VISIBLE_DEVICES=4,5,6,7 accelerate launch \
   --model transformer \
   --loss_type motor
 
-python pretrain_motor.py \
-  --pretraining_data /user/zj2398/cache/motor_mimic_8k \
-  --meds_reader /user/zj2398/cache/hf_ehr/mimic/meds_v0.6_reader \
-  --per_device_train_batch_size 1 \
-  --output_dir /user/zj2398/cache/motor_mimic_8k/output_test
-  --model transformer
-
-
-  17.5
-
-CUDA_VISIBLE_DEVICES=4,5,1 accelerate launch \
-  --num_processes 3 \
-  --mixed_precision bf16 \
-  --gpu_ids "4,5,1" \
-  pretrain_motor.py \
-  --pretraining_data //user/zj2398/cache/motor_mimic_8k \
-  --meds_reader /user/zj2398/cache/hf_ehr/mimic/meds_v0.6_reader \
-  --per_device_train_batch_size 1 \
-  --output_dir /user/zj2398/cache/motor_mimic_8k/output_separate
-
-gsb
-CUDA_VISIBLE_DEVICES=0,1,2 accelerate launch \
-  --num_processes 3 \
-  --mixed_precision bf16 \
-  --gpu_ids "0,1,2" \
-  pretrain_motor_bin_100.py \
-  --pretraining_data /user/zj2398/cache/motor_mimic_bin_100 \
-  --meds_reader /user/zj2398/cache/hf_ehr/mimic/meds_v0.6_reader \
-  --per_device_train_batch_size 1 \
-  --output_dir /user/zj2398/cache/motor_mimic_bin_100/output
 
 kuvira
-CUDA_VISIBLE_DEVICES=0 accelerate launch \
-  --num_processes 1 \
-  --mixed_precision bf16 \
-  --gpu_ids "0" \
-  pretrain_motor.py \
-  --pretraining_data /data/processed_datasets/processed_datasets/zj2398/femr/mimic/motor_mimic_bin_8 \
-  --meds_reader /data/raw_data/mimic/files/mimiciv/meds_v0.6/3.1/MEDS_cohort-reader \
-  --per_device_train_batch_size 1 \
-  --output_dir /data/processed_datasets/processed_datasets/zj2398/femr/mimic/motor_mimic_bin_8/output_exlude_corrected 
+
+CUDA_VISIBLE_DEVICES=0
+python pretrain.py \
+--pretraining_data /data2/processed_datasets/zj2398/femr/cumc_0.1/motor \
+--meds_reader /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/post_transform_0.1_reader \
+--output_dir /data2/processed_datasets/zj2398/femr/cumc_0.1/motor/transformer \
+--model transformer \
+--hf_run_name motor_cumc_0.1 \
+--loss_type motor 
+
+
 
 CUDA_VISIBLE_DEVICES=0,2 accelerate launch \
   --num_processes 2 \
@@ -372,14 +362,4 @@ CUDA_VISIBLE_DEVICES=0,2 accelerate launch \
   --loss_type tpp \
   --n_layers 12
 
-CUDA_VISIBLE_DEVICES=3 accelerate launch \
-  --num_processes 1 \
-  --mixed_precision bf16 \
-  --gpu_ids "3" \
-  pretrain_motor.py \
-  --pretraining_data /data/processed_datasets/processed_datasets/zj2398/femr/mimic/motor_mimic_bin_8 \
-  --meds_reader /data/raw_data/mimic/files/mimiciv/meds_v0.6/3.1/MEDS_cohort-reader \
-  --per_device_train_batch_size 1 \
-  --output_dir /data/processed_datasets/processed_datasets/zj2398/femr/mimic/motor_mimic_bin_8/output_linear_interpolation \
-  --linear_interpolation True
 '''
