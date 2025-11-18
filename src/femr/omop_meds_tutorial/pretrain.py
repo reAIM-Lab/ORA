@@ -220,7 +220,7 @@ def main():
         )
 
     config = femr.models.config.FEMRModelConfig.from_task_configs(model_config, task.get_task_config())
-    print(f"The config is {config}")
+    # print(f"The config is {config}")
 
     # Unified model wrapper supports both architectures
     model = femr.models.architecture.embedding.FEMRModel(config, loss_type=args.loss_type,linear_interpolation=args.linear_interpolation)
@@ -228,7 +228,7 @@ def main():
 
 
     print(f"Model param count: {count_parameters(model)}")
-    print(f"model config is {model_config}") 
+    # print(f"model config is {model_config}") 
 
     learning_rate = args.learning_rate
     # output_dir = 'tmp_trainer_' + sys.argv[1]
@@ -340,26 +340,35 @@ kuvira
 
 CUDA_VISIBLE_DEVICES=0
 python pretrain.py \
---pretraining_data /data2/processed_datasets/zj2398/femr/cumc_0.1/motor \
---meds_reader /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/post_transform_0.1_reader \
---output_dir /data2/processed_datasets/zj2398/femr/cumc_0.1/motor/transformer \
---model transformer \
---hf_run_name motor_cumc_0.1 \
---loss_type motor 
+    --pretraining_data /data2/processed_datasets/zj2398/femr/cumc_0.1/tpp \
+    --meds_reader /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/post_transform_0.1_reader \
+    --output_dir /data2/processed_datasets/zj2398/femr/cumc_0.1/tpp/transformer \
+    --model transformer \
+    --hf_run_name tpp_cumc_0.1 \
+    --loss_type tpp
+
+python pretrain.py \
+    --pretraining_data /data2/processed_datasets/zj2398/femr/cumc_0.1/mtpp \
+    --meds_reader /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/post_transform_0.1_reader \
+    --output_dir /data2/processed_datasets/zj2398/femr/cumc_0.1/mtpp/transformer \
+    --model transformer \
+    --hf_run_name mtpp_cumc_0.1 \
+    --loss_type mtpp
 
 
+# CUDA_VISIBLE_DEVICES=0,2 accelerate launch \
+#   --num_processes 2 \
+#   --mixed_precision bf16 \
+#   --gpu_ids "0,2" \
 
-CUDA_VISIBLE_DEVICES=0,2 accelerate launch \
-  --num_processes 2 \
-  --mixed_precision bf16 \
-  --gpu_ids "0,2" \
-  pretrain_motor.py \
-  --pretraining_data /data/processed_datasets/processed_datasets/zj2398/femr/mimic/deephit_tpp \
-  --meds_reader /data/raw_data/mimic/files/mimiciv/meds_v0.6/3.1/MEDS_cohort-reader \
+python  pretrain.py \
+  --pretraining_data /data2/processed_datasets/zj2398/femr/mimic/deephit_tpp/ \
+  --meds_reader /data/raw_data/mimic/files/mimiciv/meds_v0.6/3.1/MEDS_cohort-reader/ \
   --per_device_train_batch_size 1 \
-  --output_dir /data/processed_datasets/processed_datasets/zj2398/femr/mimic/deephit_tpp/output_mamba \
-  --model mamba \
-  --loss_type tpp \
-  --n_layers 12
+  --output_dir /data2/processed_datasets/zj2398/femr/mimic/deephit_tpp/output_transformer_test \
+  --model transformer \
+  --loss_type tpp 
+  
+#   --n_layers 12
 
 '''
