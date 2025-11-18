@@ -1,8 +1,0 @@
-  0%|                                                                                                                                            | 0/179250 [00:00<?, ?it/s]/data/anaconda3/envs/motor_chao/lib/python3.11/site-packages/torch/nn/parallel/_functions.py:71: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
-  warnings.warn(
-Could not estimate the number of tokens of the input, floating-point operations will not be computed
-  2%|██▌                                                                                                                           | 3585/179250 [11:25<22:39:18,  2.15it/s]/data/anaconda3/envs/motor_chao/lib/python3.11/site-packages/torch/nn/parallel/_functions.py:71: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
-{'loss': 1.082, 'grad_norm': 0.23109057545661926, 'learning_rate': 9.827468531468532e-06, 'epoch': 1.0}
-  warnings.warn(                                                                                                                                                            
-{'eval_loss': 1.0499134063720703, 'eval_runtime': 26.9429, 'eval_samples_per_second': 27.837, 'eval_steps_per_second': 6.978, 'epoch': 1.0}
-  3%|████                                                                                                                                       | 5307/179250 [18:50<1676:23:22, 34.70s/it]

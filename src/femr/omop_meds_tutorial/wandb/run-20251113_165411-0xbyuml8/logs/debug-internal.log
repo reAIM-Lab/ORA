@@ -1,7 +1,0 @@
-{"time":"2025-11-13T16:54:11.621798291-05:00","level":"INFO","msg":"stream: starting","core version":"0.21.1"}
-{"time":"2025-11-13T16:54:12.150946466-05:00","level":"INFO","msg":"stream: created new stream","id":"0xbyuml8"}
-{"time":"2025-11-13T16:54:12.150985705-05:00","level":"INFO","msg":"stream: started","id":"0xbyuml8"}
-{"time":"2025-11-13T16:54:12.151082919-05:00","level":"INFO","msg":"writer: started","stream_id":"0xbyuml8"}
-{"time":"2025-11-13T16:54:12.151094493-05:00","level":"INFO","msg":"sender: started","stream_id":"0xbyuml8"}
-{"time":"2025-11-13T16:54:12.151202644-05:00","level":"INFO","msg":"handler: started","stream_id":"0xbyuml8"}
-{"time":"2025-11-13T17:37:21.819759195-05:00","level":"INFO","msg":"api: retrying error","error":"Post \"https://api.wandb.ai/files/shalmalijoshi-columbia-university/huggingface/0xbyuml8/file_stream\": context deadline exceeded (Client.Timeout exceeded while awaiting headers)"}
