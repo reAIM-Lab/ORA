@@ -53,3 +53,162 @@ cohort_base_dir: /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/o
 Task directory: /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/task_labels/phenotype_tte/AMI/
 Running mtpp feature generation for AMI...
 Executing command: python -u -m femr.omop_meds_tutorial.evaluation.generate_features       --pretraining_data "/data2/processed_datasets/zj2398/femr/cumc_0.1/mtpp/"       --model_path "/data2/processed_datasets/zj2398/femr/cumc_0.1/mtpp/transformer/best_39446"       --model_name "mtpp"       --meds_reader "/data/raw_data/mimic/files/mimiciv/meds_v0.6/3.1/MEDS_cohort-reader"       --num_proc "20"       --tokens_per_batch "65536"       --device "cuda:0"       --min_subjects_per_batch "8"       --cohort_dir "/data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/task_labels/phenotype_tte/AMI/"       --ontology_path "/data2/processed_datasets/zj2398/femr/ontology.pkl"       --output_root "/data/results/zj2398/femr/cumc_0.1/phenotype"       --task_type binary       --loss_type labeled_subjects 
+label_name of cohort_dir: AMI
+/data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/task_labels/phenotype_tte/AMI/held_out.parquet
+/data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/task_labels/phenotype_tte/AMI/tuning.parquet
+/data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/task_labels/phenotype_tte/AMI/train.parquet
+Loading labels from  /data/results/zj2398/femr/cumc_0.1/phenotype/mtpp/labels/AMI.parquet
+labels head:    subject_id prediction_time  ...  tte_label time_to_event
+0    11459411      2019-08-27  ...          0        1546.0
+1     8624537      2021-10-03  ...          0         819.0
+2     5504403      2020-11-29  ...          0        1120.0
+3     7135352      2020-12-26  ...          0        1093.0
+4      812724      2022-11-14  ...          0         308.0
+
+[5 rows x 6 columns]
+task type is binary
+typed_labels length: 148811
+Loading model from /data2/processed_datasets/zj2398/femr/cumc_0.1/mtpp/transformer/best_39446
+use_linear_interpolation: False
+loss type is labeled_subjects
+starting loading model
+the hidden size is 768
+create loss type is labeled_subjects
+the report is LoadReport(renamed_keys=[], dropped_keys=['task_model.logvars', 'task_model.non_numerical_final_layer.bias', 'task_model.non_numerical_final_layer.weight', 'task_model.non_numerical_task_layer.bias', 'task_model.non_numerical_task_layer.weight', 'task_model.norm.weight', 'task_model.numerical_final_layer.bias', 'task_model.numerical_final_layer.weight', 'task_model.numerical_task_layer.bias', 'task_model.numerical_task_layer.weight'], missing_keys=[], unexpected_keys=[])
+The maximum context length is 8192.0,  8 subjects and 65536 tokens per batch
+max_length: 8192
+Process SpawnProcess-6:
+Traceback (most recent call last):
+  File "/data/anaconda3/envs/motor_chao/lib/python3.11/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/data/anaconda3/envs/motor_chao/lib/python3.11/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/data/anaconda3/envs/motor_chao/lib/python3.11/site-packages/meds_reader/__init__.py", line 147, in _runner
+    result = map_func(database[int(subject_id)] for subject_id in subject_ids)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/zj2398@mc.cumc.columbia.edu/femr/femr_chao_meds_v3/src/femr/models/processor.py", line 46, in map_preliminary_batch_stats
+    for subject in subjects:
+  File "/data/anaconda3/envs/motor_chao/lib/python3.11/site-packages/meds_reader/__init__.py", line 147, in <genexpr>
+    result = map_func(database[int(subject_id)] for subject_id in subject_ids)
+                      ~~~~~~~~^^^^^^^^^^^^^^^^^
+KeyError: 'SubjectDatabase did not have subject 73'
+Process SpawnProcess-1:
+Traceback (most recent call last):
+  File "/data/anaconda3/envs/motor_chao/lib/python3.11/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/data/anaconda3/envs/motor_chao/lib/python3.11/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/data/anaconda3/envs/motor_chao/lib/python3.11/site-packages/meds_reader/__init__.py", line 147, in _runner
+    result = map_func(database[int(subject_id)] for subject_id in subject_ids)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/zj2398@mc.cumc.columbia.edu/femr/femr_chao_meds_v3/src/femr/models/processor.py", line 46, in map_preliminary_batch_stats
+    for subject in subjects:
+  File "/data/anaconda3/envs/motor_chao/lib/python3.11/site-packages/meds_reader/__init__.py", line 147, in <genexpr>
+    result = map_func(database[int(subject_id)] for subject_id in subject_ids)
+                      ~~~~~~~~^^^^^^^^^^^^^^^^^
+KeyError: 'SubjectDatabase did not have subject 2609389'
+Process SpawnProcess-3:
+Traceback (most recent call last):
+  File "/data/anaconda3/envs/motor_chao/lib/python3.11/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/data/anaconda3/envs/motor_chao/lib/python3.11/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/data/anaconda3/envs/motor_chao/lib/python3.11/site-packages/meds_reader/__init__.py", line 147, in _runner
+    result = map_func(database[int(subject_id)] for subject_id in subject_ids)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/zj2398@mc.cumc.columbia.edu/femr/femr_chao_meds_v3/src/femr/models/processor.py", line 46, in map_preliminary_batch_stats
+    for subject in subjects:
+  File "/data/anaconda3/envs/motor_chao/lib/python3.11/site-packages/meds_reader/__init__.py", line 147, in <genexpr>
+    result = map_func(database[int(subject_id)] for subject_id in subject_ids)
+                      ~~~~~~~~^^^^^^^^^^^^^^^^^
+KeyError: 'SubjectDatabase did not have subject 5291924'
+Process SpawnProcess-4:
+Traceback (most recent call last):
+  File "/data/anaconda3/envs/motor_chao/lib/python3.11/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/data/anaconda3/envs/motor_chao/lib/python3.11/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/data/anaconda3/envs/motor_chao/lib/python3.11/site-packages/meds_reader/__init__.py", line 147, in _runner
+    result = map_func(database[int(subject_id)] for subject_id in subject_ids)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/zj2398@mc.cumc.columbia.edu/femr/femr_chao_meds_v3/src/femr/models/processor.py", line 46, in map_preliminary_batch_stats
+    for subject in subjects:
+  File "/data/anaconda3/envs/motor_chao/lib/python3.11/site-packages/meds_reader/__init__.py", line 147, in <genexpr>
+    result = map_func(database[int(subject_id)] for subject_id in subject_ids)
+                      ~~~~~~~~^^^^^^^^^^^^^^^^^
+KeyError: 'SubjectDatabase did not have subject 7837889'
+Process SpawnProcess-2:
+Traceback (most recent call last):
+  File "/data/anaconda3/envs/motor_chao/lib/python3.11/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/data/anaconda3/envs/motor_chao/lib/python3.11/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/data/anaconda3/envs/motor_chao/lib/python3.11/site-packages/meds_reader/__init__.py", line 147, in _runner
+    result = map_func(database[int(subject_id)] for subject_id in subject_ids)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/zj2398@mc.cumc.columbia.edu/femr/femr_chao_meds_v3/src/femr/models/processor.py", line 46, in map_preliminary_batch_stats
+    for subject in subjects:
+  File "/data/anaconda3/envs/motor_chao/lib/python3.11/site-packages/meds_reader/__init__.py", line 147, in <genexpr>
+    result = map_func(database[int(subject_id)] for subject_id in subject_ids)
+                      ~~~~~~~~^^^^^^^^^^^^^^^^^
+KeyError: 'SubjectDatabase did not have subject 10396178'
+Process SpawnProcess-5:
+Traceback (most recent call last):
+  File "/data/anaconda3/envs/motor_chao/lib/python3.11/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/data/anaconda3/envs/motor_chao/lib/python3.11/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/data/anaconda3/envs/motor_chao/lib/python3.11/site-packages/meds_reader/__init__.py", line 147, in _runner
+    result = map_func(database[int(subject_id)] for subject_id in subject_ids)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/zj2398@mc.cumc.columbia.edu/femr/femr_chao_meds_v3/src/femr/models/processor.py", line 46, in map_preliminary_batch_stats
+    for subject in subjects:
+  File "/data/anaconda3/envs/motor_chao/lib/python3.11/site-packages/meds_reader/__init__.py", line 147, in <genexpr>
+    result = map_func(database[int(subject_id)] for subject_id in subject_ids)
+                      ~~~~~~~~^^^^^^^^^^^^^^^^^
+KeyError: 'SubjectDatabase did not have subject 12994991'
+Using configuration:
+  COHORT_BASE_DIR: /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/task_labels/phenotype_tte/
+  PRETRAINING_DATA: /data2/processed_datasets/zj2398/femr/cumc_0.1/mtpp/
+  OMOP_MEDS_READER: /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/post_transform_meds_reader
+  NUM_PROC: 20
+  TOKENS_PER_BATCH: 65536
+  OBSERVATION_WINDOW: Not specified
+  USE_LINEAR_INTERPOLATION: false
+
+Discovering prediction tasks...
+[1] Found task: AMI
+[2] Found task: Celiac
+[3] Found task: Ischemic_Stroke
+[4] Found task: MASLD
+[1/4] Processing task: AMI
+cohort_base_dir: /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/task_labels/phenotype_tte/
+Task directory: /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/task_labels/phenotype_tte/AMI/
+Running mtpp feature generation for AMI...
+Executing command: python -u -m femr.omop_meds_tutorial.evaluation.generate_features       --pretraining_data "/data2/processed_datasets/zj2398/femr/cumc_0.1/mtpp/"       --model_path "/data2/processed_datasets/zj2398/femr/cumc_0.1/mtpp/transformer/best_39446"       --model_name "mtpp"       --meds_reader "/data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/post_transform_meds_reader"       --num_proc "20"       --tokens_per_batch "65536"       --device "cuda:0"       --min_subjects_per_batch "8"       --cohort_dir "/data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/task_labels/phenotype_tte/AMI/"       --ontology_path "/data2/processed_datasets/zj2398/femr/ontology.pkl"       --output_root "/data/results/zj2398/femr/cumc_0.1/phenotype"       --task_type binary       --loss_type labeled_subjects 
+label_name of cohort_dir: AMI
+/data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/task_labels/phenotype_tte/AMI/held_out.parquet
+/data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/task_labels/phenotype_tte/AMI/tuning.parquet
+/data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/task_labels/phenotype_tte/AMI/train.parquet
+Loading labels from  /data/results/zj2398/femr/cumc_0.1/phenotype/mtpp/labels/AMI.parquet
+labels head:    subject_id prediction_time  ...  tte_label time_to_event
+0    11459411      2019-08-27  ...          0        1546.0
+1     8624537      2021-10-03  ...          0         819.0
+2     5504403      2020-11-29  ...          0        1120.0
+3     7135352      2020-12-26  ...          0        1093.0
+4      812724      2022-11-14  ...          0         308.0
+
+[5 rows x 6 columns]
+task type is binary
+typed_labels length: 148811
+Loading model from /data2/processed_datasets/zj2398/femr/cumc_0.1/mtpp/transformer/best_39446
+use_linear_interpolation: False
+loss type is labeled_subjects
+starting loading model
+the hidden size is 768
+create loss type is labeled_subjects
+the report is LoadReport(renamed_keys=[], dropped_keys=['task_model.logvars', 'task_model.non_numerical_final_layer.bias', 'task_model.non_numerical_final_layer.weight', 'task_model.non_numerical_task_layer.bias', 'task_model.non_numerical_task_layer.weight', 'task_model.norm.weight', 'task_model.numerical_final_layer.bias', 'task_model.numerical_final_layer.weight', 'task_model.numerical_task_layer.bias', 'task_model.numerical_task_layer.weight'], missing_keys=[], unexpected_keys=[])
+The maximum context length is 8192.0,  8 subjects and 65536 tokens per batch
+max_length: 8192
+Got batches 2273
+Generating train split: 0 examples [00:00, ? examples/s]Generating train split: 1 examples [03:05, 185.72s/ examples]Generating train split: 2 examples [03:12, 80.42s/ examples] Generating train split: 3 examples [03:15, 45.25s/ examples]Generating train split: 4 examples [03:19, 28.95s/ examples]Generating train split: 5 examples [03:26, 21.01s/ examples]Generating train split: 6 examples [03:31, 15.35s/ examples]Generating train split: 7 examples [03:36, 12.03s/ examples]Generating train split: 8 examples [03:41,  9.87s/ examples]Generating train split: 9 examples [03:49,  9.23s/ examples]Generating train split: 10 examples [03:53,  7.62s/ examples]Generating train split: 11 examples [03:57,  6.62s/ examples]Generating train split: 12 examples [04:00,  5.54s/ examples]Generating train split: 13 examples [04:05,  5.41s/ examples]Generating train split: 14 examples [04:10,  5.14s/ examples]Generating train split: 15 examples [04:15,  5.22s/ examples]Generating train split: 16 examples [04:23,  5.96s/ examples]Generating train split: 17 examples [04:32,  6.87s/ examples]Generating train split: 18 examples [04:35,  5.68s/ examples]Generating train split: 19 examples [04:47,  7.75s/ examples]Generating train split: 20 examples [04:52,  6.89s/ examples]Generating train split: 21 examples [04:58,  6.43s/ examples]Generating train split: 22 examples [05:02,  5.84s/ examples]Generating train split: 23 examples [05:07,  5.66s/ examples]Generating train split: 24 examples [05:13,  5.53s/ examples]Generating train split: 25 examples [05:16,  4.96s/ examples]Generating train split: 26 examples [05:22,  5.13s/ examples]Generating train split: 27 examples [05:26,  4.75s/ examples]Generating train split: 28 examples [05:27,  3.69s/ examples]Generating train split: 29 examples [05:32,  4.13s/ examples]Generating train split: 30 examples [05:33,  3.26s/ examples]Generating train split: 31 examples [05:36,  3.14s/ examples]Generating train split: 32 examples [05:39,  3.18s/ examples]Generating train split: 33 examples [05:42,  2.89s/ examples]Generating train split: 34 examples [05:43,  2.47s/ examples]Generating train split: 35 examples [05:49,  3.62s/ examples]Generating train split: 37 examples [05:50,  2.11s/ examples]Generating train split: 38 examples [05:54,  2.47s/ examples]Generating train split: 39 examples [05:55,  2.20s/ examples]Generating train split: 40 examples [05:58,  2.30s/ examples]Generating train split: 41 examples [06:01,  2.54s/ examples]Generating train split: 42 examples [06:03,  2.46s/ examples]Generating train split: 43 examples [06:13,  4.60s/ examples]Generating train split: 46 examples [06:16,  2.57s/ examples]Generating train split: 47 examples [06:17,  2.28s/ examples]Generating train split: 48 examples [06:19,  2.32s/ examples]Generating train split: 49 examples [06:24,  2.79s/ examples]Generating train split: 50 examples [06:28,  3.12s/ examples]Generating train split: 51 examples [06:29,  2.63s/ examples]Generating train split: 52 examples [06:32,  2.61s/ examples]Generating train split: 53 examples [06:34,  2.47s/ examples]Generating train split: 54 examples [06:36,  2.41s/ examples]Generating train split: 55 examples [06:37,  2.02s/ examples]Generating train split: 56 examples [06:41,  2.62s/ examples]Generating train split: 57 examples [06:42,  2.12s/ examples]Generating train split: 58 examples [06:46,  2.57s/ examples]Generating train split: 59 examples [06:47,  2.20s/ examples]Generating train split: 60 examples [06:51,  2.79s/ examples]Generating train split: 61 examples [06:52,  2.27s/ examples]Generating train split: 62 examples [06:57,  3.10s/ examples]Generating train split: 64 examples [07:01,  2.45s/ examples]Generating train split: 65 examples [07:06,  3.12s/ examples]Generating train split: 66 examples [07:06,  2.41s/ examples]Generating train split: 67 examples [07:10,  2.77s/ examples]Generating train split: 68 examples [07:11,  2.33s/ examples]Generating train split: 69 examples [07:17,  3.31s/ examples]Generating train split: 70 examples [07:18,  2.70s/ examples]Generating train split: 71 examples [07:20,  2.45s/ examples]

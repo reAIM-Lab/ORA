@@ -361,7 +361,7 @@ echo "All tasks processed."
 
 # bash run.sh \
 #   --pretraining_data   /data2/processed_datasets/zj2398/femr/cumc_0.1/mtpp/ \
-#   --meds_reader        /data/raw_data/mimic/files/mimiciv/meds_v0.6/3.1/MEDS_cohort-reader \
+#   --meds_reader        /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/post_transform_meds_reader \
 #   --num_proc           20 \
 #   --model_path         /data2/processed_datasets/zj2398/femr/cumc_0.1/mtpp/transformer/best_39446 \
 #   --model_name         mtpp \
@@ -369,7 +369,7 @@ echo "All tasks processed."
 #   --device             cuda:0 \
 #   --min_subjects_per_batch 8 \
 #   --ontology_path       /data2/processed_datasets/zj2398/femr/ontology.pkl \
-#   --main_split_path     /data2/processed_datasets/zj2398/femr/main_split.csv \
+#   --main_split_path     /data2/processed_datasets/zj2398/femr/cumc/cumc_split.csv \
 #   --loss_type  labeled_subjects \
 #   --output_dir   /data/results/zj2398/femr/cumc_0.1/phenotype \
 #   /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/task_labels/phenotype_tte/
