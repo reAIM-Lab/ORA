@@ -325,7 +325,7 @@ echo "All tasks processed."
 
 # phenotype
 # export CUDA_VISIBLE_DEVICES=5
-# bash run_mtpp_cbs.sh \
+# bash run.sh \
 #   --pretraining_data   /user/zj2398/cache/mtpp_8k \
 #   --meds_reader        /shared/share_mala/zj2398/mimic/meds_v0.6_reader \
 #   --num_proc           100 \
@@ -340,8 +340,8 @@ echo "All tasks processed."
 #   --output_dir   /shared/share_mala/zj2398/mimic/phenotype_task/ \
 #   /shared/share_mala/zj2398/mimic/phenotype_task/cohort/
 
-# export CUDA_VISIBLE_DEVICES=6
-# bash run_mtpp_cbs.sh \
+# export CUDA_VISIBLE_DEVICES=1
+# bash run.sh \
 #   --pretraining_data   /user/zj2398/cache/mtpp_8k \
 #   --meds_reader        /shared/share_mala/zj2398/mimic/meds_v0.6_reader \
 #   --num_proc           100 \
@@ -357,7 +357,22 @@ echo "All tasks processed."
 #   /shared/share_mala/zj2398/mimic/patient_outcome_task/cohort/
 
 
-# old
+# kuvira
+
+# bash run.sh \
+#   --pretraining_data   /data2/processed_datasets/zj2398/femr/cumc_0.1/mtpp/ \
+#   --meds_reader        /data/raw_data/mimic/files/mimiciv/meds_v0.6/3.1/MEDS_cohort-reader \
+#   --num_proc           20 \
+#   --model_path         /data2/processed_datasets/zj2398/femr/cumc_0.1/mtpp/transformer/best_39446 \
+#   --model_name         mtpp \
+#   --tokens_per_batch   65536 \
+#   --device             cuda:0 \
+#   --min_subjects_per_batch 8 \
+#   --ontology_path       /data2/processed_datasets/zj2398/femr/ontology.pkl \
+#   --main_split_path     /data2/processed_datasets/zj2398/femr/main_split.csv \
+#   --loss_type  labeled_subjects \
+#   --output_dir   /data/results/zj2398/femr/cumc_0.1/phenotype \
+#   /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/task_labels/phenotype_tte/
 
 # bash run_mtpp_cbs.sh \
 #   --pretraining_data   /user/zj2398/cache/mtpp_8k \

@@ -180,7 +180,7 @@ for TASK_NAME in $COHORT_BASE_DIR; do
     echo "Running $MODEL_NAME feature generation for $TASK_NAME..."
 
     # Build the command with conditional observation_window parameter
-    GENERATE_CMD="python -u -m femr.omop_meds_tutorial.evaluation.generate_features \
+    GENERATE_CMD="python -u -m femr.omop_meds_tutorial.evaluation.generate_features_single_task \
       --pretraining_data \"$PRETRAINING_DATA\" \
       --model_path \"$MODEL_PATH\" \
       --model_name \"$MODEL_NAME\" \
@@ -279,41 +279,6 @@ echo "All tasks processed."
 
 
 # phenotype
-# export CUDA_VISIBLE_DEVICES=2
-# bash run.sh \
-#   --pretraining_data   /user/zj2398/cache/mtpp_8k \
-#   --meds_reader        /shared/share_mala/zj2398/mimic/meds_v0.6_reader \
-#   --num_proc           100 \
-#   --model_path         /user/zj2398/cache/mtpp_8k/mtpp_mean_all/best_134150 \
-#   --model_name         mtpp \
-#   --tokens_per_batch   65536 \
-#   --device             cuda:0 \
-#   --min_subjects_per_batch 8 \
-#   --ontology_path       /user/zj2398/cache/mtpp_8k/ontology.pkl \
-#   --main_split_path     /user/zj2398/cache/mtpp_8k/main_split.csv \
-#   --loss_type  labeled_subjects \
-#   --output_dir   /shared/share_mala/zj2398/mimic/phenotype_task/ \
-#   /shared/share_mala/zj2398/mimic/phenotype_task/cohort/
-
-
-
-# export CUDA_VISIBLE_DEVICES=3
-# bash run_mtpp_cbs.sh \
-#   --pretraining_data   /user/zj2398/cache/mtpp_8k \
-#   --meds_reader        /shared/share_mala/zj2398/mimic/meds_v0.6_reader \
-#   --num_proc           100 \
-#   --model_path         /user/zj2398/cache/mtpp_8k/mtpp_mean_all/best_134150 \
-#   --model_name         mtpp \
-#   --tokens_per_batch   65536 \
-#   --device             cuda:0 \
-#   --min_subjects_per_batch 8 \
-#   --ontology_path       /user/zj2398/cache/mtpp_8k/ontology.pkl \
-#   --main_split_path     /user/zj2398/cache/mtpp_8k/main_split.csv \
-#   --loss_type  labeled_subjects \
-#   --output_dir   /shared/share_mala/zj2398/mimic/patient_outcome_task/ \
-#   /shared/share_mala/zj2398/mimic/patient_outcome_task/cohort/
-
-
 # old
 
 # bash run_old.sh \
