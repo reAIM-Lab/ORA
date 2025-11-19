@@ -15,10 +15,11 @@ np.random.seed(42)
 torch.manual_seed(42)
 
 def tte_evaluation(train_set, test_set, task, model_name):
-    print(f"task is {task}, model is {model_name} initial length {len(train_set)},{len(test_set)}")
-    train_set = train_set[train_set["time_to_event"] <= 330]
-    test_set  = test_set [test_set ["time_to_event"] <= 330]
-    print(f"after length {len(train_set)},{len(test_set)}")
+    # codes for using the first year labels
+    # print(f"task is {task}, model is {model_name} initial length {len(train_set)},{len(test_set)}")
+    # train_set = train_set[train_set["time_to_event"] <= 330]
+    # test_set  = test_set [test_set ["time_to_event"] <= 330]
+    # print(f"after length {len(train_set)},{len(test_set)}")
 
     val = train_set.sample(frac=0.1, replace=False, random_state=42)
     train_set = train_set.drop(val.index)
@@ -78,7 +79,8 @@ def run(tasks, old_phenotype_path_str):
         if not old_phenotype_path.exists():
             print(f"Skip task {task}: {old_phenotype_path} not found.")
             continue
-
+        
+        # the subdir includes pregenerated embeddings for all models: motor, tpp, mtpp
         for subdir in old_phenotype_path.iterdir():
             if not subdir.is_dir():
                 continue
@@ -97,7 +99,7 @@ def run(tasks, old_phenotype_path_str):
             metrics['C-Index']  = (float(np.mean(tte_results['C-Index'])),  float(np.std(tte_results['C-Index'])))
             metrics['Int-Brier'] = (float(np.mean(tte_results['Int-Brier'])), float(np.std(tte_results['Int-Brier'])))
 
-            save_dir = old_phenotype_dir / "results_1st_year" / task / subdir.name
+            save_dir = old_phenotype_dir / "debug_results" / task / subdir.name
             os.makedirs(save_dir, exist_ok=True)
             save_file = save_dir / "tte.json"
             with open(save_file, "w") as f:
@@ -108,10 +110,17 @@ def run(tasks, old_phenotype_path_str):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--tasks", type=str, required=True,
-                        help="Comma-separated list of tasks, e.g., 'celiac,masld,stroke'")
+                        help="Comma-separated list of tasks, e.g., 'AMI,Celiac,MASLD,Ischemic_Stroke'")
     parser.add_argument("--old_phenotype_path", type=str, required=True,
                         help="Base directory path containing 'results/<task>/*/features_with_label/*.parquet'")
     args = parser.parse_args()
 
     tasks_list = [t.strip() for t in args.tasks.split(",") if t.strip()]
     run(tasks_list, args.old_phenotype_path)
+
+'''
+command:
+python 1st_y_evaluation.py \
+    --tasks AMI \
+    --old_phenotype_path /data/results/femr_debug/phenotype  
+'''
