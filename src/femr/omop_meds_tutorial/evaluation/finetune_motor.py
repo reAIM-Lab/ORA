@@ -212,6 +212,8 @@ def main():
             train_mask = np.isin(labeled_features['subject_ids'], main_split.train_subject_ids)
             test_mask = np.isin(labeled_features['subject_ids'], main_split.test_subject_ids)
 
+            # print()
+
             def apply_mask(values, mask):
                 def apply(k, v):
                     if len(v.shape) == 1:
@@ -226,11 +228,14 @@ def main():
             train_data = apply_mask(labeled_features, train_mask)
             test_data = apply_mask(labeled_features, test_mask)
 
+            # print(f"train_data length is {len(train_data)}, {train_data}")
+            # print(f"test_data length is {len(test_data)},{test_data}")
+
             print("Saving features and labels to parquet")
             train_features_list = [feature for feature in train_data["features"]]
             test_features_list = [feature for feature in test_data["features"]]
 
-            if label_name in ["ami","masld","stroke","celiac"]:
+            if label_name in ["AMI","MASLD","Ischemic_Stroke","Celiac"]:
                 train_set = pd.DataFrame({
                     "subject_id" : train_data["subject_ids"],
                     "prediction_time" : train_data["prediction_times"],
@@ -312,7 +317,7 @@ def main():
                 "auroc": roc_auc,
                 "aucpr": pr_auc
             }
-            if label_name in ["ami","masld","stroke","celiac"]:
+            if label_name in ["AMI","MASLD","Ischemic_Stroke","Celiac"]:
                 tte_results = tte_evaluation(train_set,test_set)
                 metrics['C-Index'] = (np.mean(tte_results['C-Index']), np.std(tte_results['C-Index']))
                 metrics['Int-Brier'] = (np.mean(tte_results['Int-Brier']), np.std(tte_results['Int-Brier']))

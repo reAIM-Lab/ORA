@@ -225,42 +225,42 @@ for TASK_DIR in "$COHORT_BASE_DIR"*/; do
     echo "Running $MODEL_NAME feature generation for $TASK_NAME..."
 
     # # Build the command with conditional observation_window parameter
-    GENERATE_CMD="python -u -m femr.omop_meds_tutorial.evaluation.generate_features \
-      --pretraining_data \"$PRETRAINING_DATA\" \
-      --model_path \"$MODEL_PATH\" \
-      --model_name \"$MODEL_NAME\" \
-      --meds_reader \"$OMOP_MEDS_READER\" \
-      --num_proc \"$NUM_PROC\" \
-      --tokens_per_batch \"$TOKENS_PER_BATCH\" \
-      --device \"$DEVICE\" \
-      --min_subjects_per_batch \"$MIN_SUBJECTS_PER_BATCH\" \
-      --cohort_dir \"$TASK_DIR\" \
-      --ontology_path \"$ONTOLOGY_PATH\" \
-      --output_root \"$OUTPUT_DIR\" \
-      --task_type "binary" \
-      --loss_type "labeled_subjects" "
+    # GENERATE_CMD="python -u -m femr.omop_meds_tutorial.evaluation.generate_features \
+    #   --pretraining_data \"$PRETRAINING_DATA\" \
+    #   --model_path \"$MODEL_PATH\" \
+    #   --model_name \"$MODEL_NAME\" \
+    #   --meds_reader \"$OMOP_MEDS_READER\" \
+    #   --num_proc \"$NUM_PROC\" \
+    #   --tokens_per_batch \"$TOKENS_PER_BATCH\" \
+    #   --device \"$DEVICE\" \
+    #   --min_subjects_per_batch \"$MIN_SUBJECTS_PER_BATCH\" \
+    #   --cohort_dir \"$TASK_DIR\" \
+    #   --ontology_path \"$ONTOLOGY_PATH\" \
+    #   --output_root \"$OUTPUT_DIR\" \
+    #   --task_type "binary" \
+    #   --loss_type "labeled_subjects" "
 
-    # Add linear_interpolation parameter if specified
-    if [ "$USE_LINEAR_INTERPOLATION" = true ]; then
-        GENERATE_CMD="$GENERATE_CMD --linear_interpolation"
-    fi
+    # # Add linear_interpolation parameter if specified
+    # if [ "$USE_LINEAR_INTERPOLATION" = true ]; then
+    #     GENERATE_CMD="$GENERATE_CMD --linear_interpolation"
+    # fi
 
-    # Add observation_window parameter if specified
-    if [ -n "$OBSERVATION_WINDOW" ]; then
-        GENERATE_CMD="$GENERATE_CMD --observation_window \"$OBSERVATION_WINDOW\""
-    fi
+    # # Add observation_window parameter if specified
+    # if [ -n "$OBSERVATION_WINDOW" ]; then
+    #     GENERATE_CMD="$GENERATE_CMD --observation_window \"$OBSERVATION_WINDOW\""
+    # fi
 
-    # Print the command
-    echo "Executing command: $GENERATE_CMD"
+    # # Print the command
+    # echo "Executing command: $GENERATE_CMD"
 
-    # # Execute the command
-    eval $GENERATE_CMD
+    # # # Execute the command
+    # eval $GENERATE_CMD
 
-    # Check if the first command succeeded
-    if [ $? -ne 0 ]; then
-        echo "Error: $MODEL_NAME feature generation failed for task $TASK_NAME"
-        continue
-    fi
+    # # Check if the first command succeeded
+    # if [ $? -ne 0 ]; then
+    #     echo "Error: $MODEL_NAME feature generation failed for task $TASK_NAME"
+    #     continue
+    # fi
 
     # Run the second command: fine-tune MOTOR
     echo "Running $MODEL_NAME fine-tuning for $TASK_NAME..."
@@ -324,7 +324,7 @@ echo "All tasks processed."
 
 
 # phenotype
-# export CUDA_VISIBLE_DEVICES=5
+# export CUDA_VISIBLE_DEVICES=2
 # bash run.sh \
 #   --pretraining_data   /user/zj2398/cache/mtpp_8k \
 #   --meds_reader        /shared/share_mala/zj2398/mimic/meds_v0.6_reader \
@@ -340,7 +340,7 @@ echo "All tasks processed."
 #   --output_dir   /shared/share_mala/zj2398/mimic/phenotype_task/ \
 #   /shared/share_mala/zj2398/mimic/phenotype_task/cohort/
 
-# export CUDA_VISIBLE_DEVICES=1
+# export CUDA_VISIBLE_DEVICES=3
 # bash run.sh \
 #   --pretraining_data   /user/zj2398/cache/mtpp_8k \
 #   --meds_reader        /shared/share_mala/zj2398/mimic/meds_v0.6_reader \
@@ -374,22 +374,37 @@ echo "All tasks processed."
 #   --output_dir   /data/results/zj2398/femr/cumc_0.1/phenotype \
 #   /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/task_labels/phenotype_tte/
 
-# bash run_mtpp_cbs.sh \
-#   --pretraining_data   /user/zj2398/cache/mtpp_8k \
-#   --meds_reader        /shared/share_mala/zj2398/mimic/meds_v0.6_reader \
-#   --num_proc           100 \
-#   --model_path         /user/zj2398/cache/mtpp_8k/mtpp_mean_all/best_134150 \
-#   --model_name         mtpp \
+# bash run.sh \
+#   --pretraining_data   /data2/processed_datasets/zj2398/femr/cumc_0.1/tpp/ \
+#   --meds_reader        /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/post_transform_meds_reader \
+#   --num_proc           20 \
+#   --model_path         /data2/processed_datasets/zj2398/femr/cumc_0.1/tpp/transformer/best_10746 \
+#   --model_name         tpp \
 #   --tokens_per_batch   65536 \
 #   --device             cuda:0 \
 #   --min_subjects_per_batch 8 \
-#   --ontology_path       /user/zj2398/cache/mtpp_8k/ontology.pkl \
-#   --main_split_path     /user/zj2398/cache/mtpp_8k/main_split.csv \
+#   --ontology_path       /data2/processed_datasets/zj2398/femr/ontology.pkl \
+#   --main_split_path     /data2/processed_datasets/zj2398/femr/cumc/cumc_split.csv \
 #   --loss_type  labeled_subjects \
-#   --output_dir   /shared/share_mala/zj2398/mimic/phenotype_task/ \
-#   /shared/share_mala/zj2398/mimic/phenotype_task/cohort/
+#   --output_dir   /data/results/zj2398/femr/cumc_0.1/phenotype \
+#   /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/task_labels/phenotype_tte/
 
 
+
+# bash run.sh \
+#   --pretraining_data   /data2/processed_datasets/zj2398/femr/cumc_0.1/motor/ \
+#   --meds_reader        /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/post_transform_meds_reader \
+#   --num_proc           20 \
+#   --model_path         /data2/processed_datasets/zj2398/femr/cumc_0.1/motor/transformer/best_17925 \
+#   --model_name         motor \
+#   --tokens_per_batch   65536 \
+#   --device             cuda:0 \
+#   --min_subjects_per_batch 8 \
+#   --ontology_path       /data2/processed_datasets/zj2398/femr/ontology.pkl \
+#   --main_split_path     /data2/processed_datasets/zj2398/femr/cumc/cumc_split.csv \
+#   --loss_type  labeled_subjects \
+#   --output_dir   /data/results/zj2398/femr/cumc_0.1/phenotype \
+#   /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/task_labels/phenotype_tte/
 
 
 
