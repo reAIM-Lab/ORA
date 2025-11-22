@@ -21,6 +21,7 @@ from .generate_features import get_model_name
 from pycox.models import DeepHitSingle
 from pycox.evaluation import EvalSurv
 import torchtuples as tt
+from sklearn.model_selection import ParameterGrid
 
 from tqdm import tqdm
 import pandas as pd
@@ -109,24 +110,31 @@ def logistic_regression(train_set,test_data,label_output_dir):
     pr_auc = sklearn.metrics.auc(recall, precision)
     return roc_auc,pr_auc
 
-def tte_evaluation(train_set,test_set):
-    val = train_set.sample(frac = 0.1, replace = False)
+def tte_evaluation(train_set, test_set):
+    # Extract validation set to stop loss
+    val = train_set.sample(frac=0.2, replace=False, random_state=42)
     train_set = train_set.drop(val.index)
-    # train[~train.boolean_value].time_to_event_days.plot.hist(bins = 1000)
+
+    # Create hyper parameter selection set
+    hyper = val.sample(frac=0.5, replace=False, random_state=42)
+    val = val.drop(hyper.index)
 
     # Transform labels
     num_durations = 100
     labtrans = DeepHitSingle.label_transform(num_durations)
-    get_target = lambda df: (df['time_to_event'].values, df['tte_label'].values) 
+    get_target = lambda df: (df['time_to_event'].values, df['tte_label'].values)
 
     # Extract features and labels
     x_train = np.stack(train_set.features.values)
     y_train = labtrans.fit_transform(*get_target(train_set))
-    train = (x_train, y_train)
+    durations_train, events_train = get_target(train_set)
 
     x_val = np.stack(val.features.values)
     y_val = labtrans.transform(*get_target(val))
     val = (x_val, y_val)
+
+    x_hyper = np.stack(hyper.features.values)
+    y_hyper = labtrans.transform(*get_target(hyper))
 
     x_test = np.stack(test_set.features.values)
     durations_test, events_test = get_target(test_set)
@@ -135,29 +143,98 @@ def tte_evaluation(train_set,test_set):
     in_features = x_train.shape[1]
     out_features = labtrans.out_features
 
-    net = tt.practical.MLPVanilla(in_features, [], out_features)
+    grid = ParameterGrid({
+        'dropout': [0, 0.1],
+        'lr': [0.001, 0.0001],
+        'batch': [1024, 2048]
+    })
 
-    # Train Deephit
-    model = DeepHitSingle(net, tt.optim.Adam, duration_index=labtrans.cuts)
-    epochs, batch = 100, 2048
-    log = model.fit(x_train, y_train, batch, epochs, [tt.callbacks.EarlyStopping()], val_data=val)
+    # Hyperparameter selection
+    best_nll = np.inf
+    for param in grid:
+        net = tt.practical.MLPVanilla(in_features, [], out_features, True, param['dropout'])
 
-    # Predict on test set
-    surv = model.predict_surv_df(x_test)
+        # Train Deephit
+        model = DeepHitSingle(net, tt.optim.Adam, duration_index=labtrans.cuts)
+        model.optimizer.set_lr(param['lr'])
+        epochs = 1000
+        _ = model.fit(x_train, y_train, param['batch'], epochs, [tt.callbacks.EarlyStopping()],
+                    val_data=val)
+        
+        nll = model.score_in_batches(x_hyper, y_hyper)['loss']
+        if nll < best_nll:
+            best_model = model
+            best_nll = nll
+    
 
-    # Compute boostrapped performance
-    results = {'C-Index':[], 'Int-Brier':[]}
-    time_grid = np.linspace(durations_test.min(), durations_test.max(), 100)
-    for boot in tqdm(range(100)):
+    # Evaluation best model
+    surv = best_model.predict_surv_df(x_test)
+
+    # Compute bootstrapped performance
+    results = {'C-Index': [], 'Int-Brier': []}
+    time_grid = np.linspace(0, 5*365, 10)
+    km = EvalSurv(best_model.predict_surv_df(x_train), durations_train, events_train, censor_surv = 'km')
+    for _ in tqdm(range(100)):
         sample = np.random.choice(len(x_test), len(x_test))
-        ev = EvalSurv(surv[sample], durations_test[sample], events_test[sample], censor_surv='km')
+        # surv has times as rows and individuals as columns; sample columns
+        ev = EvalSurv(surv.iloc[:, sample], durations_test[sample], events_test[sample], censor_surv=km)
         results['C-Index'].append(ev.concordance_td('antolini'))
         results['Int-Brier'].append(ev.integrated_brier_score(time_grid))
 
     # Display
     for metric in results:
-        print('{}: {:.2f} ({:.2f})'.format(metric, np.mean(results[metric]), np.std(results[metric])))
+        print('{}: {:.3f} ({:.3f})'.format(metric, np.mean(results[metric]), np.std(results[metric])))
     return results
+
+# def tte_evaluation(train_set,test_set):
+#     val = train_set.sample(frac = 0.1, replace = False)
+#     train_set = train_set.drop(val.index)
+#     # train[~train.boolean_value].time_to_event_days.plot.hist(bins = 1000)
+
+#     # Transform labels
+#     num_durations = 100
+#     labtrans = DeepHitSingle.label_transform(num_durations)
+#     get_target = lambda df: (df['time_to_event'].values, df['tte_label'].values) 
+
+#     # Extract features and labels
+#     x_train = np.stack(train_set.features.values)
+#     y_train = labtrans.fit_transform(*get_target(train_set))
+#     train = (x_train, y_train)
+
+#     x_val = np.stack(val.features.values)
+#     y_val = labtrans.transform(*get_target(val))
+#     val = (x_val, y_val)
+
+#     x_test = np.stack(test_set.features.values)
+#     durations_test, events_test = get_target(test_set)
+
+#     # Define one layer NN for Deephit
+#     in_features = x_train.shape[1]
+#     out_features = labtrans.out_features
+
+#     net = tt.practical.MLPVanilla(in_features, [], out_features)
+
+#     # Train Deephit
+#     model = DeepHitSingle(net, tt.optim.Adam, duration_index=labtrans.cuts)
+#     epochs, batch = 100, 2048
+#     log = model.fit(x_train, y_train, batch, epochs, [tt.callbacks.EarlyStopping()], val_data=val)
+
+#     # Predict on test set
+#     surv = model.predict_surv_df(x_test)
+
+#     # Compute boostrapped performance
+#     results = {'C-Index':[], 'Int-Brier':[]}
+#     time_grid = np.linspace(durations_test.min(), durations_test.max(), 100)
+#     for boot in tqdm(range(100)):
+#         sample = np.random.choice(len(x_test), len(x_test))
+#         ev = EvalSurv(surv[sample], durations_test[sample], events_test[sample], censor_surv='km')
+#         results['C-Index'].append(ev.concordance_td('antolini'))
+#         results['Int-Brier'].append(ev.integrated_brier_score(time_grid))
+
+#     # Display
+#     for metric in results:
+#         print('{}: {:.2f} ({:.2f})'.format(metric, np.mean(results[metric]), np.std(results[metric])))
+#     return results
     
 def main():
     args = create_arg_parser().parse_args()
@@ -283,34 +360,6 @@ def main():
             print(f"Total train features labels: {len(train_data['features'])}")
             print(f"Total test features labels: {len(test_data['features'])}")
 
-            # model = LogisticRegressionCV(scoring='roc_auc')
-            # model.fit(train_set['features'].to_list(), train_set['boolean_value'])
-
-            # y_pred = model.predict_proba(test_data['features'])[:, 1]
-
-            # # Convert predictions to a Polars DataFrame
-            # logistic_predictions = pl.DataFrame({
-            #     "subject_id": test_data["subject_ids"].tolist(),
-            #     "prediction_time": test_data["prediction_times"].tolist(),
-            #     "predicted_boolean_probability": y_pred.tolist(),
-            #     "predicted_boolean_value": None,
-            #     "boolean_value": test_data["boolean_values"].astype(bool).tolist()
-            # })
-
-            # logistic_predictions = logistic_predictions.with_columns(
-            #     pl.col("predicted_boolean_value").cast(pl.Boolean())
-            # )
-
-            # # Create output directory
-            # logistic_test_predictions = label_output_dir / "test_predictions"
-            # logistic_test_predictions.mkdir(exist_ok=True, parents=True)
-            # # Write to parquet
-            # logistic_predictions.write_parquet(logistic_test_predictions / "predictions.parquet")
-
-            # roc_auc = sklearn.metrics.roc_auc_score(test_data['boolean_values'], y_pred)
-            # precision, recall, _ = sklearn.metrics.precision_recall_curve(test_data['boolean_values'], y_pred)
-            # pr_auc = sklearn.metrics.auc(recall, precision)
-
             roc_auc,pr_auc = logistic_regression(train_set,test_data,label_output_dir)
             print(label_name, roc_auc)
             metrics = {
@@ -321,6 +370,9 @@ def main():
                 tte_results = tte_evaluation(train_set,test_set)
                 metrics['C-Index'] = (np.mean(tte_results['C-Index']), np.std(tte_results['C-Index']))
                 metrics['Int-Brier'] = (np.mean(tte_results['Int-Brier']), np.std(tte_results['Int-Brier']))
+            # tte_result_file = label_output_dir / 'tte_metrics.json'
+            # with open(tte_result_file, "w") as f:
+            #     json.dump(metrics, f, indent=4)
             with open(test_result_file, "w") as f:
                 json.dump(metrics, f, indent=4)
 
