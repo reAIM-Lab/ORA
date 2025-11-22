@@ -210,8 +210,9 @@ class MTPP_Task(Task):
             num_tasks: int,
             num_bins: int,
             final_layer_size: int,
+            value_count_threshold: int,
             codes_to_skip: List[str] = None,
-            num_value_bins: int = 10,
+            num_value_bins: int = 10
     ) -> MTPP_Task:
         tasks = []
         for dict_entry in tokenizer.dictionary["vocab"]:
@@ -228,8 +229,9 @@ class MTPP_Task(Task):
 
         print(f"Processing {len(tasks)} tasks for fitting")
 
+        print(f"Using {num_bins} time bins and {num_value_bins} value bins")
         # apply _prefit_motor_map
-        print("before functools.reduce")
+        # print("before functools.reduce")
         task_length_samples, stats, task_value_samples = functools.reduce(
             _prefit_motor_agg, db.map(functools.partial(_prefit_motor_map, tasks=tasks, ontology=tokenizer.ontology))
         )
@@ -255,7 +257,7 @@ class MTPP_Task(Task):
             
             if value_sample_count > 0:
                 # This is a numerical task: tte > 1/1000 & value count > 1000
-                if frac_events < 1 / 1000 or value_sample_count < 1000:
+                if frac_events < 1 / 1000 or value_sample_count < value_count_threshold:
                     print(f"Filtered out numerical task {task}: frac_events={frac_events}, value_count={value_sample_count}")
                     continue
             else:

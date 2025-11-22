@@ -15,12 +15,13 @@ echo
 
 # ---- job 1: data prep (background) ----
 python prepare_motor/prepare_motor.py \
-  --pretraining_data /data/processed_datasets/processed_datasets/zj2398/femr/mimic/deephit_tpp \
-  --athena_path " " \
-  --num_bins 8 \
-  --loss_type tpp \
-  --num_threads 100 \
-  --meds_reader /data/raw_data/mimic/files/mimiciv/meds_v0.6/3.1/MEDS_cohort-reader
+    --pretraining_data /data/models/zj2398/femr/cumc_0.1/mtpp_5_bin \
+    --athena_path "" \
+    --num_bins 8 \
+    --num_value_bins 5 \
+    --loss_type mtpp \
+    --num_threads 16 \
+    --meds_reader /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/post_transform_0.1_reader 
   >"$PREP_LOG" 2>&1 &
 
 # PREP_PID=$!
@@ -42,12 +43,13 @@ python prepare_motor/prepare_motor.py \
 
 #single gpu
 python pretrain.py \
-  --pretraining_data /data/processed_datasets/processed_datasets/zj2398/femr/mimic/deephit_tpp \
-  --meds_reader /data/raw_data/mimic/files/mimiciv/meds_v0.6/3.1/MEDS_cohort-reader \
+  --pretraining_data /data/models/zj2398/femr/cumc_0.1/mtpp_5_bin \
+  --meds_reader /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/post_transform_0.1_reader \
   --per_device_train_batch_size 1 \
-  --output_dir /data/processed_datasets/processed_datasets/zj2398/femr/mimic/deephit_tpp/output_mamba \
-  --model mamba \
-  --loss_type tpp \
-  --n_layers 12
+  --output_dir /data/models/zj2398/femr/cumc_0.1/mtpp_5_bin/transformer \
+  --model transformer \
+  --hf_run_name mtpp_bin_5_cumc_0.1 \
+  --loss_type mtpp \
+
 
 #  825, 8, 6100] torch.Size([825, 8, 6100])

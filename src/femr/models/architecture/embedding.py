@@ -621,6 +621,8 @@ class MTPPTaskHead(nn.Module):
         self.numerical_task_time_bins = numerical_task_time_bins
         self.num_value_bins = value_bins.shape[1] - 1
         self.value_bins = value_bins
+
+        print(f"initialize model {self.num_time_bins} time bins and {self.value_bins} value bins")
         
         # Get task counts from input data structure - we'll determine from batch data
         # For now, assume we'll get the correct task counts from the batch

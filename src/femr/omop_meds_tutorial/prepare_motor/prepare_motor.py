@@ -107,7 +107,9 @@ def main(args):
                     num_tasks=8 * 1024,
                     num_bins=args.num_bins,
                     final_layer_size=512,
-                    codes_to_skip=codes_to_skip
+                    codes_to_skip=codes_to_skip,
+                    num_value_bins=args.num_value_bins,
+                    value_count_threshold=args.value_count_threshold
                 )
 
             with open(task_path, 'wb') as f:
@@ -118,7 +120,7 @@ def main(args):
                 task = pickle.load(f)
 
         # print(f"Motor task length: {len(motor_task.pretraining_task_codes)}")
-        processor = femr.models.processor.FEMRBatchProcessor(tokenizer, task)
+        # processor = femr.models.processor.FEMRBatchProcessor(tokenizer, task)
 
         # example_subject_id = list(train_database)[0]
         # example_subject = train_database[example_subject_id]
@@ -131,26 +133,26 @@ def main(args):
         # for key in example_batch['batch'].keys():
         #     print(f"example_batch[{key}], shape: {example_batch['batch'][key].shape}, values: {example_batch['batch'][key]}")
 
-        train_batches_path = pretraining_data_path / 'train_batches'
+        # train_batches_path = pretraining_data_path / 'train_batches'
 
-        if not train_batches_path.exists():
-            print("Convert batches")
-            # But generally we want to convert entire datasets
-            train_batches = processor.convert_dataset(train_database, tokens_per_batch=args.tokens_per_batch, num_proc=32)
+        # if not train_batches_path.exists():
+        #     print("Convert batches")
+        #     # But generally we want to convert entire datasets
+        #     train_batches = processor.convert_dataset(train_database, tokens_per_batch=args.tokens_per_batch, num_proc=16)
 
-            print("Convert batches to pytorch")
-            # Convert our batches to pytorch tensors
-            train_batches.set_format("pt")
-            train_batches.save_to_disk(train_batches_path)
+        #     print("Convert batches to pytorch")
+        #     # Convert our batches to pytorch tensors
+        #     train_batches.set_format("pt")
+        #     train_batches.save_to_disk(train_batches_path)
 
-        val_batches_path = pretraining_data_path / 'val_batches'
+        # val_batches_path = pretraining_data_path / 'val_batches'
 
-        if not val_batches_path.exists():
-            print("Convert val batches")
-            val_batches = processor.convert_dataset(val_database, tokens_per_batch=args.tokens_per_batch, num_proc=32)
-            # Convert our batches to pytorch tensors
-            val_batches.set_format("pt")
-            val_batches.save_to_disk(val_batches_path)
+        # if not val_batches_path.exists():
+        #     print("Convert val batches")
+        #     val_batches = processor.convert_dataset(val_database, tokens_per_batch=args.tokens_per_batch, num_proc=16)
+        #     # Convert our batches to pytorch tensors
+        #     val_batches.set_format("pt")
+        #     val_batches.save_to_disk(val_batches_path)
 
 
 def create_omop_meds_tutorial_argparser():
@@ -206,6 +208,24 @@ def create_omop_meds_tutorial_argparser():
         default=8,
     )
     parser.add_argument(
+        "--num_value_bins",
+        dest="num_value_bins",
+        action="store",
+        required=False,
+        type=int,
+        default=10,
+    )
+
+    parser.add_argument(
+        "--value_count_threshold",
+        dest="value_count_threshold",
+        action="store",
+        required=False,
+        type=int,
+        default=100,
+    )
+
+    parser.add_argument(
         "--loss_type",
         dest="loss_type",
         action="store",
@@ -214,7 +234,6 @@ def create_omop_meds_tutorial_argparser():
         type=str,
         default=8,
     )
-    
     
 
     return parser
@@ -272,7 +291,36 @@ python prepare_motor.py \
     --num_threads 8 \
     --meds_reader /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/post_transform_0.1_reader    
     
-/data2/processed_datasets/zj2398/femr/cumc_0.1/motor  
+python prepare_motor.py \
+    --pretraining_data /data/models/zj2398/femr/cumc_0.1/mtpp_5_bin \
+    --athena_path "" \
+    --num_bins 8 \
+    --num_value_bins 5 \
+    --loss_type mtpp \
+    --num_threads 16 \
+    --meds_reader /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/post_transform_0.1_reader   
+
+python prepare_motor.py \
+    --pretraining_data /data/models/zj2398/femr/cumc_0.1/mtpp_3_bin \
+    --athena_path "" \
+    --num_bins 8 \
+    --num_value_bins 3 \
+    --loss_type mtpp \
+    --num_threads 16 \
+    --meds_reader /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/post_transform_0.1_reader 
+
+    
+python prepare_motor.py \
+    --pretraining_data /data/models/zj2398/femr/cumc_0.1/mtpp_value_100 \
+    --athena_path "" \
+    --num_bins 8 \
+    --num_value_bins 10 \
+    --loss_type mtpp \
+    --num_threads 32 \
+    --value_count_threshold 100 \
+    --meds_reader /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/post_transform_0.1_reader 
+    
+
 
 cumc-kuvira
 python prepare_motor.py \

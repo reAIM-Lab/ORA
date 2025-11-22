@@ -281,7 +281,7 @@ def main():
         train_dataset=train_batches,
         eval_dataset=val_batches,
         args=trainer_config,
-        callbacks=[CustomEarlyStoppingCallback(early_stopping_patience=1, early_stopping_threshold=0.001)],
+        callbacks=[CustomEarlyStoppingCallback(early_stopping_patience=3, early_stopping_threshold=0.001)],
     )
 
     train_result = trainer.train(resume_from_checkpoint=args.checkpoint_dir)
@@ -338,14 +338,26 @@ CUDA_VISIBLE_DEVICES=4,5,6,7 accelerate launch \
 
 kuvira
 
-CUDA_VISIBLE_DEVICES=0
+export CUDA_VISIBLE_DEVICES=1
 python pretrain.py \
     --pretraining_data /data2/processed_datasets/zj2398/femr/cumc_0.1/tpp \
     --meds_reader /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/post_transform_0.1_reader \
-    --output_dir /data2/processed_datasets/zj2398/femr/cumc_0.1/tpp/transformer \
+    --output_dir /data2/processed_datasets/zj2398/femr/cumc_0.1/tpp/transformer_continue \
+    --checkpoint_dir /data2/processed_datasets/zj2398/femr/cumc_0.1/tpp/transformer/best_10746 \
     --model transformer \
-    --hf_run_name tpp_cumc_0.1 \
+    --hf_run_name tpp_cumc_0.1_continue \
     --loss_type tpp
+
+
+python pretrain.py \
+    --pretraining_data /data2/processed_datasets/zj2398/femr/cumc_0.1/tpp \
+    --meds_reader /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/post_transform_0.1_reader \
+    --output_dir /data2/processed_datasets/zj2398/femr/cumc_0.1/tpp/transformer_continue \
+    --checkpoint_dir /data2/processed_datasets/zj2398/femr/cumc_0.1/tpp/transformer/best_10746 \
+    --model transformer \
+    --hf_run_name motor_cumc_0.1_continue \
+    --loss_type motor
+
 
 python pretrain.py \
     --pretraining_data /data2/processed_datasets/zj2398/femr/cumc_0.1/mtpp \
