@@ -70,7 +70,7 @@ def main(args):
             print("Train tokenizer")
             tokenizer = HierarchicalTokenizer.train(
                 main_database,
-                vocab_size=1024 * 16,
+                vocab_size=args.vocab_size,
                 ontology=ontology
             )
             # Save the tokenizer to the same directory as the model
@@ -115,9 +115,9 @@ def main(args):
             with open(task_path, 'wb') as f:
                 pickle.dump(task, f)
 
-        else:
-            with open(task_path, 'rb') as f:
-                task = pickle.load(f)
+        # else:
+        #     with open(task_path, 'rb') as f:
+        #         task = pickle.load(f)
 
         # print(f"Motor task length: {len(motor_task.pretraining_task_codes)}")
         # processor = femr.models.processor.FEMRBatchProcessor(tokenizer, task)
@@ -207,6 +207,16 @@ def create_omop_meds_tutorial_argparser():
         type=int,
         default=8,
     )
+
+    parser.add_argument(
+        "--vocab_size",
+        dest="vocab_size",
+        action="store",
+        required=False,
+        type=int,
+        default=16384,
+    )
+
     parser.add_argument(
         "--num_value_bins",
         dest="num_value_bins",
@@ -257,12 +267,13 @@ python prepare_motor.py \
 kuvira
 
 python prepare_motor.py \
-  --pretraining_data /data/processed_datasets/processed_datasets/zj2398/femr/mimic/deephit_tpp \
+  --pretraining_data /data2/processed_datasets/zj2398/femr/cumc_0.1/mtpp_vocab_32k \
   --athena_path " " \
   --num_bins 8 \
-  --loss_type tpp \
+  --loss_type mtpp \
+  --vocab_size 120000 \
   --num_threads 100 \
-  --meds_reader /data/raw_data/mimic/files/mimiciv/meds_v0.6/3.1/MEDS_cohort-reader
+  --meds_reader /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/post_transform_0.1_reader
 
 
 kuvira cumc 0.1

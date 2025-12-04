@@ -27,6 +27,7 @@ from tqdm import tqdm
 import pandas as pd
 import numpy as np
 import torch
+from sksurv.metrics import concordance_index_ipcw, brier_score
 
 np.random.seed(42)
 torch.manual_seed(42)
@@ -166,24 +167,44 @@ def tte_evaluation(train_set, test_set):
             best_model = model
             best_nll = nll
     
-
-    # Evaluation best model
     surv = best_model.predict_surv_df(x_test)
+    truncation = 5 * 365
+    index_truncation = (surv.index - truncation).abs().argmin() # Find index closest to truncation time in surv
 
     # Compute bootstrapped performance
-    results = {'C-Index': [], 'Int-Brier': []}
-    time_grid = np.linspace(0, 5*365, 10)
-    km = EvalSurv(best_model.predict_surv_df(x_train), durations_train, events_train, censor_surv = 'km')
+    results = {'C-Index': [], 'Brier': []}
+
+    # Create format for sksurv
+    et_train = np.array([(events_train[i], durations_train[i]) for i in range(len(events_train))],
+                    dtype = [('e', bool), ('t', float)])
+    et_test = np.array([(events_test[i], durations_test[i]) for i in range(len(events_test))],
+                    dtype = [('e', bool), ('t', float)])
     for _ in tqdm(range(100)):
-        sample = np.random.choice(len(x_test), len(x_test))
-        # surv has times as rows and individuals as columns; sample columns
-        ev = EvalSurv(surv.iloc[:, sample], durations_test[sample], events_test[sample], censor_surv=km)
-        results['C-Index'].append(ev.concordance_td('antolini'))
-        results['Int-Brier'].append(ev.integrated_brier_score(time_grid))
+        sample = np.random.choice(len(et_test), len(et_test))
+        results['C-Index'].append(concordance_index_ipcw(et_train, et_test[sample], surv.T[sample], truncation))
+        results['Brier'].append(brier_score(et_train, et_test[sample], surv[index_truncation].T[sample], [truncation])[1]) #Only focus on data at truncation time
 
     # Display
     for metric in results:
         print('{}: {:.3f} ({:.3f})'.format(metric, np.mean(results[metric]), np.std(results[metric])))
+
+    # Evaluation best model
+    # surv = best_model.predict_surv_df(x_test)
+
+    # # Compute bootstrapped performance
+    # results = {'C-Index': [], 'Int-Brier': []}
+    # time_grid = np.linspace(0, 5*365, 10)
+    # km = EvalSurv(best_model.predict_surv_df(x_train), durations_train, events_train, censor_surv = 'km')
+    # for _ in tqdm(range(100)):
+    #     sample = np.random.choice(len(x_test), len(x_test))
+    #     # surv has times as rows and individuals as columns; sample columns
+    #     ev = EvalSurv(surv.iloc[:, sample], durations_test[sample], events_test[sample], censor_surv=km)
+    #     results['C-Index'].append(ev.concordance_td('antolini'))
+    #     results['Int-Brier'].append(ev.integrated_brier_score(time_grid))
+
+    # # Display
+    # for metric in results:
+    #     print('{}: {:.3f} ({:.3f})'.format(metric, np.mean(results[metric]), np.std(results[metric])))
     return results
 
 # def tte_evaluation(train_set,test_set):
