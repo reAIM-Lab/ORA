@@ -12,6 +12,9 @@ import numpy as np
 import scipy.sparse
 import torch
 import warnings
+from collections import defaultdict
+from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
+import multiprocessing as mp
 
 import femr.models.config
 import femr.models.tokenizer
@@ -20,6 +23,8 @@ import femr.pat_utils
 import femr.stat_utils
 import random
 import logging
+from collections import defaultdict
+
 
 class Task(abc.ABC):
     def __init__(self):
@@ -59,7 +64,7 @@ class Task(abc.ABC):
         return batch
 
 
-class TPP_SurvivalCalculator:
+class MTPP_SurvivalCalculator:
     def __init__(
             self, ontology: femr.ontology.Ontology, subject: meds_reader.Subject,
             code_whitelist: Optional[Set[str]] = None
@@ -137,7 +142,7 @@ def _prefit_motor_map(
     task_set = set(tasks)
 
     for subject in subjects:
-        calculator = TPP_SurvivalCalculator(ontology, subject, task_set)
+        calculator = MTPP_SurvivalCalculator(ontology, subject, task_set)
         birth = femr.pat_utils.get_subject_birthdate(subject)
 
         for event, next_event in zip(subject.events, subject.events[1:]):
@@ -175,6 +180,7 @@ def _prefit_motor_map(
                 
                 task_time_stats[i][2].add(1, time_delta.total_seconds())
     
+    
     print(f"prefit_motor_map is done")
     return (task_event_times, task_time_stats, task_value_stats)
 
@@ -200,13 +206,67 @@ def keep_unique_bins(value_samples, num_bins):
     unique_bins_augmented = np.concatenate([unique_bins,np.array((num_bins+1-len(unique_bins))*[float("inf")])])
     mask = np.concatenate([np.ones(len(unique_bins)),np.zeros(num_bins+1-len(unique_bins))])
     return unique_bins_augmented, mask
+
+def count_codes_for_subjects(args):
+    """Process a chunk of subjects and return local code counts"""
+    subject_ids_chunk, meds_path = args
+    database = meds_reader.SubjectDatabase(meds_path)
+    local_stats = defaultdict(int)
+    
+    for subject_id in subject_ids_chunk:
+        subject_num = database[subject_id]
+        for event in subject_num.events:
+            if (event.numeric_value is not None and 
+                isinstance(event.numeric_value, (int, float)) and 
+                event.text_value is None):
+                local_stats[event.code] += 1
+    
+    return dict(local_stats)
+
+def calculate_numeric_distribution(meds_reader_path, train_subject_ids, n_workers=32):    
+    # Split subject IDs into chunks
+    database = meds_reader.SubjectDatabase(str(meds_reader_path))
+    # subject_ids = list(database)
+    chunk_size = max(1, len(train_subject_ids) // n_workers)
+    chunks = [train_subject_ids[i:i + chunk_size] 
+            for i in range(0, len(train_subject_ids), chunk_size)]
+    
+    # Prepare arguments for each worker
+    args_list = [(chunk, meds_reader_path) for chunk in chunks]
+    
+    # Process chunks in parallel (use ThreadPoolExecutor if database isn't picklable)
+    code_stats = defaultdict(int)
+    
+    # Try ProcessPoolExecutor first (faster for CPU-bound), fallback to ThreadPoolExecutor
+    # try:
+    with ProcessPoolExecutor(max_workers=n_workers) as executor:
+        results = executor.map(count_codes_for_subjects, args_list)
+        # results = 
+        
+        # Merge results
+        for local_stats in results:
+            for code, count in local_stats.items():
+                code_stats[code] += count
+    
+    # Filter: keep only codes with 100 <= count <= 10^6
+    filtered_stats = {code: count for code, count in code_stats.items() 
+                    if 100 <= count}
+    
+    # Sort by frequency (count) in descending order and return only keys
+    sorted_codes = [code for code, count in 
+                    sorted(filtered_stats.items(), key=lambda x: x[1], reverse=True)]
+    
+    return sorted_codes
     
 class MTPP_Task(Task):
     @classmethod
+
     def fit_pretraining_task_info(
             cls,
             db: meds_reader.SubjectDatabase,
             tokenizer: femr.models.tokenizer.HierarchicalTokenizer,
+            train_subject_ids,
+            meds_reader_path,
             num_tasks: int,
             num_bins: int,
             final_layer_size: int,
@@ -215,8 +275,14 @@ class MTPP_Task(Task):
             num_value_bins: int = 10
     ) -> MTPP_Task:
         tasks = []
+        print(f"inside the meds reader is {meds_reader_path} type is {type(meds_reader_path)}")
+        numerical_codes = calculate_numeric_distribution(meds_reader_path,train_subject_ids, n_workers=32)
+        for i in range(0,min(len(numerical_codes),1000)):
+            print(numerical_codes[i])
+            tasks.append(numerical_codes[i])
+
         for dict_entry in tokenizer.dictionary["vocab"]:
-            if dict_entry["type"] == "code":
+            if dict_entry["type"] == "code" and dict_entry["code_string"] not in tasks:
                 # Skip the codes that are in the codes_to_skip
                 if codes_to_skip and dict_entry["code_string"] in codes_to_skip:
                     continue
@@ -228,6 +294,7 @@ class MTPP_Task(Task):
             warnings.warn(f"Could not find enough tasks in the provided tokenizer {len(tasks)}")
 
         print(f"Processing {len(tasks)} tasks for fitting")
+        logging.info(f"Processing {len(tasks)} tasks for fitting")
 
         print(f"Using {num_bins} time bins and {num_value_bins} value bins")
         # apply _prefit_motor_map
@@ -244,12 +311,14 @@ class MTPP_Task(Task):
         numerical_task_list = []
         task_data = []
 
+        not_valid_numerical = []
         for i, (task, task_stats) in enumerate(zip(tasks, stats)):
             frac_events = task_stats[1] / (task_stats[0] + task_stats[1])
             rate = frac_events / task_stats[2].mean()  # happening rate of the task num_points/time
 
             if rate == 0:
                 print("Ran into task of rate 0?", task, frac_events, task_stats[0], task_stats[1], task_stats[2].mean())
+                logging.info("Ran into task of rate 0?", task, frac_events, task_stats[0], task_stats[1], task_stats[2].mean())
                 continue
 
             # Apply filtering based on whether task has numerical values
@@ -257,17 +326,19 @@ class MTPP_Task(Task):
             
             if value_sample_count > 0:
                 # This is a numerical task: tte > 1/1000 & value count > 1000
-                if frac_events < 1 / 1000 or value_sample_count < value_count_threshold:
-                    print(f"Filtered out numerical task {task}: frac_events={frac_events}, value_count={value_sample_count}")
-                    continue
-            else:
-                # This is a non-numerical task: original threshold
                 if frac_events < 1 / 1000:
-                    print("Ran into very rare task with less than 0.1% events", task, frac_events, task_stats[0],
-                          task_stats[1], task_stats[2].mean())
+                    not_valid_numerical.append(task)
+                    print(f"Filtered out numerical task {task}: frac_events={frac_events}, value_count={value_sample_count}")
+                    logging.info(f"Filtered out numerical task {task}: frac_events={frac_events}, value_count={value_sample_count}")
                     continue
+            # else:
+            #     # This is a non-numerical task: original threshold
+            #     if frac_events < 1 / 1000:
+            #         print("Ran into very rare task with less than 0.1% events", task, frac_events, task_stats[0],
+            #               task_stats[1], task_stats[2].mean())
+                    # continue
 
-            task_data.append((task, rate, task_stats[0], task_stats[1], task_stats[2].mean()))
+            task_data.append((task, rate, task_stats[0], task_stats[1], task_stats[2].mean(),value_sample_count,not_valid_numerical))
             
 
             
@@ -290,6 +361,7 @@ class MTPP_Task(Task):
                 numerical_task_list.append(task)
             
                 print(f"Created {sum(mask)} valid value bins for numerical task {task} from {value_sample_count} samples")
+                logging.info(f"Created {sum(mask)} valid value bins for numerical task {task} from {value_sample_count} samples")
             
             else:
                 # Create time bins
@@ -369,7 +441,7 @@ class MTPP_Task(Task):
 
     def start_subject(self, subject: meds_reader.Subject, ontology: Optional[femr.ontology.Ontology]) -> None:
         assert ontology
-        self.calculator = TPP_SurvivalCalculator(ontology, subject, self.pretraining_task_codes)
+        self.calculator = MTPP_SurvivalCalculator(ontology, subject, self.pretraining_task_codes)
 
         self.per_subject_censor_time: List[float] = []
         self.per_subject_time_sparse: Dict[str, List[float]] = {

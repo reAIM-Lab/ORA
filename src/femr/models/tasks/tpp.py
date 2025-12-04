@@ -58,7 +58,7 @@ class Task(abc.ABC):
     def cleanup(self, batch: Mapping[str, torch.Tensor]) -> Mapping[str, torch.Tensor]:
         return batch
 
-class MTPP_SurvivalCalculator:
+class TPP_SurvivalCalculator:
     def __init__(
             self, ontology: femr.ontology.Ontology, subject: meds_reader.Subject,
             code_whitelist: Optional[Set[str]] = None
@@ -120,7 +120,7 @@ def _prefit_motor_map(
 
     # print(f"subject has {len(list(subjects))} objects.")
     for subject in subjects:
-        calculator = MTPP_SurvivalCalculator(ontology, subject, task_set)
+        calculator = TPP_SurvivalCalculator(ontology, subject, task_set)
         # print(f"calculator: {calculator}")
         # print(for )
         birth = femr.pat_utils.get_subject_birthdate(subject)
@@ -275,7 +275,7 @@ class TPP_Task(Task):
 
     def start_subject(self, subject: meds_reader.Subject, ontology: Optional[femr.ontology.Ontology]) -> None:
         assert ontology
-        self.calculator = MTPP_SurvivalCalculator(ontology, subject, self.pretraining_task_codes)
+        self.calculator = TPP_SurvivalCalculator(ontology, subject, self.pretraining_task_codes)
 
         self.per_subject_censor_time: List[float] = []
         self.per_subject_time_sparse: Dict[str, List[float]] = {

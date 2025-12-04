@@ -210,6 +210,8 @@ def convert_statistics_to_msgpack(
 
             num_numeric_for_property = max(1, int(num_numeric * frac_numeric))
 
+            print()
+
             bins = sorted(list(set(np.quantile(numeric_samples, np.linspace(0, 1, num=num_numeric_for_property + 1)))))
             bins = bins[1:-1]
 
@@ -234,6 +236,9 @@ def convert_statistics_to_msgpack(
     vocab = [v for v in vocab if v["weight"] <= min_entropy]
 
     vocab.sort(key=lambda a: a["weight"])
+    print(f"min fraction is {min_fraction}, min_entropy is {min_entropy}")
+    print(f"vocab currently have {len(vocab)} tokens, limite is {vocab_size} vocab size")
+    vocab_size = min(len(vocab),vocab_size)
     vocab = vocab[:vocab_size]
 
     age_stats_dict = {}
