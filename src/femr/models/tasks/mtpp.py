@@ -277,18 +277,21 @@ class MTPP_Task(Task):
         tasks = []
         print(f"inside the meds reader is {meds_reader_path} type is {type(meds_reader_path)}")
         numerical_codes = calculate_numeric_distribution(meds_reader_path,train_subject_ids, n_workers=32)
-        for i in range(0,min(len(numerical_codes),1000)):
-            print(numerical_codes[i])
-            tasks.append(numerical_codes[i])
 
         for dict_entry in tokenizer.dictionary["vocab"]:
-            if dict_entry["type"] == "code" and dict_entry["code_string"] not in tasks:
+            if dict_entry["type"] == "code":
                 # Skip the codes that are in the codes_to_skip
                 if codes_to_skip and dict_entry["code_string"] in codes_to_skip:
                     continue
                 tasks.append(dict_entry["code_string"])
                 if len(tasks) == num_tasks:
                     break
+
+        # append all numerical codes from highest happening rate to lowest
+        for i in range(0,len(numerical_codes)):
+            if numerical_codes[i] not in tasks:
+            # print(numerical_codes[i])
+                tasks.append(numerical_codes[i])
 
         if len(tasks) < num_tasks:
             warnings.warn(f"Could not find enough tasks in the provided tokenizer {len(tasks)}")
@@ -312,7 +315,13 @@ class MTPP_Task(Task):
         task_data = []
 
         not_valid_numerical = []
+        task_num = 0
+        numerical_task_num = 0
+
         for i, (task, task_stats) in enumerate(zip(tasks, stats)):
+            if task_num > num_tasks-1 and numerical_task_num >= 1000:
+                break
+            task_num += 1
             frac_events = task_stats[1] / (task_stats[0] + task_stats[1])
             rate = frac_events / task_stats[2].mean()  # happening rate of the task num_points/time
 
@@ -331,12 +340,13 @@ class MTPP_Task(Task):
                     print(f"Filtered out numerical task {task}: frac_events={frac_events}, value_count={value_sample_count}")
                     logging.info(f"Filtered out numerical task {task}: frac_events={frac_events}, value_count={value_sample_count}")
                     continue
-            # else:
-            #     # This is a non-numerical task: original threshold
-            #     if frac_events < 1 / 1000:
-            #         print("Ran into very rare task with less than 0.1% events", task, frac_events, task_stats[0],
-            #               task_stats[1], task_stats[2].mean())
-                    # continue
+                numerical_task_num += 1
+            else:
+                # This is a non-numerical task: original threshold
+                if frac_events < 1 / 1000:
+                    print("Ran into very rare nonnumerical task with less than 0.1% events", task, frac_events, task_stats[0],
+                          task_stats[1], task_stats[2].mean())
+                    continue
 
             task_data.append((task, rate, task_stats[0], task_stats[1], task_stats[2].mean(),value_sample_count,not_valid_numerical))
             

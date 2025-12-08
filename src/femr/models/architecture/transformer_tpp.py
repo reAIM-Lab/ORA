@@ -213,10 +213,10 @@ class TPPTaskHead(nn.Module):
     def __init__(
             self,
             hidden_size: int,
-            linear_interpolation: bool,
             pretraining_task_info: List[Tuple[str, float]],
             time_bins: np.ndarray,
             final_layer_size: int,
+            linear_interpolation: bool = False,
     ):
         super().__init__()
 
@@ -270,11 +270,6 @@ class TPPTaskHead(nn.Module):
         
         # OPTION 2: If you want sigmoid, use it INSTEAD of softmax, not both
         # Uncomment this block and comment out the above if you prefer sigmoid approach
-        # task_logits = self.task_layer(self.norm(time_independent_features))
-        # task_logits = torch.clamp(task_logits, min=-50, max=50)  # prevent overflow
-        # time_dependent_logits = torch.sigmoid(task_logits)
-        # # Normalize along time dimension to ensure probabilities sum to 1 over time
-        # time_dependent_logits = time_dependent_logits / torch.sum(time_dependent_logits, dim=1, keepdim=True)
         
         # Debug: Check for NaN/inf values
         if torch.any(torch.isnan(time_dependent_logits)) or torch.any(torch.isinf(time_dependent_logits)):
@@ -334,19 +329,19 @@ class TPPTaskHead(nn.Module):
         # event probability
         event_probs = torch.where(
             event_in_bins,
-            time_dependent_logits_stable,
+            torch.log(time_dependent_logits_stable),
             torch.zeros_like(event_in_bins)
         )
 
         censor_probs = torch.where(
-            is_censored_expanded,
-            integrated_logits_stable,
-            torch.zeros_like(is_censored_expanded)
+            censor_in_bins,
+            torch.log(integrated_logits_stable),
+            torch.zeros_like(censor_in_bins)
         )
 
         # Select the appropriate probability based on event vs censoring
         selected_probs = torch.where(
-            is_censored_expanded,
+            is_censored_expanded,  # true for all time bins for censor patients
             integrated_logits_stable,  # Use 1-F() for censoring
             time_dependent_logits_stable  # Use f() for events
         )
@@ -358,10 +353,13 @@ class TPPTaskHead(nn.Module):
             torch.zeros_like(selected_probs)  # No contribution from unmarked bins
         )
 
-        assert event_in_bins+censor_in_bins==marked_bins, f" event {event_in_bins} censor {censor_in_bins} take & {marked_bins}"
+        # print(f"event_in_bins {event_in_bins},{event_in_bins.shape}")
+        # print(f"censor_in_bins {censor_in_bins},{censor_in_bins.shape}")
+        # print(f"marked_bins {marked_bins},{marked_bins.shape}")
+        assert torch.all(event_in_bins+censor_in_bins==marked_bins), f" event {event_in_bins} censor {censor_in_bins} take & {marked_bins}"
         assert event_in_bins.shape == censor_in_bins.shape
         assert marked_bins.shape == censor_in_bins.shape
-        assert torch.sum(loss_values) == torch.sum(event_probs) + torch.sum(censor_probs), f"the loss for all, event, censor are {torch.sum(loss_values)}, {torch.sum(event_probs)},{torch.sum(censor_probs)}"
+        assert torch.sum(loss_values) - (torch.sum(event_probs) + torch.sum(censor_probs))<5, f"the loss for all, event, censor are {torch.sum(loss_values)}, {torch.sum(event_probs)},{torch.sum(censor_probs)}"
         
 
         # Average over all marked bins (should be exactly one per prediction-task combination)

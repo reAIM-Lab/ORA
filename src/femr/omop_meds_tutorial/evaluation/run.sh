@@ -224,7 +224,7 @@ for TASK_DIR in "$COHORT_BASE_DIR"*/; do
     # Run the first command: generate MOTOR features
     echo "Running $MODEL_NAME feature generation for $TASK_NAME..."
 
-    # Build the command with conditional observation_window parameter
+    # # Build the command with conditional observation_window parameter
     # GENERATE_CMD="python -u -m femr.omop_meds_tutorial.evaluation.generate_features \
     #   --pretraining_data \"$PRETRAINING_DATA\" \
     #   --model_path \"$MODEL_PATH\" \
@@ -256,11 +256,11 @@ for TASK_DIR in "$COHORT_BASE_DIR"*/; do
     # # # Execute the command
     # eval $GENERATE_CMD
 
-    # Check if the first command succeeded
-    if [ $? -ne 0 ]; then
-        echo "Error: $MODEL_NAME feature generation failed for task $TASK_NAME"
-        continue
-    fi
+    # # Check if the first command succeeded
+    # if [ $? -ne 0 ]; then
+    #     echo "Error: $MODEL_NAME feature generation failed for task $TASK_NAME"
+    #     continue
+    # fi
 
     # Run the second command: fine-tune MOTOR
     echo "Running $MODEL_NAME fine-tuning for $TASK_NAME..."
@@ -340,7 +340,7 @@ echo "All tasks processed."
 #   --output_dir   /shared/share_mala/zj2398/mimic/phenotype_task/ \
 #   /shared/share_mala/zj2398/mimic/phenotype_task/cohort/
 
-# export CUDA_VISIBLE_DEVICES=1
+# export CUDA_VISIBLE_DEVICES=2
 # bash run.sh \
 #   --pretraining_data   /user/zj2398/cache/mtpp_8k \
 #   --meds_reader        /shared/share_mala/zj2398/mimic/meds_v0.6_reader \
@@ -360,16 +360,16 @@ echo "All tasks processed."
 # kuvira
 
 # bash run.sh \
-#   --pretraining_data   /data2/processed_datasets/zj2398/femr/cumc_0.1/mtpp/ \
+#   --pretraining_data    /data/models/zj2398/femr/cumc_0.1/mtpp_shared \
 #   --meds_reader        /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/post_transform_meds_reader \
-#   --num_proc           20 \
-#   --model_path         /data2/processed_datasets/zj2398/femr/cumc_0.1/mtpp/transformer/best_39446 \
-#   --model_name         mtpp \
+#   --num_proc           32 \
+#   --model_path         /data/models/zj2398/femr/cumc_0.1/mtpp_shared/transformer/best_39446 \
+#   --model_name         mtpp_shared \
 #   --tokens_per_batch   65536 \
 #   --device             cuda:0 \
 #   --min_subjects_per_batch 8 \
-#   --ontology_path       /data2/processed_datasets/zj2398/femr/ontology.pkl \
-#   --main_split_path     /data2/processed_datasets/zj2398/femr/cumc/cumc_split.csv \
+#   --ontology_path       /data/models/zj2398/femr/cumc_0.1/mtpp_shared/ontology.pkl \
+#   --main_split_path     /data2/processed_datasets/zj2398/femr/cumc/mtpp_vocab_all/cumc_split.csv \
 #   --loss_type  labeled_subjects \
 #   --output_dir   /data/results/zj2398/femr/cumc_0.1/phenotype \
 #   /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/task_labels/phenotype_tte/

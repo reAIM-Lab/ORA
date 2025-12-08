@@ -434,8 +434,8 @@ class TPPTaskHead(nn.Module):
 
         self.task_layer = nn.Linear(self.final_layer_size, self.num_tasks)
         self.softmax = nn.Softmax(dim=1)
-        start_bias = torch.log2(torch.tensor([a[1] for a in pretraining_task_info], dtype=torch.float32))
-        self.task_layer.bias.data = start_bias
+        # start_bias = torch.log2(torch.tensor([a[1] for a in pretraining_task_info], dtype=torch.float32))
+        # self.task_layer.bias.data = start_bias
 
       
         self.norm = femr.models.rmsnorm.RMSNorm(self.final_layer_size)
@@ -622,7 +622,7 @@ class MTPPTaskHead(nn.Module):
         self.num_value_bins = value_bins.shape[1] - 1
         self.value_bins = value_bins
 
-        print(f"initialize model {self.num_time_bins} time bins and {self.value_bins} value bins")
+        # print(f"initialize model {self.num_time_bins} time bins and {self.value_bins} value bins")
         
         # Get task counts from input data structure - we'll determine from batch data
         # For now, assume we'll get the correct task counts from the batch
@@ -940,19 +940,20 @@ class MTPPSharedTaskHead(nn.Module):
         # Original layer for non-numerical codes: time prediction only
         # print(f"hidden size is {hidden_size}")
         # self.non_numerical_final_layer = nn.Linear(hidden_size, self.num_time_bins * final_layer_size)
-        self.final_layer = nn.Linear(hidden_size, self.num_time_bins * self.num_value_bins * final_layer_size)
+        self.final_layer = nn.Linear(hidden_size, self.num_time_bins*final_layer_size)
 
-        self.non_numerical_task_layer = nn.Linear(self.final_layer_size*self.num_value_bins, len(self.non_numerical_tasks))  # All tasks initially
+        self.non_numerical_task_layer = nn.Linear(self.final_layer_size, len(self.non_numerical_tasks))  # All tasks initially
         
         # Additional layer for numerical codes: time × value prediction
         # self.numerical_final_layer = nn.Linear(hidden_size, self.num_time_bins * self.num_value_bins * final_layer_size)
-        self.numerical_task_layer = nn.Linear(self.final_layer_size, len(self.numerical_tasks))
+        self.numerical_task_layer = nn.Linear(self.final_layer_size, self.num_value_bins*len(self.numerical_tasks))
         # We'll determine the actual number of numerical tasks from batch data
         # self.numerical_task_layer = nn.Linear(self.final_layer_size, num_numerical_tasks).to(features.device)
         
         self.softmax = nn.Softmax(dim=1)
-        self.numerical_norm = femr.models.rmsnorm.RMSNorm(self.final_layer_size)
-        self.non_numerical_norm = femr.models.rmsnorm.RMSNorm(self.final_layer_size*self.num_value_bins)
+        self.norm = femr.models.rmsnorm.RMSNorm(self.final_layer_size)
+        # self.numerical_norm = femr.models.rmsnorm.RMSNorm(self.final_layer_size)
+        # self.non_numerical_norm = femr.models.rmsnorm.RMSNorm(self.final_layer_size*self.num_value_bins)
         # self.linear_interpolation = linear_interpolation
         self.H_t  = math.log(self.num_time_bins)
         self.H_tv = math.log(self.num_time_bins * self.num_value_bins)
@@ -980,11 +981,11 @@ class MTPPSharedTaskHead(nn.Module):
         # ========== NON-NUMERICAL CODES (Original Logic) ==========
             # Time-dependent features for non-numerical codes
         time_independent_features = self.final_layer(features).reshape(
-            features.shape[0], self.num_time_bins, self.num_value_bins*self.final_layer_size
+            features.shape[0], self.num_time_bins, self.final_layer_size
         )
         
         # Non-numerical task logits: [prediction_points, time_bins, non_numerical_tasks]
-        task_logits = self.non_numerical_task_layer(self.non_numerical_norm(time_independent_features))
+        task_logits = self.non_numerical_task_layer(self.norm(time_independent_features))
         time_dependent_logits = self.softmax(task_logits)
 
         # Debug: Check for NaN/inf values  
@@ -1053,12 +1054,14 @@ class MTPPSharedTaskHead(nn.Module):
             
             batch_size, _, num_numerical_tasks = time_event_in_bin.shape
             # Time-value features: [pred_points, time_bins, value_bins, final_layer_size]
-            numerical_features = self.final_layer(features).reshape(
-                batch_size, self.num_time_bins*self.num_value_bins, self.final_layer_size
-            )
+            # numerical_features = self.final_layer(features).reshape(
+            #     batch_size, self.num_time_bins*self.num_value_bins, self.final_layer_size
+            # )
             
             # Numerical task logits: [pred_points, time_bins*value_bins, numerical_tasks]
-            numerical_task_logits = self.numerical_task_layer(self.numerical_norm(numerical_features))
+            numerical_task_logits = self.numerical_task_layer(self.norm(time_independent_features)).reshape(
+                batch_size, self.num_time_bins*self.num_value_bins,len(self.numerical_tasks)
+            )
 
             # Apply value_valid_mask to mask out invalid value bins before softmax
             # value_valid_mask: [numerical_tasks, value_bins] -> need to expand to [time_bins*value_bins, numerical_tasks]
@@ -1183,7 +1186,7 @@ class MTPPSharedTaskHead(nn.Module):
                 result["value_dependent_logits"] = numerical_probs
         else:
             print("No numerical codes found in batch")
-
+            
         loss = total_loss / total_count
 
         return loss, result

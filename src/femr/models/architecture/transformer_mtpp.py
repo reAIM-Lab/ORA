@@ -213,7 +213,6 @@ class MTPPTaskHead(nn.Module):
     def __init__(
             self,
             hidden_size: int,
-            linear_interpolation: bool,
             pretraining_task_info: List[Tuple[str, float]],
             non_numerical_task: List[str],
             numerical_task: List[str],
@@ -221,6 +220,7 @@ class MTPPTaskHead(nn.Module):
             non_numerical_task_time_bins: Union[np.ndarray, List],
             numerical_task_time_bins: Union[np.ndarray, List],
             final_layer_size: int,
+            linear_interpolation: bool = False,
             # num_value_bins: int = 10,
     ):
         super().__init__()
@@ -246,6 +246,8 @@ class MTPPTaskHead(nn.Module):
         self.numerical_task_time_bins = numerical_task_time_bins
         self.num_value_bins = value_bins.shape[1] - 1
         self.value_bins = value_bins
+
+        print(f"initialize model {self.num_time_bins} time bins and {self.value_bins} value bins")
         
         # Get task counts from input data structure - we'll determine from batch data
         # For now, assume we'll get the correct task counts from the batch
@@ -253,14 +255,9 @@ class MTPPTaskHead(nn.Module):
         self.non_numerical_tasks = non_numerical_task
 
         self.final_layer_size = final_layer_size
-
-        # print(f"non_numerical_task: {len(non_numerical_task)}")
-        # print(f"numerical_task: {len(numerical_task)}")
-        # print(f"value_bins: {value_bins.shape}")
-        # print(f"non_numerical_task_time_bins: {non_numerical_task_time_bins.shape}")
-        # print(f"numerical_task_time_bins: {numerical_task_time_bins.shape}")
         
         # Original layer for non-numerical codes: time prediction only
+        # print(f"hidden size is {hidden_size}")
         self.non_numerical_final_layer = nn.Linear(hidden_size, self.num_time_bins * final_layer_size)
         self.non_numerical_task_layer = nn.Linear(self.final_layer_size, len(self.non_numerical_tasks))  # All tasks initially
 
@@ -273,19 +270,13 @@ class MTPPTaskHead(nn.Module):
         
         self.softmax = nn.Softmax(dim=1)
         self.norm = femr.models.rmsnorm.RMSNorm(self.final_layer_size)
-        self.linear_interpolation = linear_interpolation
+        # self.linear_interpolation = linear_interpolation
         self.H_t  = math.log(self.num_time_bins)
         self.H_tv = math.log(self.num_time_bins * self.num_value_bins)
         
         # Set initial biases
         self.non_numerical_task_layer.bias.data.zero_()
         self.numerical_task_layer.bias.data.zero_()
-        # non_numerical_start_bias = torch.log2(torch.tensor([a[1] for a in pretraining_task_info if a[0] in self.non_numerical_tasks], dtype=torch.float32))
-        # numerical_start_bias = torch.log2(torch.tensor([a[1] for a in pretraining_task_info if a[0] in self.numerical_tasks], dtype=torch.float32))
-        # assert len(non_numerical_start_bias)+len(numerical_start_bias) == len(pretraining_task_info), f"the length of non_numerical, numerical and all are: {len(non_numerical_start_bias)},{len(numerical_start_bias)},{len(pretraining_task_info)}"
-
-        # self.non_numerical_task_layer.bias.data = non_numerical_start_bias
-        # self.numerical_task_layer.bias.data = numerical_start_bias
 
     def forward(self, features: torch.Tensor, batch: Mapping[str, torch.Tensor], return_logits=False):
         """
@@ -299,7 +290,7 @@ class MTPPTaskHead(nn.Module):
         """
         eps = 1e-9
         total_loss = torch.tensor(0.0, device=features.device)
-        loss_count = 0
+        total_count = 0
         result = {}
 
         
@@ -313,11 +304,6 @@ class MTPPTaskHead(nn.Module):
         task_logits = self.non_numerical_task_layer(self.norm(time_independent_features))
         time_dependent_logits = self.softmax(task_logits)
 
-        # task_logits_f32 = task_logits.float()
-        # task_logits_f32 = task_logits_f32 - task_logits_f32.amax(dim=1, keepdim=True)
-        # time_dependent_logits = torch.softmax(task_logits_f32, dim=1).to(task_logits.dtype)
-        
-        # print(f"time_dependent_logits is {time_dependent_logits}")
         # Debug: Check for NaN/inf values  
         if torch.any(torch.isnan(time_dependent_logits)) or torch.any(torch.isinf(time_dependent_logits)):
             print(f"ERROR: NaN/inf detected in time_dependent_logits")
@@ -334,17 +320,6 @@ class MTPPTaskHead(nn.Module):
         # Add numerical stability
         time_dependent_logits_stable = torch.clamp(time_dependent_logits, min=eps)
         integrated_logits_stable = torch.clamp(integrated_logits, min=eps)
-        
-        # Linear interpolation adjustment if enabled
-        # if self.linear_interpolation:
-        #     censor_time_ratio = batch["non_numerical_censor_time_ratio"]
-        #     is_censored_expanded = batch["non_numerical_is_censored"].unsqueeze(1).expand(-1, self.num_time_bins, -1)
-        #     integrated_logits_stable = torch.where(
-        #         is_censored_expanded,
-        #         integrated_logits_stable - (censor_time_ratio * time_dependent_logits_stable),
-        #         integrated_logits_stable
-        #     )
-        #     integrated_logits_stable = torch.clamp(integrated_logits_stable, min=eps, max=1.0-eps)
         
         # Verify input shapes match expectations
         assert batch["non_numerical_is_event"].shape == time_dependent_logits.shape, \
@@ -375,6 +350,8 @@ class MTPPTaskHead(nn.Module):
         num_marked_bins = torch.sum(marked_bins)
         if num_marked_bins > 0:
             L_non = -torch.sum(loss_values) / (num_marked_bins)  # normalized by log B_t
+            total_loss += -torch.sum(loss_values)
+            total_count += num_marked_bins
         else:
             L_non = torch.tensor(0.0, device=features.device)
 
@@ -392,10 +369,6 @@ class MTPPTaskHead(nn.Module):
             # numerical_is_censored = batch["numerical_is_censored"]  # [pred_points, numerical_tasks]
             
             batch_size, _, num_numerical_tasks = time_event_in_bin.shape
-            # _, value_bins, _ = value_event_in_bin.shape
-            
-            # print(f"time bins is {self.num_time_bins}")
-            # print(f"value bins is {self.num_value_bins}")
             # Time-value features: [pred_points, time_bins, value_bins, final_layer_size]
             numerical_features = self.numerical_final_layer(features).reshape(
                 batch_size, self.num_time_bins*self.num_value_bins, self.final_layer_size
@@ -427,21 +400,10 @@ class MTPPTaskHead(nn.Module):
             mask_value = -1e10  # This effectively zeros out in softmax but avoids -inf
             numerical_task_logits = numerical_task_logits.masked_fill(~expanded_mask, mask_value)
 
-            # # Normalize over time_bins × value_bins to ensure probability sum = 1 (only over valid bins)
-            # numerical_probs_flat = self.softmax(numerical_task_logits)
-
-
-            # numerical_log_probs_flat = F.log_softmax(numerical_task_logits, dim=1)
-            # numerical_probs_flat = torch.exp(numerical_log_probs_flat)
-
             numerical_probs_flat = self.softmax(numerical_task_logits)
 
             # torch.logsumexp()
             # torch.exp(torch.logsum(numerical_log_probs_flat))
-
-            # numerical_logits_f32 = (numerical_task_logits - numerical_task_logits.amax(dim=1, keepdim=True)).to(torch.float32)
-            # numerical_probs_flat = F.softmax(numerical_logits_f32, dim=1).to(numerical_task_logits.dtype)
-            # print(numerical_probs_flat.shape,numerical_probs_flat)
 
             # numerical_log_probs = numerical_log_probs_flat.reshape(batch_size, self.num_time_bins, self.num_value_bins, num_numerical_tasks)
             numerical_probs = numerical_probs_flat.reshape(batch_size, self.num_time_bins, self.num_value_bins, num_numerical_tasks)
@@ -456,20 +418,6 @@ class MTPPTaskHead(nn.Module):
             "Non-zero probabilities found in invalid bins."
             assert torch.all(numerical_probs[expanded_valid_mask_assert] >= eps), \
             "zero probabilities found in valid bins."
-
-            # # Probability should sum to 1 over valid (T,V) for each (B,N)
-            # prob_sums = (numerical_probs * expanded_valid_mask_assert).sum(dim=(1, 2))  # [B, N]
-            # assert torch.allclose(prob_sums, torch.ones_like(prob_sums), atol=1e-6), \
-            #     f"Numerical probability sums off; example: {prob_sums[0]}"
-
-            # numerical_probs = torch.where(expanded_valid_mask_assert, numerical_probs.clamp_min(eps), numerical_probs)
-            # prob_sums = torch.sum(numerical_probs, dim=(1, 2))  # Sum over time and value bins
-            # assert torch.allclose(torch.sum(numerical_probs, dim=(1, 2)), torch.ones_like(prob_sums), atol=1e-6), f"Numerical probability sums: {prob_sums[0]}"
-
-            
-            #original one
-            # numerical_probs_flat = self.softmax(numerical_task_logits)
-            # numerical_probs = numerical_probs_flat.reshape(batch_size, self.num_time_bins, self.num_value_bins, num_numerical_tasks)
             
             # === MATRIX-WISE LOSS COMPUTATION (NO NESTED LOOPS) ===
             
@@ -521,16 +469,6 @@ class MTPPTaskHead(nn.Module):
                 
                 event_count = torch.sum(event_bins)
                 if event_count > 0:
-                    # Normalize by the number of valid value bins for each task
-                    # valid_bin_counts = torch.sum(value_valid_mask, dim=1)  # [numerical_tasks]
-                    # print(f"the min value in valid_bin_counts is {torch.min(valid_bin_counts)}")
-                    # Expand to match event_bins shape: [pred_points, time_bins, value_bins, numerical_tasks]
-                    # valid_bin_counts_expanded = valid_bin_counts.unsqueeze(0).unsqueeze(1).unsqueeze(2)  # [1, 1, 1, numerical_tasks]
-
-                    # Apply normalization only where events occur
-                    # normalization = torch.where(event_bins, torch.log(valid_bin_counts_expanded), torch.ones_like(event_bins))
-                    # event_loss_values = torch.div(event_loss_values,normalization)
-                    # event_loss_values = event_loss_values / normalization
 
                     L_num_event = -torch.sum(event_loss_values)
                     numerical_loss += L_num_event
@@ -541,6 +479,8 @@ class MTPPTaskHead(nn.Module):
             # den = ne + nc
             if total_num_count > 0:
                 L_num = numerical_loss/total_num_count
+                total_count += total_num_count
+                total_loss += numerical_loss
             else:
                 L_num = torch.tensor(0.0, device=features.device)
 
@@ -558,17 +498,8 @@ class MTPPTaskHead(nn.Module):
                     "L_num_censor":  L_num_cens.detach(),
                 }
                 result["value_dependent_logits"] = numerical_probs
-            # if num_numerical_losses < 2:
-            #     print(f"censor cases are {torch.any(time_censor_in_bin)}")
-            #     print(f"event cases are {torch.any(time_event_in_bin) and torch.any(value_event_in_bin)}")
-            # L_num = numerical_loss / (total_count*self.H_tv)
         else:
             print("No numerical codes found in batch")
-        # Final loss: mean of non-numerical and numerical losses
-        # print(f"ratio {non_numerical_loss/numerical_loss}, non_numerical_loss is {non_numerical_loss} : numerical loss is {numerical_loss}, censor {censored_loss}, event {event_loss}")
-        # loss = total_loss / loss_count
-        # loss = non_numerical_loss*0.75+numerical_loss_mean*0.25
-        # print(f"l_non {L_non}, L_num {L_num}")
 
         # logvars = torch.clamp(self.logvars, *self._logvar_clamp)
         # w = torch.exp(-self.logvars)  # [w_non, w_num] = [exp(-s1), exp(-s2)]
@@ -581,18 +512,8 @@ class MTPPTaskHead(nn.Module):
         # if args.
         #     loss = alpha * L_non + (1 - alpha) * L_num
         # else:
-        #     loss = total_loss / loss_count
-        alpha = 0.5
-        loss = alpha * L_non + (1 - alpha) * L_num
-    
-        # loss = L_num
-        # print(f"yes mean loss is {loss}, L_non is {L_non}, total non {num_marked_bins},  L_num is {L_num}, total num {total_num_count}")
-        
-        # Debug: Check for issues
-        if torch.isnan(loss) or torch.isinf(loss):
-            print(f"WARNING: NaN/inf detected in final loss: {loss}")
-            print(f"  num_losses: {loss_count}")
-            print(f"  total_loss: {total_loss}")
+        loss = total_loss / total_count
+        # print(f"loss is {loss}, L_non {L_non} L_num {L_num}")
 
         return loss, result
 
