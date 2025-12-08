@@ -121,8 +121,11 @@ def main(args):
         else:
             with open(task_path, 'rb') as f:
                 task = pickle.load(f)
+        else:
+            with open(task_path, 'rb') as f:
+                task = pickle.load(f)
 
-        print(f"Motor task length: {len(motor_task.pretraining_task_codes)}")
+        # print(f"Motor task length: {len(motor_task.pretraining_task_codes)}")
         processor = femr.models.processor.FEMRBatchProcessor(tokenizer, task)
 
         example_subject_id = list(train_database)[0]
@@ -137,7 +140,12 @@ def main(args):
             print(f"example_batch[{key}], shape: {example_batch['batch'][key].shape}, values: {example_batch['batch'][key]}")
 
         train_batches_path = pretraining_data_path / 'train_batches'
+        train_batches_path = pretraining_data_path / 'train_batches'
 
+        if not train_batches_path.exists():
+            print("Convert batches")
+            # But generally we want to convert entire datasets
+            train_batches = processor.convert_dataset(train_database, tokens_per_batch=args.tokens_per_batch, num_proc=16)
         if not train_batches_path.exists():
             print("Convert batches")
             # But generally we want to convert entire datasets
@@ -147,9 +155,20 @@ def main(args):
             # Convert our batches to pytorch tensors
             train_batches.set_format("pt")
             train_batches.save_to_disk(train_batches_path)
+            print("Convert batches to pytorch")
+            # Convert our batches to pytorch tensors
+            train_batches.set_format("pt")
+            train_batches.save_to_disk(train_batches_path)
 
         val_batches_path = pretraining_data_path / 'val_batches'
+        val_batches_path = pretraining_data_path / 'val_batches'
 
+        if not val_batches_path.exists():
+            print("Convert val batches")
+            val_batches = processor.convert_dataset(val_database, tokens_per_batch=args.tokens_per_batch, num_proc=16)
+            # Convert our batches to pytorch tensors
+            val_batches.set_format("pt")
+            val_batches.save_to_disk(val_batches_path)
         if not val_batches_path.exists():
             print("Convert val batches")
             val_batches = processor.convert_dataset(val_database, tokens_per_batch=args.tokens_per_batch, num_proc=16)

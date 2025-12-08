@@ -14,13 +14,13 @@ echo "  train   -> $TRAIN_LOG"
 echo
 
 # ---- job 1: data prep (background) ----
-python prepare_motor/prepare_motor.py \
-    --pretraining_data /data/models/zj2398/femr/cumc_0.1/mtpp_5_bin \
+python prepare_motor/prepare_mtpp.py \
+    --pretraining_data /data/models/zj2398/femr/cumc_0.1/mtpp_shared \
     --athena_path "" \
     --num_bins 8 \
-    --num_value_bins 5 \
+    --num_value_bins 10 \
     --loss_type mtpp \
-    --num_threads 16 \
+    --num_threads 32 \
     --meds_reader /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/post_transform_0.1_reader 
   >"$PREP_LOG" 2>&1 &
 
@@ -43,13 +43,12 @@ python prepare_motor/prepare_motor.py \
 
 #single gpu
 python pretrain.py \
-  --pretraining_data /data/models/zj2398/femr/cumc_0.1/mtpp_5_bin \
-  --meds_reader /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/post_transform_0.1_reader \
-  --per_device_train_batch_size 1 \
-  --output_dir /data/models/zj2398/femr/cumc_0.1/mtpp_5_bin/transformer \
-  --model transformer \
-  --hf_run_name mtpp_bin_5_cumc_0.1 \
-  --loss_type mtpp \
+    --pretraining_data /data/models/zj2398/femr/cumc_0.1/mtpp_shared \
+    --meds_reader /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/post_transform_0.1_reader \
+    --output_dir /data/models/zj2398/femr/cumc_0.1/mtpp_shared/transformer \
+    --model transformer \
+    --hf_run_name mtpp_shared_1k_num \
+    --loss_type mtpp_shared
 
 
 #  825, 8, 6100] torch.Size([825, 8, 6100])

@@ -146,6 +146,7 @@ def tte_evaluation(train_set, test_set):
 
     # Evaluation best model
     surv = best_model.predict_surv_df(x_test)
+    # print(f"surv is {surv}")
     truncation = 5 * 365
 
     # times represent all discretized intervals
@@ -206,7 +207,8 @@ def tte_evaluation(train_set, test_set):
                     (times <= max_time_sample) & \
                     (times <= truncation)
         times_eval = times[eval_mask]
-        print(f"times_eval is {times_eval}")
+        # print(f"times_eval is {times_eval}")
+         
         
         # Safety check: need at least 2 time points for integration
         if len(times_eval) < 2:
@@ -279,21 +281,22 @@ def run(tasks, old_phenotype_path_str):
                 continue
             train_parquet = pd.read_parquet(train_path)
             test_parquet  = pd.read_parquet(test_path)
-            if task in ["AMI","Ischemic_Stroke"]:
-                # print(f"task is {task}")
-                # print(f"before train_parquet {len(train_parquet)}")
-                # print(f"before test_parquet {len(test_parquet)}")
+            # only fetch updated cohort: the first event
+            # if task in ["AMI","Ischemic_Stroke"]:
+            #     # print(f"task is {task}")
+            #     # print(f"before train_parquet {len(train_parquet)}")
+            #     # print(f"before test_parquet {len(test_parquet)}")
                 
-                train_label = pd.read_parquet(phenotype_label_dir/task/"train.parquet")
-                tuning_label = pd.read_parquet(phenotype_label_dir/task/"tuning.parquet")
-                train_label  = pd.concat([train_label, tuning_label], ignore_index=True)
-                test_label = pd.read_parquet(phenotype_label_dir/task/"held_out.parquet")
+            #     train_label = pd.read_parquet(phenotype_label_dir/task/"train.parquet")
+            #     tuning_label = pd.read_parquet(phenotype_label_dir/task/"tuning.parquet")
+            #     train_label  = pd.concat([train_label, tuning_label], ignore_index=True)
+            #     test_label = pd.read_parquet(phenotype_label_dir/task/"held_out.parquet")
 
-                train_keys = train_label[key_cols].drop_duplicates()
-                test_keys  = test_label[key_cols].drop_duplicates()
+            #     train_keys = train_label[key_cols].drop_duplicates()
+            #     test_keys  = test_label[key_cols].drop_duplicates()
 
-                train_parquet = train_parquet.merge(train_keys, on=key_cols, how="inner")
-                test_parquet  = test_parquet.merge(test_keys,  on=key_cols, how="inner")
+            #     train_parquet = train_parquet.merge(train_keys, on=key_cols, how="inner")
+            #     test_parquet  = test_parquet.merge(test_keys,  on=key_cols, how="inner")
 
                 # print(f"after  train_parquet: {len(train_parquet)}")
                 # print(f"after  test_parquet:  {len(test_parquet)}")
@@ -326,7 +329,7 @@ if __name__ == "__main__":
 '''
 command:
 python tte_grid_search_filter.py \
-    --tasks AMI,MASLD \
+    --tasks AMI \
     --old_phenotype_path /data/results/zj2398/femr/cumc_0.1/phenotype
 
 python tte_grid_search_filter.py \
