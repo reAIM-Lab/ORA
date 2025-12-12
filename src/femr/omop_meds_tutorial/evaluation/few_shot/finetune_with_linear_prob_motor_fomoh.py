@@ -10,7 +10,8 @@ from sklearn.linear_model import LogisticRegressionCV
 from sklearn.metrics import auc, precision_recall_curve, roc_auc_score
 
 MINIMUM_NUM_CASES = 10
-TRAIN_SIZES = [100, 1000, 10000, 100000]
+# TRAIN_SIZES = [100,1000,10000,100000,-1]
+TRAIN_SIZES = [-1]
 
 
 def main(args):
@@ -35,6 +36,7 @@ def main(args):
         name="sample_id",
         offset=1
     )
+    # print(f"train_dataset: {train_dataset}")
     test_dataset = features_label.join(
         subject_splits.select("subject_id", "split"), "subject_id"
     ).filter(
@@ -49,7 +51,8 @@ def main(args):
         if should_terminate:
             break
 
-        if len(train_dataset) < size:
+        if len(train_dataset) < size or size == -1:
+            # print()
             size = len(train_dataset)
             should_terminate = True
 
@@ -91,6 +94,9 @@ def main(args):
                         break
                     else:
                         n_positive_cases = len(subset.filter(pl.col("boolean_value") == True))
+                        # print(f"number of positive cases: {n_positive_cases}")
+                        # print(f"remaining true cases: {remaining_train_set.filter(pl.col('boolean_value') == True)}")
+                        # print(f"remaining false cases: {remaining_train_set.filter(pl.col('boolean_value') == False)}")
                         sampling_percentage = size_required / len(remaining_train_set)
                         n_positives_to_sample = max(MINIMUM_NUM_CASES, int(n_positive_cases * sampling_percentage))
                         positives_subset = remaining_train_set.filter(pl.col("boolean_value") == True).sample(
@@ -111,6 +117,8 @@ def main(args):
                         break
 
                 existing_sample_ids.update(subset["sample_id"].to_list())
+                print(f"length of existing_sample_ids: {len(existing_sample_ids)}")
+
                 if logistic_model_file.exists():
                     print(
                         f"The logistic regression model already exist for {size} shots, loading it from {logistic_model_file}"
@@ -119,10 +127,12 @@ def main(args):
                         model = pickle.load(f)
                 else:
                     model = LogisticRegressionCV(scoring="roc_auc", random_state=args.seed, max_iter=500)
+                    print(f"Fitting the model with {len(subset)} samples")
                     model.fit(np.asarray(subset["features"].to_list()), subset["boolean_value"].to_numpy())
                     with open(logistic_model_file, "wb") as f:
                         pickle.dump(model, f)
 
+                print(f"Predicting the test set with {len(test_dataset)} samples")
                 y_pred = model.predict_proba(np.asarray(test_dataset["features"].to_list()))[:, 1]
                 logistic_predictions = pl.DataFrame(
                     {
