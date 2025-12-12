@@ -600,9 +600,6 @@ class MTPPTaskHead(nn.Module):
     ):
         super().__init__()
 
-        self.use_uncertainty = True
-        self.logvars = nn.Parameter(torch.zeros(2))   # [non, num]
-        self._logvar_clamp = (-3.0, 3.0)   
 
         # Handle both numpy array and list (from config deserialization)
         if not isinstance(value_bins, np.ndarray):
@@ -907,10 +904,7 @@ class MTPPSharedTaskHead(nn.Module):
             # num_value_bins: int = 10,
     ):
         super().__init__()
-
-        self.use_uncertainty = True
-        self.logvars = nn.Parameter(torch.zeros(2))   # [non, num]
-        self._logvar_clamp = (-3.0, 3.0)   
+ 
 
         # Handle both numpy array and list (from config deserialization)
         if not isinstance(value_bins, np.ndarray):
