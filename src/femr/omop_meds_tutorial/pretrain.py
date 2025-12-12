@@ -299,19 +299,22 @@ if __name__ == "__main__":
 #   --meds_reader $OMOP_MEDS_READER
 
 '''
-40 hours
-export CUDA_VISIBLE_DEVICES=0
+
+export CUDA_VISIBLE_DEVICES=4,5,6,7
 
 mimic 
-
 gsb
 
-python pretrain_motor.py \
-  --pretraining_data /user/zj2398/cache/motor_mimic_8k \
-  --meds_reader /user/zj2398/cache/hf_ehr/mimic/meds_v0.6_reader \
-  --output_dir /user/zj2398/cache/motor_mimic_8k/output_test \
-  --model transformer \
-  --loss_type mtpp 
+CUDA_VISIBLE_DEVICES=4,5,6,7 accelerate launch \
+  --num_processes 4 \
+  --gpu_ids "4,5,6,7" \
+    pretrain.py \
+    --pretraining_data /user/zj2398/cache/mtpp_8k \
+    --meds_reader /shared/share_mala/zj2398/mimic/meds_v0.6_reader \
+    --output_dir /shared/share_mala/zj2398/models/mtpp_8k/mtpp_mean_all_shared \
+    --model transformer \
+    --hf_run_name mimic_mtpp_shared \
+    --loss_type mtpp_shared
 
 python pretrain_motor.py \
   --pretraining_data /user/zj2398/cache/mtpp_8k \
@@ -327,7 +330,7 @@ python pretrain_motor.py \
 CUDA_VISIBLE_DEVICES=4,5,6,7 accelerate launch \
   --num_processes 4 \
   --gpu_ids "4,5,6,7" \
-  pretrain_motor.py \
+  pretrain.py \
   --pretraining_data /shared/share_mala/zj2398/fomoh/motor \
   --meds_reader /shared/share_mala/zj2398/mimic/meds_v0.6_reader \
   --per_device_train_batch_size 1 \

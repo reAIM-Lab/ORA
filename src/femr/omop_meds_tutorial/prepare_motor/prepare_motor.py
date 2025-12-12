@@ -115,9 +115,9 @@ def main(args):
             with open(task_path, 'wb') as f:
                 pickle.dump(task, f)
 
-        # else:
-        #     with open(task_path, 'rb') as f:
-        #         task = pickle.load(f)
+        else:
+            with open(task_path, 'rb') as f:
+                task = pickle.load(f)
 
         # print(f"Motor task length: {len(motor_task.pretraining_task_codes)}")
         # processor = femr.models.processor.FEMRBatchProcessor(tokenizer, task)
