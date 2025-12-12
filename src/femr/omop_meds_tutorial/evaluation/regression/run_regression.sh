@@ -227,25 +227,8 @@ echo "All selected tasks processed."
 #   --main_split_path    /user/zj2398/cache/mtpp_8k/main_split.csv \
 #   --cohort_dir   /shared/share_mala/zj2398/mimic/regression/cohort/icu_stay_4h/ \
 #   --output_dir   /shared/share_mala/zj2398/mimic/regression/mtpp/ \
-#   --tasks "bilirubin,creatinine" \
+#   --tasks "bilirubin,creatinine,pao2,platelets" \
 #   --regression 
-
-# bash run_regression.sh \
-#   --pretraining_data   /user/zj2398/cache/mtpp_8k \
-#   --meds_reader        /shared/share_mala/zj2398/mimic/meds_v0.6_reader \
-#   --num_proc           64 \
-#   --model_path         /user/zj2398/cache/mtpp_8k/mtpp_mean_all/best_134150 \
-#   --model_name         mtpp \
-#   --tokens_per_batch   65536 \
-#   --device             cuda:0 \
-#   --min_subjects_per_batch 8 \
-#   --ontology_path      /user/zj2398/cache/mtpp_8k/ontology.pkl \
-#   --main_split_path    /user/zj2398/cache/mtpp_8k/main_split.csv \
-#   --cohort_dir   /shared/share_mala/zj2398/mimic/regression/cohort/icu_stay_4h/ \
-#   --output_dir   /shared/share_mala/zj2398/mimic/regression/mtpp/ \
-#   --tasks "pao2,platelets" \
-#   --regression 
-
 
 # export CUDA_VISIBLE_DEVICES=2
 # bash run_regression.sh \
@@ -262,24 +245,6 @@ echo "All selected tasks processed."
 #   --cohort_dir   /shared/share_mala/zj2398/mimic/regression/cohort/icu_stay_4h/ \
 #   --output_dir   /shared/share_mala/zj2398/mimic/regression/motor/ \
 #   --tasks "pao2,platelets" \
-#   --regression 
-
-
-
-# bash run_regression.sh \
-#   --pretraining_data   /user/zj2398/cache/motor_mimic_8k \
-#   --meds_reader        /shared/share_mala/zj2398/mimic/meds_v0.6_reader \
-#   --num_proc           64 \
-#   --model_path         /user/zj2398/cache/motor_mimic_8k/output/best_100620 \
-#   --model_name         motor \
-#   --tokens_per_batch   65536 \
-#   --device             cuda:0 \
-#   --min_subjects_per_batch 8 \
-#   --ontology_path      /user/zj2398/cache/motor_mimic_8k/ontology.pkl \
-#   --main_split_path    /user/zj2398/cache/motor_mimic_8k/main_split.csv \
-#   --cohort_dir   /shared/share_mala/zj2398/mimic/regression/cohort/icu_stay_4h/ \
-#   --output_dir   /shared/share_mala/zj2398/mimic/regression/motor/ \
-#   --tasks "bilirubin,creatinine" \
 #   --regression 
 
 
