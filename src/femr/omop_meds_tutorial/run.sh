@@ -19,6 +19,7 @@ python prepare_motor/prepare_mtpp.py \
     --athena_path "" \
     --num_bins 8 \
     --num_value_bins 5 \
+    --value_count_threshold 1000 \
     --loss_type mtpp \
     --num_threads 32 \
     --meds_reader /shared/share_mala/zj2398/mimic/data/meds_v0.6_reader
@@ -52,7 +53,6 @@ python prepare_motor/prepare_mtpp.py \
 
 CUDA_VISIBLE_DEVICES=0,1,2,4 accelerate launch \
   --num_processes 4 \
-  --gpu_ids "0,1,2,4" \
     pretrain.py \
     --pretraining_data /user/zj2398/cache/mtpp_8k_num_bin5 \
     --meds_reader /shared/share_mala/zj2398/mimic/data/meds_v0.6_reader \
