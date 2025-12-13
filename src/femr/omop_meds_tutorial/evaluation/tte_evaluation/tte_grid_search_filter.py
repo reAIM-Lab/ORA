@@ -153,7 +153,7 @@ def tte_evaluation(train_set, test_set):
     times = surv.index.to_numpy()
     # print("")
 
-    # the index closest to 5 yeats
+    # the index closest to 5 years
     index_truncation = np.argmin(np.abs(times - truncation))
 
     # Create mask for time points within 5 years (for integrated Brier score)
