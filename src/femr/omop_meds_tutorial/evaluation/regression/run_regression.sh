@@ -96,7 +96,7 @@ RUN_ROOT="$(pwd)"
 export PYTHONPATH="$REPO_ROOT:$PYTHONPATH"
 export PYTHONUNBUFFERED=1
 
-GEN_FEATURES_PY="$REPO_ROOT/femr/omop_meds_tutorial/evaluation/generate_mtpp_features.py"
+GEN_FEATURES_PY="$REPO_ROOT/femr/omop_meds_tutorial/evaluation/generate_features.py"
 FINETUNE_PY="$REPO_ROOT/femr/omop_meds_tutorial/evaluation/regression/finetune_regression.py"
 
 [ -f "$GEN_FEATURES_PY" ] || { echo "Missing: $GEN_FEATURES_PY"; exit 1; }
@@ -212,28 +212,45 @@ done
 
 echo "All selected tasks processed."
 
-#export CUDA_VISIBLE_DEVICES=0
+#export CUDA_VISIBLE_DEVICES=7
 
 # bash run_regression.sh \
 #   --pretraining_data   /user/zj2398/cache/mtpp_8k \
-#   --meds_reader        /shared/share_mala/zj2398/mimic/meds_v0.6_reader \
+#   --meds_reader        /shared/share_mala/zj2398/mimic/data/meds_v0.6_reader \
 #   --num_proc           64 \
-#   --model_path         /user/zj2398/cache/mtpp_8k/mtpp_mean_all/best_134150 \
-#   --model_name         mtpp \
+#   --model_path         /shared/share_mala/zj2398/models/mtpp_8k/mtpp_mean_all_shared/best_120744 \
+#   --model_name         mtpp_shared \
 #   --tokens_per_batch   65536 \
 #   --device             cuda:0 \
 #   --min_subjects_per_batch 8 \
 #   --ontology_path      /user/zj2398/cache/mtpp_8k/ontology.pkl \
 #   --main_split_path    /user/zj2398/cache/mtpp_8k/main_split.csv \
-#   --cohort_dir   /shared/share_mala/zj2398/mimic/regression/cohort/icu_stay_4h/ \
-#   --output_dir   /shared/share_mala/zj2398/mimic/regression/mtpp/ \
-#   --tasks "bilirubin,creatinine,pao2,platelets" \
+#   --cohort_dir   /shared/share_mala/zj2398/mimic/task/regression/cohort/icu_stay_4h/ \
+#   --output_dir   /shared/share_mala/zj2398/mimic/task/regression/mtpp_shared/ \
+#   --tasks "bilirubin,creatinine" \
+#   --regression 
+
+
+# bash run_regression.sh \
+#   --pretraining_data   /user/zj2398/cache/mtpp_8k \
+#   --meds_reader        /shared/share_mala/zj2398/mimic/data/meds_v0.6_reader \
+#   --num_proc           64 \
+#   --model_path         /shared/share_mala/zj2398/models/mtpp_8k/mtpp_mean_all_shared/best_120744 \
+#   --model_name         mtpp_shared \
+#   --tokens_per_batch   65536 \
+#   --device             cuda:0 \
+#   --min_subjects_per_batch 8 \
+#   --ontology_path      /user/zj2398/cache/mtpp_8k/ontology.pkl \
+#   --main_split_path    /user/zj2398/cache/mtpp_8k/main_split.csv \
+#   --cohort_dir   /shared/share_mala/zj2398/mimic/task/regression/cohort/icu_stay_4h/ \
+#   --output_dir   /shared/share_mala/zj2398/mimic/task/regression/mtpp_shared/ \
+#   --tasks "pao2,platelets" \
 #   --regression 
 
 # export CUDA_VISIBLE_DEVICES=2
 # bash run_regression.sh \
 #   --pretraining_data   /user/zj2398/cache/motor_mimic_8k \
-#   --meds_reader        /shared/share_mala/zj2398/mimic/meds_v0.6_reader \
+#   --meds_reader        /shared/share_mala/zj2398/mimic/data/meds_v0.6_reader \
 #   --num_proc           64 \
 #   --model_path         /user/zj2398/cache/motor_mimic_8k/output/best_100620 \
 #   --model_name         motor \

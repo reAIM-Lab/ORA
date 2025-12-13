@@ -50,9 +50,9 @@ python prepare_motor/prepare_mtpp.py \
 #     --hf_run_name mtpp_shared_1k_num \
 #     --loss_type mtpp_shared
 
-CUDA_VISIBLE_DEVICES=0,4,6,7 accelerate launch \
+CUDA_VISIBLE_DEVICES=0,1,2,4 accelerate launch \
   --num_processes 4 \
-  --gpu_ids "0,4,6,7" \
+  --gpu_ids "0,1,2,4" \
     pretrain.py \
     --pretraining_data /user/zj2398/cache/mtpp_8k_num_bin5 \
     --meds_reader /shared/share_mala/zj2398/mimic/data/meds_v0.6_reader \

@@ -244,7 +244,7 @@ def create_omop_meds_tutorial_argparser():
         action="store",
         required=False,
         type=int,
-        default=100,
+        default=1000,
     )
 
     parser.add_argument(
