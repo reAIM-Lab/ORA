@@ -44,7 +44,7 @@ from sklearn.preprocessing import StandardScaler
 import femr.featurizers
 import femr.splits
 
-from src.femr.omop_meds_tutorial.evaluation.generate_features import get_model_name
+from femr.omop_meds_tutorial.evaluation.generate_features import get_model_name
 from femr.omop_meds_tutorial.evaluation.generate_labels import LABEL_NAMES
 
 

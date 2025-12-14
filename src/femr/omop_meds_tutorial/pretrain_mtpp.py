@@ -3,7 +3,7 @@ import transformers
 import pathlib
 import torch
 import sys
-import src.femr.models.architecture.transformer_mtpp
+import femr.models.architecture.transformer_mtpp
 import femr.models.config
 import pickle
 import datasets

@@ -20,7 +20,7 @@ from torch.profiler import ProfilerActivity, profile
 import femr.models_tpp.config
 import femr.models_tpp.processor
 import femr.models_tpp.rmsnorm
-import src.femr.models_tpp.tasks_mtpp
+import femr.models_tpp.tasks_mtpp
 import femr.models_tpp.tokenizer
 import femr.models_tpp.xformers
 

@@ -212,21 +212,21 @@ done
 
 echo "All selected tasks processed."
 
-#export CUDA_VISIBLE_DEVICES=7
+#export CUDA_VISIBLE_DEVICES=5
 
 # bash run_regression.sh \
 #   --pretraining_data   /user/zj2398/cache/mtpp_8k \
 #   --meds_reader        /shared/share_mala/zj2398/mimic/data/meds_v0.6_reader \
-#   --num_proc           64 \
-#   --model_path         /shared/share_mala/zj2398/models/mtpp_8k/mtpp_mean_all_shared/best_120744 \
-#   --model_name         mtpp_shared \
+#   --num_proc           16 \
+#   --model_path         /shared/share_mala/zj2398/models/mtpp_8k/mtpp_mean_all_shared_bin_5/best-130806 \
+#   --model_name         mtpp_shared_bin_5 \
 #   --tokens_per_batch   65536 \
 #   --device             cuda:0 \
 #   --min_subjects_per_batch 8 \
 #   --ontology_path      /user/zj2398/cache/mtpp_8k/ontology.pkl \
 #   --main_split_path    /user/zj2398/cache/mtpp_8k/main_split.csv \
 #   --cohort_dir   /shared/share_mala/zj2398/mimic/task/regression/cohort/icu_stay_4h/ \
-#   --output_dir   /shared/share_mala/zj2398/mimic/task/regression/mtpp_shared/ \
+#   --output_dir   /shared/share_mala/zj2398/mimic/task/regression/ \
 #   --tasks "bilirubin,creatinine" \
 #   --regression 
 
@@ -234,7 +234,24 @@ echo "All selected tasks processed."
 # bash run_regression.sh \
 #   --pretraining_data   /user/zj2398/cache/mtpp_8k \
 #   --meds_reader        /shared/share_mala/zj2398/mimic/data/meds_v0.6_reader \
-#   --num_proc           64 \
+#   --num_proc           16 \
+#   --model_path         /shared/share_mala/zj2398/models/mtpp_8k/mtpp_mean_all_shared_bin_5/best-130806 \
+#   --model_name         mtpp_shared_bin_5 \
+#   --tokens_per_batch   65536 \
+#   --device             cuda:0 \
+#   --min_subjects_per_batch 8 \
+#   --ontology_path      /user/zj2398/cache/mtpp_8k/ontology.pkl \
+#   --main_split_path    /user/zj2398/cache/mtpp_8k/main_split.csv \
+#   --cohort_dir   /shared/share_mala/zj2398/mimic/task/regression/cohort/icu_stay_4h/ \
+#   --output_dir   /shared/share_mala/zj2398/mimic/task/regression/ \
+#   --tasks "pao2,platelets" \
+#   --regression 
+
+
+# bash run_regression.sh \
+#   --pretraining_data   /user/zj2398/cache/mtpp_8k \
+#   --meds_reader        /shared/share_mala/zj2398/mimic/data/meds_v0.6_reader \
+#   --num_proc           16 \
 #   --model_path         /shared/share_mala/zj2398/models/mtpp_8k/mtpp_mean_all_shared/best_120744 \
 #   --model_name         mtpp_shared \
 #   --tokens_per_batch   65536 \
@@ -243,9 +260,10 @@ echo "All selected tasks processed."
 #   --ontology_path      /user/zj2398/cache/mtpp_8k/ontology.pkl \
 #   --main_split_path    /user/zj2398/cache/mtpp_8k/main_split.csv \
 #   --cohort_dir   /shared/share_mala/zj2398/mimic/task/regression/cohort/icu_stay_4h/ \
-#   --output_dir   /shared/share_mala/zj2398/mimic/task/regression/mtpp_shared/ \
-#   --tasks "pao2,platelets" \
+#   --output_dir   /shared/share_mala/zj2398/mimic/task/regression/ \
+#   --tasks "creatinine" \
 #   --regression 
+
 
 # export CUDA_VISIBLE_DEVICES=2
 # bash run_regression.sh \
