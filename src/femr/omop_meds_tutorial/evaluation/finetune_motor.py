@@ -438,10 +438,10 @@ def main():
                 "auroc": roc_auc,
                 "aucpr": pr_auc
             }
-            if label_name in ["AMI","MASLD","Ischemic_Stroke","Celiac"]:
-                tte_results = tte_evaluation(train_set,test_set)
-                metrics['C-Index'] = (np.mean(tte_results['C-Index']), np.std(tte_results['C-Index']))
-                metrics['Int-Brier'] = (np.mean(tte_results['Int-Brier']), np.std(tte_results['Int-Brier']))
+            # if label_name in ["AMI","MASLD","Ischemic_Stroke","Celiac"]:
+            #     tte_results = tte_evaluation(train_set,test_set)
+            #     metrics['C-Index'] = (np.mean(tte_results['C-Index']), np.std(tte_results['C-Index']))
+            #     metrics['Int-Brier'] = (np.mean(tte_results['Int-Brier']), np.std(tte_results['Int-Brier']))
             # tte_result_file = label_output_dir / 'tte_metrics.json'
             # with open(tte_result_file, "w") as f:
             #     json.dump(metrics, f, indent=4)

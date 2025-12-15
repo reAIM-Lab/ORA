@@ -15,7 +15,6 @@ show_help() {
     echo "Usage: $SCRIPT_NAME COHORT_BASE_DIR [OPTIONS]"
     echo
     echo "Options:"
-    echo "  --pretraining_data       Override PRETRAINING_DATA env var (ontology, splits, etc.)"
     echo "  --meds_reader            Override OMOP_MEDS_READER env var"
     echo "  --model_path             Path to MOTOR encoder checkpoint"
     echo "  --num_proc               Number of processors (default: 10)"
@@ -31,7 +30,7 @@ show_help() {
     echo "                           e.g. --tasks \"Readmission,Mortality\" or --tasks \"(Readmission, Mortality)\""
 }
 
-PRETRAINING_DATA_ARG=""
+# PRETRAINING_DATA_ARG=""
 OMOP_MEDS_READER_ARG=""
 COHORT_BASE_DIR=""
 MIN_SUBJECTS_PER_BATCH="1"
@@ -54,7 +53,7 @@ FILTER_TASKS=()
 while [ $# -gt 0 ]; do
     case $1 in
         -h|--help) show_help; exit 0 ;;
-        --pretraining_data) PRETRAINING_DATA_ARG="$2"; shift 2 ;;
+        # --pretraining_data) PRETRAINING_DATA_ARG="$2"; shift 2 ;;
         --meds_reader) OMOP_MEDS_READER_ARG="$2"; shift 2 ;;
         --model_type) MEDS_TYPE="$2"; shift 2 ;;
         --model_path) MODEL_PATH="$2"; shift 2 ;;
@@ -80,11 +79,11 @@ done
 
 [ -z "$COHORT_BASE_DIR" ] && { echo "Error: Missing required argument COHORT_BASE_DIR" >&2; exit 1; }
 
-[ -n "$PRETRAINING_DATA_ARG" ] && PRETRAINING_DATA="$PRETRAINING_DATA_ARG"
+# [ -n "$PRETRAINING_DATA_ARG" ] && PRETRAINING_DATA="$PRETRAINING_DATA_ARG"
 [ -n "$OMOP_MEDS_READER_ARG" ] && OMOP_MEDS_READER="$OMOP_MEDS_READER_ARG"
 
-if [ -z "$PRETRAINING_DATA" ] || [ -z "$OMOP_MEDS_READER" ]; then
-    echo "Error: PRETRAINING_DATA or OMOP_MEDS_READER are not set." >&2
+if [ -z "$OMOP_MEDS_READER" ]; then
+    echo "Error: OMOP_MEDS_READER are not set." >&2
     exit 1
 fi
 
@@ -104,7 +103,7 @@ FINETUNE_PY="$REPO_ROOT/femr/omop_meds_tutorial/evaluation/regression/finetune_r
 
 echo "Using configuration:"
 echo "  COHORT_BASE_DIR:          $COHORT_BASE_DIR"
-echo "  PRETRAINING_DATA:         $PRETRAINING_DATA"
+# echo "  PRETRAINING_DATA:         $PRETRAINING_DATA"
 echo "  OMOP_MEDS_READER:         $OMOP_MEDS_READER"
 echo "  NUM_PROC:                 $NUM_PROC"
 echo "  TOKENS_PER_BATCH:         $TOKENS_PER_BATCH"
@@ -175,24 +174,23 @@ for TASK_DIR in "$COHORT_BASE_DIR"*/; do
     echo "cohort_base_dir: $COHORT_BASE_DIR"
     echo "Task directory: $TASK_DIR"
 
-    GENERATE_CMD="python -u \"$GEN_FEATURES_PY\" \
-        --pretraining_data \"$PRETRAINING_DATA\" \
-        --model_path \"$MODEL_PATH\" \
-        --model_name \"$MODEL_NAME\" \
-        --meds_reader \"$OMOP_MEDS_READER\" \
-        --num_proc \"$NUM_PROC\" \
-        --tokens_per_batch \"$TOKENS_PER_BATCH\" \
-        --device \"$DEVICE\" \
-        --min_subjects_per_batch \"$MIN_SUBJECTS_PER_BATCH\" \
-        --cohort_dir \"$TASK_DIR\" \
-        --ontology_path \"$ONTOLOGY_PATH\" \
-        --output_root \"$OUTPUT_DIR\" \
-        --loss_type "labeled_subjects" \
-        --task_type "regression" "
-    [ -n "$OBSERVATION_WINDOW" ] && GENERATE_CMD="$GENERATE_CMD --observation_window \"$OBSERVATION_WINDOW\""
+    # GENERATE_CMD="python -u \"$GEN_FEATURES_PY\" \
+    #     --model_path \"$MODEL_PATH\" \
+    #     --model_name \"$MODEL_NAME\" \
+    #     --meds_reader \"$OMOP_MEDS_READER\" \
+    #     --num_proc \"$NUM_PROC\" \
+    #     --tokens_per_batch \"$TOKENS_PER_BATCH\" \
+    #     --device \"$DEVICE\" \
+    #     --min_subjects_per_batch \"$MIN_SUBJECTS_PER_BATCH\" \
+    #     --cohort_dir \"$TASK_DIR\" \
+    #     --ontology_path \"$ONTOLOGY_PATH\" \
+    #     --output_root \"$OUTPUT_DIR\" \
+    #     --loss_type "labeled_subjects" \
+    #     --task_type "regression" "
+    # [ -n "$OBSERVATION_WINDOW" ] && GENERATE_CMD="$GENERATE_CMD --observation_window \"$OBSERVATION_WINDOW\""
 
-    echo "Executing: $GENERATE_CMD"
-    eval $GENERATE_CMD || { echo "Error: feature generation failed for $TASK_NAME"; echo "----------------------------------------"; continue; }
+    # echo "Executing: $GENERATE_CMD"
+    # eval $GENERATE_CMD || { echo "Error: feature generation failed for $TASK_NAME"; echo "----------------------------------------"; continue; }
 
     FINETUNE_CMD="python -u \"$FINETUNE_PY\" \
         --cohort_label \"$TASK_NAME\" \
@@ -213,13 +211,13 @@ done
 echo "All selected tasks processed."
 
 #export CUDA_VISIBLE_DEVICES=5
+# bilirubin,creatinine,pao2,platelets
 
 # bash run_regression.sh \
-#   --pretraining_data   /user/zj2398/cache/mtpp_8k \
 #   --meds_reader        /shared/share_mala/zj2398/mimic/data/meds_v0.6_reader \
 #   --num_proc           16 \
-#   --model_path         /shared/share_mala/zj2398/models/mtpp_8k/mtpp_mean_all_shared_bin_5/best-130806 \
-#   --model_name         mtpp_shared_bin_5 \
+#   --model_path         /shared/share_mala/zj2398/models/mtpp_8k/mtpp_mean_all_shared/best_120744 \
+#   --model_name         mtpp_shared \
 #   --tokens_per_batch   65536 \
 #   --device             cuda:0 \
 #   --min_subjects_per_batch 8 \
@@ -227,12 +225,11 @@ echo "All selected tasks processed."
 #   --main_split_path    /user/zj2398/cache/mtpp_8k/main_split.csv \
 #   --cohort_dir   /shared/share_mala/zj2398/mimic/task/regression/cohort/icu_stay_4h/ \
 #   --output_dir   /shared/share_mala/zj2398/mimic/task/regression/ \
-#   --tasks "bilirubin,creatinine" \
+#   --tasks "creatinine" \
 #   --regression 
 
 
 # bash run_regression.sh \
-#   --pretraining_data   /user/zj2398/cache/mtpp_8k \
 #   --meds_reader        /shared/share_mala/zj2398/mimic/data/meds_v0.6_reader \
 #   --num_proc           16 \
 #   --model_path         /shared/share_mala/zj2398/models/mtpp_8k/mtpp_mean_all_shared_bin_5/best-130806 \
@@ -249,7 +246,6 @@ echo "All selected tasks processed."
 
 
 # bash run_regression.sh \
-#   --pretraining_data   /user/zj2398/cache/mtpp_8k \
 #   --meds_reader        /shared/share_mala/zj2398/mimic/data/meds_v0.6_reader \
 #   --num_proc           16 \
 #   --model_path         /shared/share_mala/zj2398/models/mtpp_8k/mtpp_mean_all_shared/best_120744 \
@@ -267,7 +263,6 @@ echo "All selected tasks processed."
 
 # export CUDA_VISIBLE_DEVICES=2
 # bash run_regression.sh \
-#   --pretraining_data   /user/zj2398/cache/motor_mimic_8k \
 #   --meds_reader        /shared/share_mala/zj2398/mimic/data/meds_v0.6_reader \
 #   --num_proc           64 \
 #   --model_path         /user/zj2398/cache/motor_mimic_8k/output/best_100620 \
@@ -288,7 +283,6 @@ echo "All selected tasks processed."
 ##kuvira
 
 # bash run_regression.sh \
-#   --pretraining_data   /data2/processed_datasets/zj2398/femr/mimic/deephit_tpp \
 #   --meds_reader        /data/raw_data/mimic/files/mimiciv/meds_v0.6/3.1/MEDS_cohort-reader \
 #   --num_proc           64 \
 #   --model_path         /data2/processed_datasets/zj2398/femr/mimic/deephit_tpp/output_transformer/best_221573\
@@ -304,7 +298,6 @@ echo "All selected tasks processed."
 #   --regression 
 
 # bash run_regression.sh \
-#   --pretraining_data   /data2/processed_datasets/zj2398/femr/mimic/deephit_tpp \
 #   --meds_reader        /data/raw_data/mimic/files/mimiciv/meds_v0.6/3.1/MEDS_cohort-reader \
 #   --num_proc           64 \
 #   --model_path         /data2/processed_datasets/zj2398/femr/mimic/deephit_tpp/output_transformer/best_221573\
