@@ -260,14 +260,15 @@ def main():
     """
     # Configuration - UPDATE THESE PATHS
     meds_path = "/data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/post_transform_meds_reader/"  # Path to your MEDS data
-    visits_parquet_path = "/data2/processed_datasets/zj2398/cumc_data/outpatient_visits.parquet"  # Output from Task 1
+    visits_parquet_path = "/data2/processed_datasets/zj2398/cumc_data/outpatient_visits_new.parquet"  # Output from Task 1
+    
     
     # Step 1: Load visits and create lookup structure
     visits_dict = load_and_prepare_visits(visits_parquet_path)
     
     # Step 2: Initialize MEDS database
     print(f"\nInitializing MEDS database from {meds_path}...")
-    db = meds_reader.SubjectDatabase(meds_path, num_threads=32)
+    db = meds_reader.SubjectDatabase(meds_path, num_threads=40)
     
     # Step 3: Process subjects with parallel workers
     print(f"\nProcessing subjects to extract intervals...")
