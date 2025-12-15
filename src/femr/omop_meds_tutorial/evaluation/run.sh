@@ -24,7 +24,6 @@ show_help() {
     echo
     echo "Options:"
     echo "  -h, --help               Display this help message and exit"
-    echo "  --pretraining_data       Override PRETRAINING_DATA environment variable, load ontology"
     echo "  --meds_reader            Override OMOP_MEDS_READER environment variable"
     echo "  --num_proc               Number of processors to use (default: 10)"
     echo "  --tokens_per_batch       Tokens per batch (default: 231072)"
@@ -32,18 +31,16 @@ show_help() {
     echo "  --linear_interpolation   Enable linear interpolation for the model"
     echo
     echo "Environment Variables:"
-    echo "  PRETRAINING_DATA         Path to pretraining data (required if not set with --pretraining_data)"
     echo "  OMOP_MEDS_READER         Path to OMOP MEDS reader (required if not set with --meds_reader)"
     echo
     echo "Example:"
     echo "  $SCRIPT_NAME /path/to/cohorts"
-    echo "  $SCRIPT_NAME /path/to/cohorts --pretraining_data /path/to/pretraining --meds_reader /path/to/reader --num_proc 8"
     echo "  $SCRIPT_NAME /path/to/cohorts --observation_window 30"
     echo "  $SCRIPT_NAME /path/to/cohorts --linear_interpolation"
 }
 
 # Parse command line options
-PRETRAINING_DATA_ARG=""
+# PRETRAINING_DATA_ARG=""
 OMOP_MEDS_READER_ARG=""
 COHORT_BASE_DIR=""
 DEVICE="cuda"
@@ -54,10 +51,10 @@ while [ $# -gt 0 ]; do
             show_help
             exit 0
             ;;
-        --pretraining_data)
-            PRETRAINING_DATA_ARG="$2"
-            shift 2
-            ;;
+        # --pretraining_data)
+        #     PRETRAINING_DATA_ARG="$2"
+        #     shift 2
+        #     ;;
         --meds_reader)
             OMOP_MEDS_READER_ARG="$2"
             shift 2
@@ -135,18 +132,18 @@ if [ -z "$COHORT_BASE_DIR" ]; then
 fi
 
 # Use command line arguments if provided, otherwise use environment variables
-if [ -n "$PRETRAINING_DATA_ARG" ]; then
-    PRETRAINING_DATA="$PRETRAINING_DATA_ARG"
-fi
+# if [ -n "$PRETRAINING_DATA_ARG" ]; then
+#     PRETRAINING_DATA="$PRETRAINING_DATA_ARG"
+# fi
 
 if [ -n "$OMOP_MEDS_READER_ARG" ]; then
     OMOP_MEDS_READER="$OMOP_MEDS_READER_ARG"
 fi
 
 # Check if the required variables are set
-if [ -z "$PRETRAINING_DATA" ] || [ -z "$OMOP_MEDS_READER" ]; then
-    echo "Error: PRETRAINING_DATA or OMOP_MEDS_READER are not set." >&2
-    echo "Set them as environment variables or use --pretraining_data and --meds_reader options." >&2
+if [ -z "$OMOP_MEDS_READER" ]; then
+    echo "Error: OMOP_MEDS_READER are not set." >&2
+    echo "Set them as environment variables or use --meds_reader options." >&2
     echo "Try '$SCRIPT_NAME --help' for more information." >&2
     exit 1
 fi
@@ -159,7 +156,6 @@ fi
 
 echo "Using configuration:"
 echo "  COHORT_BASE_DIR: $COHORT_BASE_DIR"
-echo "  PRETRAINING_DATA: $PRETRAINING_DATA"
 echo "  OMOP_MEDS_READER: $OMOP_MEDS_READER"
 echo "  NUM_PROC: $NUM_PROC"
 echo "  TOKENS_PER_BATCH: $TOKENS_PER_BATCH"
@@ -225,42 +221,41 @@ for TASK_DIR in "$COHORT_BASE_DIR"*/; do
     echo "Running $MODEL_NAME feature generation for $TASK_NAME..."
 
     # # Build the command with conditional observation_window parameter
-    # GENERATE_CMD="python -u -m femr.omop_meds_tutorial.evaluation.generate_features \
-    #   --pretraining_data \"$PRETRAINING_DATA\" \
-    #   --model_path \"$MODEL_PATH\" \
-    #   --model_name \"$MODEL_NAME\" \
-    #   --meds_reader \"$OMOP_MEDS_READER\" \
-    #   --num_proc \"$NUM_PROC\" \
-    #   --tokens_per_batch \"$TOKENS_PER_BATCH\" \
-    #   --device \"$DEVICE\" \
-    #   --min_subjects_per_batch \"$MIN_SUBJECTS_PER_BATCH\" \
-    #   --cohort_dir \"$TASK_DIR\" \
-    #   --ontology_path \"$ONTOLOGY_PATH\" \
-    #   --output_root \"$OUTPUT_DIR\" \
-    #   --task_type "binary" \
-    #   --loss_type "labeled_subjects" "
+    GENERATE_CMD="python -u -m femr.omop_meds_tutorial.evaluation.generate_features \
+      --model_path \"$MODEL_PATH\" \
+      --model_name \"$MODEL_NAME\" \
+      --meds_reader \"$OMOP_MEDS_READER\" \
+      --num_proc \"$NUM_PROC\" \
+      --tokens_per_batch \"$TOKENS_PER_BATCH\" \
+      --device \"$DEVICE\" \
+      --min_subjects_per_batch \"$MIN_SUBJECTS_PER_BATCH\" \
+      --cohort_dir \"$TASK_DIR\" \
+      --ontology_path \"$ONTOLOGY_PATH\" \
+      --output_root \"$OUTPUT_DIR\" \
+      --task_type "binary" \
+      --loss_type "labeled_subjects" "
 
-    # # Add linear_interpolation parameter if specified
-    # if [ "$USE_LINEAR_INTERPOLATION" = true ]; then
-    #     GENERATE_CMD="$GENERATE_CMD --linear_interpolation"
-    # fi
+    # Add linear_interpolation parameter if specified
+    if [ "$USE_LINEAR_INTERPOLATION" = true ]; then
+        GENERATE_CMD="$GENERATE_CMD --linear_interpolation"
+    fi
 
-    # # Add observation_window parameter if specified
-    # if [ -n "$OBSERVATION_WINDOW" ]; then
-    #     GENERATE_CMD="$GENERATE_CMD --observation_window \"$OBSERVATION_WINDOW\""
-    # fi
+    # Add observation_window parameter if specified
+    if [ -n "$OBSERVATION_WINDOW" ]; then
+        GENERATE_CMD="$GENERATE_CMD --observation_window \"$OBSERVATION_WINDOW\""
+    fi
 
-    # # Print the command
-    # echo "Executing command: $GENERATE_CMD"
+    # Print the command
+    echo "Executing command: $GENERATE_CMD"
 
-    # # # Execute the command
-    # eval $GENERATE_CMD
+    # # Execute the command
+    eval $GENERATE_CMD
 
-    # # Check if the first command succeeded
-    # if [ $? -ne 0 ]; then
-    #     echo "Error: $MODEL_NAME feature generation failed for task $TASK_NAME"
-    #     continue
-    # fi
+    # Check if the first command succeeded
+    if [ $? -ne 0 ]; then
+        echo "Error: $MODEL_NAME feature generation failed for task $TASK_NAME"
+        continue
+    fi
 
     # Run the second command: fine-tune MOTOR
     echo "Running $MODEL_NAME fine-tuning for $TASK_NAME..."
@@ -324,29 +319,41 @@ echo "All tasks processed."
 
 
 # phenotype
-# export CUDA_VISIBLE_DEVICES=2
+# export CUDA_VISIBLE_DEVICES=5
 # bash run.sh \
-#   --pretraining_data   /user/zj2398/cache/mtpp_8k \
-#   --meds_reader        /shared/share_mala/zj2398/mimic/meds_v0.6_reader \
-#   --num_proc           100 \
-#   --model_path         /user/zj2398/cache/mtpp_8k/mtpp_mean_all/best_134150 \
-#   --model_name         mtpp \
+#   --meds_reader        /shared/share_mala/zj2398/mimic/data/meds_v0.6_reader  \
+#   --num_proc           30 \
+#   --model_path         /shared/share_mala/zj2398/models/mtpp_8k/mtpp_mean_all_shared/best_120744 \
+#   --model_name         mtpp_shared_bin_10 \
 #   --tokens_per_batch   65536 \
 #   --device             cuda:0 \
 #   --min_subjects_per_batch 8 \
 #   --ontology_path       /user/zj2398/cache/mtpp_8k/ontology.pkl \
 #   --main_split_path     /user/zj2398/cache/mtpp_8k/main_split.csv \
 #   --loss_type  labeled_subjects \
-#   --output_dir   /shared/share_mala/zj2398/mimic/phenotype_task/ \
-#   /shared/share_mala/zj2398/mimic/phenotype_task/cohort/
+#   --output_dir   /shared/share_mala/zj2398/mimic/task/phenotype_task/ \
+#   /shared/share_mala/zj2398/mimic/task/phenotype_task/cohort/
 
 # export CUDA_VISIBLE_DEVICES=2
 # bash run.sh \
-#   --pretraining_data   /user/zj2398/cache/mtpp_8k \
-#   --meds_reader        /shared/share_mala/zj2398/mimic/meds_v0.6_reader \
-#   --num_proc           100 \
-#   --model_path         /user/zj2398/cache/mtpp_8k/mtpp_mean_all/best_134150 \
-#   --model_name         mtpp \
+#   --meds_reader        /shared/share_mala/zj2398/mimic/data/meds_v0.6_reader  \
+#   --num_proc           30 \
+#   --model_path         /shared/share_mala/zj2398/models/mtpp_8k/mtpp_mean_all_shared_bin_5/best-130806 \
+#   --model_name         mtpp_shared_bin_5 \
+#   --tokens_per_batch   65536 \
+#   --device             cuda:0 \
+#   --min_subjects_per_batch 8 \
+#   --ontology_path       /user/zj2398/cache/mtpp_8k/ontology.pkl \
+#   --main_split_path     /user/zj2398/cache/mtpp_8k/main_split.csv \
+#   --loss_type  labeled_subjects \
+#   --output_dir   /shared/share_mala/zj2398/mimic/task/phenotype_task/ \
+#   /shared/share_mala/zj2398/mimic/task/phenotype_task/cohort/
+
+# bash run.sh \
+#   --meds_reader        /shared/share_mala/zj2398/mimic/data/meds_v0.6_reader \
+#   --num_proc           24 \
+#   --model_path         /shared/share_mala/zj2398/models/mtpp_8k/mtpp_mean_all_shared_bin_5/best-130806 \
+#   --model_name         mtpp_shared_bin_5 \
 #   --tokens_per_batch   65536 \
 #   --device             cuda:0 \
 #   --min_subjects_per_batch 8 \
@@ -354,8 +361,7 @@ echo "All tasks processed."
 #   --main_split_path     /user/zj2398/cache/mtpp_8k/main_split.csv \
 #   --loss_type  labeled_subjects \
 #   --output_dir   /shared/share_mala/zj2398/mimic/patient_outcome_task/ \
-#   /shared/share_mala/zj2398/mimic/patient_outcome_task/cohort/
-
+#   /shared/share_mala/zj2398/mimic/task/patient_outcome_task/cohort/
 
 # kuvira
 

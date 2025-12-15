@@ -12,6 +12,7 @@ import pickle
 import meds
 import pathlib
 import torch
+import argparse
 from femr.omop_meds_tutorial.evaluation.generate_labels import (  # type: ignore
         create_omop_meds_tutorial_arg_parser,
         LABEL_NAMES,
@@ -20,7 +21,15 @@ from femr.omop_meds_tutorial.evaluation.generate_labels import (  # type: ignore
 
 
 def create_arg_parser():
-    args = create_omop_meds_tutorial_arg_parser()
+    # args = create_omop_meds_tutorial_arg_parser()
+    # import argparse
+    args = argparse.ArgumentParser(description="Arguments for preparing Motor")
+    args.add_argument(
+        "--meds_reader",
+        dest="meds_reader",
+        action="store",
+        required=True,
+    )
     args.add_argument(
         "--num_proc",
         dest="num_proc",
@@ -126,8 +135,9 @@ def get_model_name(label_name: str, model_name: str, observation_window: Optiona
 def main():
     args = create_arg_parser().parse_args()
     with meds_reader.SubjectDatabase(args.meds_reader, num_threads=6) as database:
-        pretraining_data = pathlib.Path(args.pretraining_data)
-        output_root = pathlib.Path(args.output_root) if args.output_root else pretraining_data
+        # pretraining_data = pathlib.Path(args.pretraining_data)
+        # output_root = pathlib.Path(args.output_root) if args.output_root else pretraining_data
+        output_root = pathlib.Path(args.output_root)
         output_root = output_root/args.model_name
         ontology_path = args.ontology_path
 
@@ -223,7 +233,6 @@ if __name__ == "__main__":
 '''
 export CUDA_VISIBLE_DEVICES=3
 python generate_motor_features.py \
-  --pretraining_data /data/processed_datasets/processed_datasets/zj2398/femr/mimic/motor_mimic_bin_100 \
   --meds_reader /data/raw_data/mimic/files/mimiciv/meds_v0.6/3.1/MEDS_cohort-reader \
   --model_path /data/processed_datasets/processed_datasets/zj2398/femr/mimic/motor_mimic_bin_100/output/checkpoint-20123 \
   --device cuda:0 \

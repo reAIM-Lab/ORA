@@ -84,153 +84,153 @@ def main():
     args = create_arg_parser().parse_args()
 
     # Avoid variable shadowing: keep label_names for task iteration
-    label_names = LABEL_NAMES
-    output_root = Path(args.output_root)
+    # label_names = LABEL_NAMES
+    output_root = Path(args.output_root)/args.model_name
     if args.cohort_label is not None:
         label_path = output_root / "labels" / (args.cohort_label + '.parquet')
         if label_path.exists():
             print(f"Using the user defined label at: {label_path}")
-            label_names = [args.cohort_label]
+            label_name = args.cohort_label
         else:
             raise RuntimeError(f"The user provided label does not exist at {label_path}")
 
     # labels = ["in_hospital_mortality","readmission","long_los"]
     output_dir = Path(output_root) / "results"
     with meds_reader.SubjectDatabase(args.meds_reader, num_threads=32) as database:
-        for label_name in label_names:
-            if args.observation_window:
-                label_output_dir = output_dir / label_name / f"{args.model_name}_{args.observation_window}"
-            else:
-                label_output_dir = output_dir / label_name / f"{args.model_name}"
-            label_output_dir.mkdir(exist_ok=True, parents=True)
-            test_result_file = label_output_dir / 'metrics.json'
-            features_label_data = label_output_dir / 'features_with_label'
-            features_label_data.mkdir(exist_ok=True, parents=True)
-            # if test_result_file.exists():
-            #     print(f"The result already existed for {label_name} at {test_result_file}, it will be skipped!")
-            #     continue
-            labels = pd.read_parquet(output_root / "labels" / (label_name + '.parquet'))
+        # for label_name in label_names:
+        if args.observation_window:
+            label_output_dir = output_dir / label_name / f"{args.model_name}_{args.observation_window}"
+        else:
+            label_output_dir = output_dir / label_name / f"{args.model_name}"
+        label_output_dir.mkdir(exist_ok=True, parents=True)
+        test_result_file = label_output_dir / 'metrics.json'
+        features_label_data = label_output_dir / 'features_with_label'
+        features_label_data.mkdir(exist_ok=True, parents=True)
+        # if test_result_file.exists():
+        #     print(f"The result already existed for {label_name} at {test_result_file}, it will be skipped!")
+        #     continue
+        labels = pd.read_parquet(label_path)
 
-            motor_features_name = get_model_name(label_name, args.model_name, args.observation_window)
-            features_path = output_root / "features"
-            with open(features_path / f"{motor_features_name}.pkl", 'rb') as f:
-                features = pickle.load(f)
+        motor_features_name = get_model_name(label_name, args.model_name, args.observation_window)
+        features_path = output_root / "features"
+        with open(features_path / f"{motor_features_name}.pkl", 'rb') as f:
+            features = pickle.load(f)
 
-            # Find labels that have no features
-            labels_no_features = labels[~labels.subject_id.isin(features["subject_ids"])]
-            if len(labels_no_features) > 0:
-                print(f"{len(labels_no_features)} features are not included")
-                # labels_no_features.to_parquet(label_output_dir / "labels_no_features.parquet")
+        # Find labels that have no features
+        labels_no_features = labels[~labels.subject_id.isin(features["subject_ids"])]
+        if len(labels_no_features) > 0:
+            print(f"{len(labels_no_features)} features are not included")
+            # labels_no_features.to_parquet(label_output_dir / "labels_no_features.parquet")
 
-            # Remove the labels that do not have features generated
-            labels = labels[labels.subject_id.isin(features["subject_ids"])]
-            labels = labels.sort_values(["subject_id", "prediction_time"])
-            # labels = labels.sample(n=len(labels), random_state=42, replace=False)
-            labeled_features = femr.featurizers.join_labels_numerical(features, labels)
+        # Remove the labels that do not have features generated
+        labels = labels[labels.subject_id.isin(features["subject_ids"])]
+        labels = labels.sort_values(["subject_id", "prediction_time"])
+        # labels = labels.sample(n=len(labels), random_state=42, replace=False)
+        labeled_features = femr.featurizers.join_labels_numerical(features, labels)
 
-            main_split = femr.splits.SubjectSplit.load_from_csv(args.main_split_path)
+        main_split = femr.splits.SubjectSplit.load_from_csv(args.main_split_path)
 
-            train_mask = np.isin(labeled_features['subject_ids'], main_split.train_subject_ids)
-            test_mask = np.isin(labeled_features['subject_ids'], main_split.test_subject_ids)
+        train_mask = np.isin(labeled_features['subject_ids'], main_split.train_subject_ids)
+        test_mask = np.isin(labeled_features['subject_ids'], main_split.test_subject_ids)
 
-            def apply_mask(values, mask):
-                def apply(k, v):
-                    if len(v.shape) == 1:
-                        return v[mask]
-                    elif len(v.shape) == 2:
-                        return v[mask, :]
-                    else:
-                        assert False, f"Cannot handle {k} {v.shape}"
+        def apply_mask(values, mask):
+            def apply(k, v):
+                if len(v.shape) == 1:
+                    return v[mask]
+                elif len(v.shape) == 2:
+                    return v[mask, :]
+                else:
+                    assert False, f"Cannot handle {k} {v.shape}"
 
-                return {k: apply(k, v) for k, v in values.items()}
+            return {k: apply(k, v) for k, v in values.items()}
 
-            train_data = apply_mask(labeled_features, train_mask)
-            test_data = apply_mask(labeled_features, test_mask)
+        train_data = apply_mask(labeled_features, train_mask)
+        test_data = apply_mask(labeled_features, test_mask)
 
-            print("Saving features and labels to parquet")
-            train_features_list = [feature for feature in train_data["features"]]
-            train_set = (
-                pd.DataFrame(
-                    {
-                        "subject_id": train_data["subject_ids"],
-                        "prediction_time": train_data["prediction_times"],
-                        "numerical_value": train_data["numerical_value"],
-                        "features": train_features_list,
-                    }
-                )
-                .sample(frac=1.0, random_state=42)
-            )
-            train_set.to_parquet(features_label_data / "train.parquet", index=False)
-            test_features_list = [feature for feature in test_data["features"]]
+        print("Saving features and labels to parquet")
+        train_features_list = [feature for feature in train_data["features"]]
+        train_set = (
             pd.DataFrame(
                 {
-                    "subject_id": test_data["subject_ids"],
-                    "prediction_time": test_data["prediction_times"],
-                    "numerical_value": test_data["numerical_value"],
-                    "features": test_features_list,
+                    "subject_id": train_data["subject_ids"],
+                    "prediction_time": train_data["prediction_times"],
+                    "numerical_value": train_data["numerical_value"],
+                    "features": train_features_list,
                 }
-            ).to_parquet(features_label_data / "test.parquet", index=False)
-
-            print(f"Total labels: {len(labels)}")
-            print(f"Total train features labels: {len(train_data['features'])}")
-            print(f"Total test features labels: {len(test_data['features'])}")
-
-            # Prepare dense float32 arrays explicitly to avoid dtype/object issues
-            X_train = train_data["features"]
-            y_train = train_data["numerical_value"]
-            X_test = test_data["features"]
-
-            if isinstance(X_train, list):
-                X_train = np.asarray(X_train)
-            if isinstance(X_test, list):
-                X_test = np.asarray(X_test)
-            X_train = X_train.astype(np.float32, copy=False)
-            X_test = X_test.astype(np.float32, copy=False)
-
-            print(f"Train shape: {X_train.shape}, Test shape: {X_test.shape}")
-
-            # potential issue 1 scale back?
-            # not ridge... just linear regression
-
-            model = Pipeline([
-                ("scaler", StandardScaler(with_mean=True, with_std=True)),
-                ("ridge", LinearRegression()),
-            ])
-            model.fit(X_train, y_train)
-            y_pred = model.predict(X_test)
-            # model.fit(train_set['features'].to_list(), train_set["numerical_value"])
-            # y_pred = model.predict(test_data['features'])
-
-            pl.DataFrame({
-                "subject_id": test_data["subject_ids"].tolist(),
-                "prediction_time": test_data["prediction_times"].tolist(),
-                "y_true": test_data["numerical_value"].tolist(),
-                "y_pred": y_pred.tolist(),
-                "residual": (test_data["numerical_value"] - y_pred).tolist(),
-            }).write_parquet(label_output_dir / "test_predictions.parquet")
-            rmse = float(np.sqrt(mean_squared_error(test_data["numerical_value"], y_pred)))
-            mae = float(mean_absolute_error(test_data["numerical_value"], y_pred))
-            r2 = float(r2_score(test_data["numerical_value"], y_pred))
-            metrics = {
-                "rmse": rmse,
-                "mae": mae,
-                "r2": r2,
+            )
+            .sample(frac=1.0, random_state=42)
+        )
+        train_set.to_parquet(features_label_data / "train.parquet", index=False)
+        test_features_list = [feature for feature in test_data["features"]]
+        pd.DataFrame(
+            {
+                "subject_id": test_data["subject_ids"],
+                "prediction_time": test_data["prediction_times"],
+                "numerical_value": test_data["numerical_value"],
+                "features": test_features_list,
             }
-            
-            with open(test_result_file, "w") as f:
-                json.dump(metrics, f, indent=4)
+        ).to_parquet(features_label_data / "test.parquet", index=False)
 
-            # y_train_mean = np.mean(y_train)
-            # y_pred_baseline = np.full_like(test_data["numerical_value"], y_train_mean)
+        print(f"Total labels: {len(labels)}")
+        print(f"Total train features labels: {len(train_data['features'])}")
+        print(f"Total test features labels: {len(test_data['features'])}")
 
-            # # Calculate baseline metrics
-            # baseline_rmse = float(np.sqrt(mean_squared_error(test_data["numerical_value"], y_pred_baseline)))
-            # baseline_mae = float(mean_absolute_error(test_data["numerical_value"], y_pred_baseline))
-            # baseline_r2 = float(r2_score(test_data["numerical_value"], y_pred_baseline))
-            # print(f"baselie baseline_rmse {baseline_rmse} baseline_mae {baseline_mae} ,baseline_r2 {baseline_r2} ")
+        # Prepare dense float32 arrays explicitly to avoid dtype/object issues
+        X_train = train_data["features"]
+        y_train = train_data["numerical_value"]
+        X_test = test_data["features"]
 
-            # print(f"{label_name} regression | RMSE={rmse:.4g} | MAE={mae:.4g} | R2={r2:.4g}")
-            # # print(f"{label_name} ridge α={metrics['alpha']:.4g} | RMSE={rmse:.4g} | MAE={mae:.4g} | R2={r2:.4g}")
+        if isinstance(X_train, list):
+            X_train = np.asarray(X_train)
+        if isinstance(X_test, list):
+            X_test = np.asarray(X_test)
+        X_train = X_train.astype(np.float32, copy=False)
+        X_test = X_test.astype(np.float32, copy=False)
+
+        print(f"Train shape: {X_train.shape}, Test shape: {X_test.shape}")
+
+        # potential issue 1 scale back?
+        # not ridge... just linear regression
+
+        model = Pipeline([
+            ("scaler", StandardScaler(with_mean=True, with_std=True)),
+            ("ridge", LinearRegression()),
+        ])
+        model.fit(X_train, y_train)
+        y_pred = model.predict(X_test)
+        # model.fit(train_set['features'].to_list(), train_set["numerical_value"])
+        # y_pred = model.predict(test_data['features'])
+
+        pl.DataFrame({
+            "subject_id": test_data["subject_ids"].tolist(),
+            "prediction_time": test_data["prediction_times"].tolist(),
+            "y_true": test_data["numerical_value"].tolist(),
+            "y_pred": y_pred.tolist(),
+            "residual": (test_data["numerical_value"] - y_pred).tolist(),
+        }).write_parquet(label_output_dir / "test_predictions.parquet")
+        rmse = float(np.sqrt(mean_squared_error(test_data["numerical_value"], y_pred)))
+        mae = float(mean_absolute_error(test_data["numerical_value"], y_pred))
+        r2 = float(r2_score(test_data["numerical_value"], y_pred))
+        metrics = {
+            "rmse": rmse,
+            "mae": mae,
+            "r2": r2,
+        }
+        
+        with open(test_result_file, "w") as f:
+            json.dump(metrics, f, indent=4)
+
+        # y_train_mean = np.mean(y_train)
+        # y_pred_baseline = np.full_like(test_data["numerical_value"], y_train_mean)
+
+        # # Calculate baseline metrics
+        # baseline_rmse = float(np.sqrt(mean_squared_error(test_data["numerical_value"], y_pred_baseline)))
+        # baseline_mae = float(mean_absolute_error(test_data["numerical_value"], y_pred_baseline))
+        # baseline_r2 = float(r2_score(test_data["numerical_value"], y_pred_baseline))
+        # print(f"baselie baseline_rmse {baseline_rmse} baseline_mae {baseline_mae} ,baseline_r2 {baseline_r2} ")
+
+        # print(f"{label_name} regression | RMSE={rmse:.4g} | MAE={mae:.4g} | R2={r2:.4g}")
+        # # print(f"{label_name} ridge α={metrics['alpha']:.4g} | RMSE={rmse:.4g} | MAE={mae:.4g} | R2={r2:.4g}")
 
 
 if __name__ == "__main__":

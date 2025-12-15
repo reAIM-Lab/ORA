@@ -676,3 +676,251 @@ create loss type is labeled_subjects
 the report is LoadReport(renamed_keys=[], dropped_keys=['task_model.final_layer.bias', 'task_model.final_layer.weight', 'task_model.non_numerical_task_layer.bias', 'task_model.non_numerical_task_layer.weight', 'task_model.norm.weight', 'task_model.numerical_task_layer.bias', 'task_model.numerical_task_layer.weight'], missing_keys=[], unexpected_keys=[])
 The maximum context length is 8192.0,  8 subjects and 65536 tokens per batch
 max_length: 8192
+Using configuration:
+  COHORT_BASE_DIR:          /shared/share_mala/zj2398/mimic/task/regression/cohort/icu_stay_4h/
+  PRETRAINING_DATA:         /user/zj2398/cache/mtpp_8k
+  OMOP_MEDS_READER:         /shared/share_mala/zj2398/mimic/data/meds_v0.6_reader
+  NUM_PROC:                 16
+  TOKENS_PER_BATCH:         65536
+  OBSERVATION_WINDOW:       Not specified
+  REGRESSION:               true
+  PYTHONPATH head:          /user/zj2398/femr_chao_meds_v3/src
+  RUN_ROOT (outputs):       /user/zj2398/femr_chao_meds_v3/src/femr/omop_meds_tutorial/evaluation/regression
+
+[1] Found task: bilirubin
+[2] Found task: creatinine
+[3] Found task: pao2
+[4] Found task: platelets
+[1/4] Processing task: bilirubin
+cohort_base_dir: /shared/share_mala/zj2398/mimic/task/regression/cohort/icu_stay_4h/
+Task directory: /shared/share_mala/zj2398/mimic/task/regression/cohort/icu_stay_4h/bilirubin/
+Executing: python -u "/user/zj2398/femr_chao_meds_v3/src/femr/omop_meds_tutorial/evaluation/regression/finetune_regression.py"         --cohort_label "bilirubin"         --model_name "mtpp_shared_bin_5"         --main_split_path "/user/zj2398/cache/mtpp_8k/main_split.csv"         --meds_reader "/shared/share_mala/zj2398/mimic/data/meds_v0.6_reader"         --model_path "/shared/share_mala/zj2398/models/mtpp_8k/mtpp_mean_all_shared_bin_5/best-130806"         --output_root "/shared/share_mala/zj2398/mimic/task/regression/"
+Using the user defined label at: /shared/share_mala/zj2398/mimic/task/regression/mtpp_shared_bin_5/labels/bilirubin.parquet
+Traceback (most recent call last):
+  File "/user/zj2398/femr_chao_meds_v3/src/femr/omop_meds_tutorial/evaluation/regression/finetune_regression.py", line 237, in <module>
+    main()
+  File "/user/zj2398/femr_chao_meds_v3/src/femr/omop_meds_tutorial/evaluation/regression/finetune_regression.py", line 112, in main
+    labels = pd.read_parquet(output_root / "labels" / (label_name + '.parquet'))
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/user/zj2398/.conda/envs/tte/lib/python3.11/site-packages/pandas/io/parquet.py", line 669, in read_parquet
+    return impl.read(
+           ^^^^^^^^^^
+  File "/user/zj2398/.conda/envs/tte/lib/python3.11/site-packages/pandas/io/parquet.py", line 258, in read
+    path_or_handle, handles, filesystem = _get_path_or_handle(
+                                          ^^^^^^^^^^^^^^^^^^^^
+  File "/user/zj2398/.conda/envs/tte/lib/python3.11/site-packages/pandas/io/parquet.py", line 141, in _get_path_or_handle
+    handles = get_handle(
+              ^^^^^^^^^^^
+  File "/user/zj2398/.conda/envs/tte/lib/python3.11/site-packages/pandas/io/common.py", line 882, in get_handle
+    handle = open(handle, ioargs.mode)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/shared/share_mala/zj2398/mimic/task/regression/labels/bilirubin.parquet'
+Error: finetune failed for bilirubin
+----------------------------------------
+[2/4] Processing task: creatinine
+cohort_base_dir: /shared/share_mala/zj2398/mimic/task/regression/cohort/icu_stay_4h/
+Task directory: /shared/share_mala/zj2398/mimic/task/regression/cohort/icu_stay_4h/creatinine/
+Executing: python -u "/user/zj2398/femr_chao_meds_v3/src/femr/omop_meds_tutorial/evaluation/regression/finetune_regression.py"         --cohort_label "creatinine"         --model_name "mtpp_shared_bin_5"         --main_split_path "/user/zj2398/cache/mtpp_8k/main_split.csv"         --meds_reader "/shared/share_mala/zj2398/mimic/data/meds_v0.6_reader"         --model_path "/shared/share_mala/zj2398/models/mtpp_8k/mtpp_mean_all_shared_bin_5/best-130806"         --output_root "/shared/share_mala/zj2398/mimic/task/regression/"
+Using the user defined label at: /shared/share_mala/zj2398/mimic/task/regression/mtpp_shared_bin_5/labels/creatinine.parquet
+Traceback (most recent call last):
+  File "/user/zj2398/femr_chao_meds_v3/src/femr/omop_meds_tutorial/evaluation/regression/finetune_regression.py", line 237, in <module>
+    main()
+  File "/user/zj2398/femr_chao_meds_v3/src/femr/omop_meds_tutorial/evaluation/regression/finetune_regression.py", line 112, in main
+    labels = pd.read_parquet(output_root / "labels" / (label_name + '.parquet'))
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/user/zj2398/.conda/envs/tte/lib/python3.11/site-packages/pandas/io/parquet.py", line 669, in read_parquet
+    return impl.read(
+           ^^^^^^^^^^
+  File "/user/zj2398/.conda/envs/tte/lib/python3.11/site-packages/pandas/io/parquet.py", line 258, in read
+    path_or_handle, handles, filesystem = _get_path_or_handle(
+                                          ^^^^^^^^^^^^^^^^^^^^
+  File "/user/zj2398/.conda/envs/tte/lib/python3.11/site-packages/pandas/io/parquet.py", line 141, in _get_path_or_handle
+    handles = get_handle(
+              ^^^^^^^^^^^
+  File "/user/zj2398/.conda/envs/tte/lib/python3.11/site-packages/pandas/io/common.py", line 882, in get_handle
+    handle = open(handle, ioargs.mode)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/shared/share_mala/zj2398/mimic/task/regression/labels/creatinine.parquet'
+Error: finetune failed for creatinine
+----------------------------------------
+[3/4] Processing task: pao2
+cohort_base_dir: /shared/share_mala/zj2398/mimic/task/regression/cohort/icu_stay_4h/
+Task directory: /shared/share_mala/zj2398/mimic/task/regression/cohort/icu_stay_4h/pao2/
+Executing: python -u "/user/zj2398/femr_chao_meds_v3/src/femr/omop_meds_tutorial/evaluation/regression/finetune_regression.py"         --cohort_label "pao2"         --model_name "mtpp_shared_bin_5"         --main_split_path "/user/zj2398/cache/mtpp_8k/main_split.csv"         --meds_reader "/shared/share_mala/zj2398/mimic/data/meds_v0.6_reader"         --model_path "/shared/share_mala/zj2398/models/mtpp_8k/mtpp_mean_all_shared_bin_5/best-130806"         --output_root "/shared/share_mala/zj2398/mimic/task/regression/"
+Using the user defined label at: /shared/share_mala/zj2398/mimic/task/regression/mtpp_shared_bin_5/labels/pao2.parquet
+Traceback (most recent call last):
+  File "/user/zj2398/femr_chao_meds_v3/src/femr/omop_meds_tutorial/evaluation/regression/finetune_regression.py", line 237, in <module>
+    main()
+  File "/user/zj2398/femr_chao_meds_v3/src/femr/omop_meds_tutorial/evaluation/regression/finetune_regression.py", line 112, in main
+    labels = pd.read_parquet(output_root / "labels" / (label_name + '.parquet'))
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/user/zj2398/.conda/envs/tte/lib/python3.11/site-packages/pandas/io/parquet.py", line 669, in read_parquet
+    return impl.read(
+           ^^^^^^^^^^
+  File "/user/zj2398/.conda/envs/tte/lib/python3.11/site-packages/pandas/io/parquet.py", line 258, in read
+    path_or_handle, handles, filesystem = _get_path_or_handle(
+                                          ^^^^^^^^^^^^^^^^^^^^
+  File "/user/zj2398/.conda/envs/tte/lib/python3.11/site-packages/pandas/io/parquet.py", line 141, in _get_path_or_handle
+    handles = get_handle(
+              ^^^^^^^^^^^
+  File "/user/zj2398/.conda/envs/tte/lib/python3.11/site-packages/pandas/io/common.py", line 882, in get_handle
+    handle = open(handle, ioargs.mode)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/shared/share_mala/zj2398/mimic/task/regression/labels/pao2.parquet'
+Error: finetune failed for pao2
+----------------------------------------
+[4/4] Processing task: platelets
+cohort_base_dir: /shared/share_mala/zj2398/mimic/task/regression/cohort/icu_stay_4h/
+Task directory: /shared/share_mala/zj2398/mimic/task/regression/cohort/icu_stay_4h/platelets/
+Executing: python -u "/user/zj2398/femr_chao_meds_v3/src/femr/omop_meds_tutorial/evaluation/regression/finetune_regression.py"         --cohort_label "platelets"         --model_name "mtpp_shared_bin_5"         --main_split_path "/user/zj2398/cache/mtpp_8k/main_split.csv"         --meds_reader "/shared/share_mala/zj2398/mimic/data/meds_v0.6_reader"         --model_path "/shared/share_mala/zj2398/models/mtpp_8k/mtpp_mean_all_shared_bin_5/best-130806"         --output_root "/shared/share_mala/zj2398/mimic/task/regression/"
+Using the user defined label at: /shared/share_mala/zj2398/mimic/task/regression/mtpp_shared_bin_5/labels/platelets.parquet
+Traceback (most recent call last):
+  File "/user/zj2398/femr_chao_meds_v3/src/femr/omop_meds_tutorial/evaluation/regression/finetune_regression.py", line 237, in <module>
+    main()
+  File "/user/zj2398/femr_chao_meds_v3/src/femr/omop_meds_tutorial/evaluation/regression/finetune_regression.py", line 112, in main
+    labels = pd.read_parquet(output_root / "labels" / (label_name + '.parquet'))
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/user/zj2398/.conda/envs/tte/lib/python3.11/site-packages/pandas/io/parquet.py", line 669, in read_parquet
+    return impl.read(
+           ^^^^^^^^^^
+  File "/user/zj2398/.conda/envs/tte/lib/python3.11/site-packages/pandas/io/parquet.py", line 258, in read
+    path_or_handle, handles, filesystem = _get_path_or_handle(
+                                          ^^^^^^^^^^^^^^^^^^^^
+  File "/user/zj2398/.conda/envs/tte/lib/python3.11/site-packages/pandas/io/parquet.py", line 141, in _get_path_or_handle
+    handles = get_handle(
+              ^^^^^^^^^^^
+  File "/user/zj2398/.conda/envs/tte/lib/python3.11/site-packages/pandas/io/common.py", line 882, in get_handle
+    handle = open(handle, ioargs.mode)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/shared/share_mala/zj2398/mimic/task/regression/labels/platelets.parquet'
+Error: finetune failed for platelets
+----------------------------------------
+All selected tasks processed.
+Using configuration:
+  COHORT_BASE_DIR:          /shared/share_mala/zj2398/mimic/task/regression/cohort/icu_stay_4h/
+  PRETRAINING_DATA:         /user/zj2398/cache/mtpp_8k
+  OMOP_MEDS_READER:         /shared/share_mala/zj2398/mimic/data/meds_v0.6_reader
+  NUM_PROC:                 16
+  TOKENS_PER_BATCH:         65536
+  OBSERVATION_WINDOW:       Not specified
+  REGRESSION:               true
+  PYTHONPATH head:          /user/zj2398/femr_chao_meds_v3/src
+  RUN_ROOT (outputs):       /user/zj2398/femr_chao_meds_v3/src/femr/omop_meds_tutorial/evaluation/regression
+
+[1] Found task: bilirubin
+[2] Found task: creatinine
+[3] Found task: pao2
+[4] Found task: platelets
+[1/4] Processing task: bilirubin
+cohort_base_dir: /shared/share_mala/zj2398/mimic/task/regression/cohort/icu_stay_4h/
+Task directory: /shared/share_mala/zj2398/mimic/task/regression/cohort/icu_stay_4h/bilirubin/
+Executing: python -u "/user/zj2398/femr_chao_meds_v3/src/femr/omop_meds_tutorial/evaluation/regression/finetune_regression.py"         --cohort_label "bilirubin"         --model_name "mtpp_shared_bin_5"         --main_split_path "/user/zj2398/cache/mtpp_8k/main_split.csv"         --meds_reader "/shared/share_mala/zj2398/mimic/data/meds_v0.6_reader"         --model_path "/shared/share_mala/zj2398/models/mtpp_8k/mtpp_mean_all_shared_bin_5/best-130806"         --output_root "/shared/share_mala/zj2398/mimic/task/regression/"
+Using the user defined label at: /shared/share_mala/zj2398/mimic/task/regression/mtpp_shared_bin_5/labels/bilirubin.parquet
+Traceback (most recent call last):
+  File "/user/zj2398/femr_chao_meds_v3/src/femr/omop_meds_tutorial/evaluation/regression/finetune_regression.py", line 237, in <module>
+    main()
+  File "/user/zj2398/femr_chao_meds_v3/src/femr/omop_meds_tutorial/evaluation/regression/finetune_regression.py", line 116, in main
+    with open(features_path / f"{motor_features_name}.pkl", 'rb') as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/shared/share_mala/zj2398/mimic/task/regression/features/bilirubin_mtpp_shared_bin_5.pkl'
+Error: finetune failed for bilirubin
+----------------------------------------
+[2/4] Processing task: creatinine
+cohort_base_dir: /shared/share_mala/zj2398/mimic/task/regression/cohort/icu_stay_4h/
+Task directory: /shared/share_mala/zj2398/mimic/task/regression/cohort/icu_stay_4h/creatinine/
+Executing: python -u "/user/zj2398/femr_chao_meds_v3/src/femr/omop_meds_tutorial/evaluation/regression/finetune_regression.py"         --cohort_label "creatinine"         --model_name "mtpp_shared_bin_5"         --main_split_path "/user/zj2398/cache/mtpp_8k/main_split.csv"         --meds_reader "/shared/share_mala/zj2398/mimic/data/meds_v0.6_reader"         --model_path "/shared/share_mala/zj2398/models/mtpp_8k/mtpp_mean_all_shared_bin_5/best-130806"         --output_root "/shared/share_mala/zj2398/mimic/task/regression/"
+Using the user defined label at: /shared/share_mala/zj2398/mimic/task/regression/mtpp_shared_bin_5/labels/creatinine.parquet
+Using configuration:
+  COHORT_BASE_DIR:          /shared/share_mala/zj2398/mimic/task/regression/cohort/icu_stay_4h/
+  PRETRAINING_DATA:         /user/zj2398/cache/mtpp_8k
+  OMOP_MEDS_READER:         /shared/share_mala/zj2398/mimic/data/meds_v0.6_reader
+  NUM_PROC:                 16
+  TOKENS_PER_BATCH:         65536
+  OBSERVATION_WINDOW:       Not specified
+  REGRESSION:               true
+  PYTHONPATH head:          /user/zj2398/femr_chao_meds_v3/src
+  RUN_ROOT (outputs):       /user/zj2398/femr_chao_meds_v3/src/femr/omop_meds_tutorial/evaluation/regression
+
+[1] Found task: bilirubin
+[2] Found task: creatinine
+[3] Found task: pao2
+[4] Found task: platelets
+[1/4] Processing task: bilirubin
+cohort_base_dir: /shared/share_mala/zj2398/mimic/task/regression/cohort/icu_stay_4h/
+Task directory: /shared/share_mala/zj2398/mimic/task/regression/cohort/icu_stay_4h/bilirubin/
+Executing: python -u "/user/zj2398/femr_chao_meds_v3/src/femr/omop_meds_tutorial/evaluation/regression/finetune_regression.py"         --cohort_label "bilirubin"         --model_name "mtpp_shared_bin_5"         --main_split_path "/user/zj2398/cache/mtpp_8k/main_split.csv"         --meds_reader "/shared/share_mala/zj2398/mimic/data/meds_v0.6_reader"         --model_path "/shared/share_mala/zj2398/models/mtpp_8k/mtpp_mean_all_shared_bin_5/best-130806"         --output_root "/shared/share_mala/zj2398/mimic/task/regression/"
+Using the user defined label at: /shared/share_mala/zj2398/mimic/task/regression/mtpp_shared_bin_5/labels/bilirubin.parquet
+Saving features and labels to parquet
+Total labels: 138379
+Total train features labels: 124683
+Total test features labels: 13696
+Train shape: (124683, 768), Test shape: (13696, 768)
+Completed processing of task: bilirubin
+----------------------------------------
+[2/4] Processing task: creatinine
+cohort_base_dir: /shared/share_mala/zj2398/mimic/task/regression/cohort/icu_stay_4h/
+Task directory: /shared/share_mala/zj2398/mimic/task/regression/cohort/icu_stay_4h/creatinine/
+Executing: python -u "/user/zj2398/femr_chao_meds_v3/src/femr/omop_meds_tutorial/evaluation/regression/finetune_regression.py"         --cohort_label "creatinine"         --model_name "mtpp_shared_bin_5"         --main_split_path "/user/zj2398/cache/mtpp_8k/main_split.csv"         --meds_reader "/shared/share_mala/zj2398/mimic/data/meds_v0.6_reader"         --model_path "/shared/share_mala/zj2398/models/mtpp_8k/mtpp_mean_all_shared_bin_5/best-130806"         --output_root "/shared/share_mala/zj2398/mimic/task/regression/"
+Using the user defined label at: /shared/share_mala/zj2398/mimic/task/regression/mtpp_shared_bin_5/labels/creatinine.parquet
+Saving features and labels to parquet
+Total labels: 521338
+Total train features labels: 470083
+Total test features labels: 51255
+Train shape: (470083, 768), Test shape: (51255, 768)
+Completed processing of task: creatinine
+----------------------------------------
+[3/4] Processing task: pao2
+cohort_base_dir: /shared/share_mala/zj2398/mimic/task/regression/cohort/icu_stay_4h/
+Task directory: /shared/share_mala/zj2398/mimic/task/regression/cohort/icu_stay_4h/pao2/
+Executing: python -u "/user/zj2398/femr_chao_meds_v3/src/femr/omop_meds_tutorial/evaluation/regression/finetune_regression.py"         --cohort_label "pao2"         --model_name "mtpp_shared_bin_5"         --main_split_path "/user/zj2398/cache/mtpp_8k/main_split.csv"         --meds_reader "/shared/share_mala/zj2398/mimic/data/meds_v0.6_reader"         --model_path "/shared/share_mala/zj2398/models/mtpp_8k/mtpp_mean_all_shared_bin_5/best-130806"         --output_root "/shared/share_mala/zj2398/mimic/task/regression/"
+Using the user defined label at: /shared/share_mala/zj2398/mimic/task/regression/mtpp_shared_bin_5/labels/pao2.parquet
+Saving features and labels to parquet
+Total labels: 439054
+Total train features labels: 396596
+Total test features labels: 42458
+Train shape: (396596, 768), Test shape: (42458, 768)
+Completed processing of task: pao2
+----------------------------------------
+[4/4] Processing task: platelets
+cohort_base_dir: /shared/share_mala/zj2398/mimic/task/regression/cohort/icu_stay_4h/
+Task directory: /shared/share_mala/zj2398/mimic/task/regression/cohort/icu_stay_4h/platelets/
+Executing: python -u "/user/zj2398/femr_chao_meds_v3/src/femr/omop_meds_tutorial/evaluation/regression/finetune_regression.py"         --cohort_label "platelets"         --model_name "mtpp_shared_bin_5"         --main_split_path "/user/zj2398/cache/mtpp_8k/main_split.csv"         --meds_reader "/shared/share_mala/zj2398/mimic/data/meds_v0.6_reader"         --model_path "/shared/share_mala/zj2398/models/mtpp_8k/mtpp_mean_all_shared_bin_5/best-130806"         --output_root "/shared/share_mala/zj2398/mimic/task/regression/"
+Using the user defined label at: /shared/share_mala/zj2398/mimic/task/regression/mtpp_shared_bin_5/labels/platelets.parquet
+Saving features and labels to parquet
+Total labels: 464608
+Total train features labels: 419037
+Total test features labels: 45571
+Train shape: (419037, 768), Test shape: (45571, 768)
+Completed processing of task: platelets
+----------------------------------------
+All selected tasks processed.
+Using configuration:
+  COHORT_BASE_DIR:          /shared/share_mala/zj2398/mimic/task/regression/cohort/icu_stay_4h/
+  OMOP_MEDS_READER:         /shared/share_mala/zj2398/mimic/data/meds_v0.6_reader
+  NUM_PROC:                 16
+  TOKENS_PER_BATCH:         65536
+  OBSERVATION_WINDOW:       Not specified
+  REGRESSION:               true
+  PYTHONPATH head:          /user/zj2398/femr_chao_meds_v3/src
+  RUN_ROOT (outputs):       /user/zj2398/femr_chao_meds_v3/src/femr/omop_meds_tutorial/evaluation/regression
+
+[1] Found task: bilirubin
+[2] Found task: creatinine
+[3] Found task: pao2
+[4] Found task: platelets
+[1 skipped] Skipping task: bilirubin (not in specified task list)
+[1/4] Processing task: creatinine
+cohort_base_dir: /shared/share_mala/zj2398/mimic/task/regression/cohort/icu_stay_4h/
+Task directory: /shared/share_mala/zj2398/mimic/task/regression/cohort/icu_stay_4h/creatinine/
+Executing: python -u "/user/zj2398/femr_chao_meds_v3/src/femr/omop_meds_tutorial/evaluation/regression/finetune_regression.py"         --cohort_label "creatinine"         --model_name "mtpp_shared"         --main_split_path "/user/zj2398/cache/mtpp_8k/main_split.csv"         --meds_reader "/shared/share_mala/zj2398/mimic/data/meds_v0.6_reader"         --model_path "/shared/share_mala/zj2398/models/mtpp_8k/mtpp_mean_all_shared/best_120744"         --output_root "/shared/share_mala/zj2398/mimic/task/regression/"
+Using the user defined label at: /shared/share_mala/zj2398/mimic/task/regression/mtpp_shared/labels/creatinine.parquet
+Saving features and labels to parquet
+Total labels: 521338
+Total train features labels: 470083
+Total test features labels: 51255
+Train shape: (470083, 768), Test shape: (51255, 768)
+Completed processing of task: creatinine
+----------------------------------------
+[2 skipped] Skipping task: pao2 (not in specified task list)
+[3 skipped] Skipping task: platelets (not in specified task list)
+All selected tasks processed.
