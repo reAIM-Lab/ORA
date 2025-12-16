@@ -86,6 +86,7 @@ def main(args):
             print(f"Train {args.loss_type} task")
 
             if args.loss_type == "motor":
+                print("motor choosen")
                 task = MOTOR_Task.fit_pretraining_task_info(
                     main_database, tokenizer,
                     num_tasks=8 * 1024,
@@ -94,6 +95,7 @@ def main(args):
                     codes_to_skip=codes_to_skip
                 )
             elif args.loss_type == "tpp":
+                print("tpp choosen")
                 task = TPP_Task.fit_pretraining_task_info(
                     main_database, tokenizer,
                     num_tasks=8 * 1024,
