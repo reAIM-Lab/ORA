@@ -1,5 +1,5 @@
   0%|                                                                                                                                      | 0/3423100 [00:00<?, ?it/s]Could not estimate the number of tokens of the input, floating-point operations will not be computed
-  5%|██████▉                                                                                                                           | 181252/3423100 [9:03:32<135:05:41,  6.67it/s]
+  5%|██████▊                                                                                                                          | 181510/3423100 [9:05:23<1933:19:21,  2.15s/it]
 {'loss': 0.8026, 'grad_norm': 0.7474855780601501, 'learning_rate': 9.601405364342899e-06, 'epoch': 2.0}
                                                                                                                                                                            
 {'eval_loss': 0.7955491542816162, 'eval_runtime': 879.0695, 'eval_samples_per_second': 8.269, 'eval_steps_per_second': 4.135, 'epoch': 2.0}
