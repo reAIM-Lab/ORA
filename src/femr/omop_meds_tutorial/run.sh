@@ -31,7 +31,7 @@ python prepare_motor/prepare_mtpp.py \
     --num_bins 8 \
     --value_count_threshold 100 \
     --loss_type tpp \
-    --num_threads 40 \
+    --num_threads 40  \
     --meds_reader /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/post_transform_meds_reader
   >"$PREP_LOG" 2>&1 &
 
@@ -40,14 +40,17 @@ python prepare_motor/prepare_mtpp.py \
 
 # ---- job 2: training (background) ----
 # multi-gpu pretraining
-CUDA_VISIBLE_DEVICES=1,3 accelerate launch \
+# export CUDA_VISIBLE_DEVICES=0,1 
+accelerate launch --gpu_ids 2,3 \
   --num_processes 2 \
-  pretrain_motor.py \
+  pretrain.py \
   --pretraining_data /data/models/zj2398/femr/cumc_full/tpp/  \
   --meds_reader /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/post_transform_meds_reader \
+  --checkpoint_dir /data/models/zj2398/femr/cumc_full/tpp/transformer/checkpoint-68462 \
   --per_device_train_batch_size 1 \
   --output_dir /data/models/zj2398/femr/cumc_full/tpp/transformer  \
-  --model mamba \
+  --hf_run_name cumc_full_tpp \
+  --model transformer \
   --loss_type tpp 
 
 #single gpu

@@ -174,23 +174,23 @@ for TASK_DIR in "$COHORT_BASE_DIR"*/; do
     echo "cohort_base_dir: $COHORT_BASE_DIR"
     echo "Task directory: $TASK_DIR"
 
-    # GENERATE_CMD="python -u \"$GEN_FEATURES_PY\" \
-    #     --model_path \"$MODEL_PATH\" \
-    #     --model_name \"$MODEL_NAME\" \
-    #     --meds_reader \"$OMOP_MEDS_READER\" \
-    #     --num_proc \"$NUM_PROC\" \
-    #     --tokens_per_batch \"$TOKENS_PER_BATCH\" \
-    #     --device \"$DEVICE\" \
-    #     --min_subjects_per_batch \"$MIN_SUBJECTS_PER_BATCH\" \
-    #     --cohort_dir \"$TASK_DIR\" \
-    #     --ontology_path \"$ONTOLOGY_PATH\" \
-    #     --output_root \"$OUTPUT_DIR\" \
-    #     --loss_type "labeled_subjects" \
-    #     --task_type "regression" "
-    # [ -n "$OBSERVATION_WINDOW" ] && GENERATE_CMD="$GENERATE_CMD --observation_window \"$OBSERVATION_WINDOW\""
+    GENERATE_CMD="python -u \"$GEN_FEATURES_PY\" \
+        --model_path \"$MODEL_PATH\" \
+        --model_name \"$MODEL_NAME\" \
+        --meds_reader \"$OMOP_MEDS_READER\" \
+        --num_proc \"$NUM_PROC\" \
+        --tokens_per_batch \"$TOKENS_PER_BATCH\" \
+        --device \"$DEVICE\" \
+        --min_subjects_per_batch \"$MIN_SUBJECTS_PER_BATCH\" \
+        --cohort_dir \"$TASK_DIR\" \
+        --ontology_path \"$ONTOLOGY_PATH\" \
+        --output_root \"$OUTPUT_DIR\" \
+        --loss_type "labeled_subjects" \
+        --task_type "regression" "
+    [ -n "$OBSERVATION_WINDOW" ] && GENERATE_CMD="$GENERATE_CMD --observation_window \"$OBSERVATION_WINDOW\""
 
-    # echo "Executing: $GENERATE_CMD"
-    # eval $GENERATE_CMD || { echo "Error: feature generation failed for $TASK_NAME"; echo "----------------------------------------"; continue; }
+    echo "Executing: $GENERATE_CMD"
+    eval $GENERATE_CMD || { echo "Error: feature generation failed for $TASK_NAME"; echo "----------------------------------------"; continue; }
 
     FINETUNE_CMD="python -u \"$FINETUNE_PY\" \
         --cohort_label \"$TASK_NAME\" \
@@ -217,38 +217,8 @@ echo "All selected tasks processed."
 #   --meds_reader        /shared/share_mala/zj2398/mimic/data/meds_v0.6_reader \
 #   --num_proc           16 \
 #   --model_path         /shared/share_mala/zj2398/models/mtpp_8k/mtpp_mean_all_shared/best_120744 \
-#   --model_name         mtpp_shared \
-#   --tokens_per_batch   65536 \
-#   --device             cuda:0 \
-#   --min_subjects_per_batch 8 \
-#   --ontology_path      /user/zj2398/cache/mtpp_8k/ontology.pkl \
-#   --main_split_path    /user/zj2398/cache/mtpp_8k/main_split.csv \
-#   --cohort_dir   /shared/share_mala/zj2398/mimic/task/regression/cohort/icu_stay_4h/ \
-#   --output_dir   /shared/share_mala/zj2398/mimic/task/regression/ \
-#   --tasks "creatinine" \
-#   --regression 
-
-
-# bash run_regression.sh \
-#   --meds_reader        /shared/share_mala/zj2398/mimic/data/meds_v0.6_reader \
-#   --num_proc           16 \
 #   --model_path         /shared/share_mala/zj2398/models/mtpp_8k/mtpp_mean_all_shared_bin_5/best-130806 \
-#   --model_name         mtpp_shared_bin_5 \
-#   --tokens_per_batch   65536 \
-#   --device             cuda:0 \
-#   --min_subjects_per_batch 8 \
-#   --ontology_path      /user/zj2398/cache/mtpp_8k/ontology.pkl \
-#   --main_split_path    /user/zj2398/cache/mtpp_8k/main_split.csv \
-#   --cohort_dir   /shared/share_mala/zj2398/mimic/task/regression/cohort/icu_stay_4h/ \
-#   --output_dir   /shared/share_mala/zj2398/mimic/task/regression/ \
-#   --tasks "pao2,platelets" \
-#   --regression 
 
-
-# bash run_regression.sh \
-#   --meds_reader        /shared/share_mala/zj2398/mimic/data/meds_v0.6_reader \
-#   --num_proc           16 \
-#   --model_path         /shared/share_mala/zj2398/models/mtpp_8k/mtpp_mean_all_shared/best_120744 \
 #   --model_name         mtpp_shared \
 #   --tokens_per_batch   65536 \
 #   --device             cuda:0 \
@@ -261,7 +231,7 @@ echo "All selected tasks processed."
 #   --regression 
 
 
-# export CUDA_VISIBLE_DEVICES=2
+# export CUDA_VISIBLE_DEVICES=3
 # bash run_regression.sh \
 #   --meds_reader        /shared/share_mala/zj2398/mimic/data/meds_v0.6_reader \
 #   --num_proc           64 \
@@ -278,10 +248,8 @@ echo "All selected tasks processed."
 #   --regression 
 
 
-
-
 ##kuvira
-
+# mimic
 # bash run_regression.sh \
 #   --meds_reader        /data/raw_data/mimic/files/mimiciv/meds_v0.6/3.1/MEDS_cohort-reader \
 #   --num_proc           64 \
@@ -294,19 +262,36 @@ echo "All selected tasks processed."
 #   --main_split_path    /data2/processed_datasets/zj2398/femr/mimic/deephit_tpp/main_split.csv \
 #   --cohort_dir   /data2/processed_datasets/mimic/regression/icu_stay_4h/ \
 #   --output_dir   /data2/processed_datasets/zj2398/femr/mimic/results/regression \
-#   --tasks "pao2,platelets" \
+#   --tasks "pao2,platelets,bilirubin,creatinine" \
 #   --regression 
 
+# kuvira
 # bash run_regression.sh \
-#   --meds_reader        /data/raw_data/mimic/files/mimiciv/meds_v0.6/3.1/MEDS_cohort-reader \
-#   --num_proc           64 \
-#   --model_path         /data2/processed_datasets/zj2398/femr/mimic/deephit_tpp/output_transformer/best_221573\
+#   --meds_reader         /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/post_transform_meds_reader \
+#   --num_proc           50 \
+#   --model_path         /data/models/zj2398/femr/cumc_0.1/mtpp_shared/transformer/best_39446 \
+#   --model_name         mtpp_shared_10 \
 #   --tokens_per_batch   65536 \
 #   --device             cuda:0 \
 #   --min_subjects_per_batch 8 \
-#   --ontology_path      /data2/processed_datasets/zj2398/femr/mimic/deephit_tpp/ontology.pkl \
-#   --main_split_path    /data2/processed_datasets/zj2398/femr/mimic/deephit_tpp/main_split.csv \
-#   --cohort_dir   /data2/processed_datasets/mimic/regression/icu_stay_4h/ \
-#   --output_dir   /data2/processed_datasets/zj2398/femr/mimic/results/regression/ \
-#   --tasks "bilirubin,creatinine" \
+#   --ontology_path      /data2/processed_datasets/zj2398/femr/ontology.pkl \
+#   --main_split_path    /data2/processed_datasets/zj2398/femr/cumc/mtpp_vocab_all/cumc_split.csv \
+#   --cohort_dir   /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/task_labels/regression/ \
+#   --output_dir   /data/results/zj2398/femr/cumc_0.1/regression \
+#   --tasks "platelets,bilirubin,creatinine" \
+#   --regression 
+
+# bash run_regression.sh \
+#   --meds_reader         /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/post_transform_meds_reader \
+#   --num_proc           50 \
+#   --model_path         /data2/processed_datasets/zj2398/femr/cumc_0.1/motor/transformer/best_17925 \
+#   --model_name         motor \
+#   --tokens_per_batch   65536 \
+#   --device             cuda:0 \
+#   --min_subjects_per_batch 8 \
+#   --ontology_path      /data2/processed_datasets/zj2398/femr/ontology.pkl \
+#   --main_split_path    /data2/processed_datasets/zj2398/femr/cumc/mtpp_vocab_all/cumc_split.csv \
+#   --cohort_dir   /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/task_labels/regression/ \
+#   --output_dir   /data/results/zj2398/femr/cumc_0.1/regression \
+#   --tasks "platelets,bilirubin,creatinine" \
 #   --regression 

@@ -1,0 +1,90 @@
+  0%|                                                                                  | 0/3423100 [00:00<?, ?it/s]Could not estimate the number of tokens of the input, floating-point operations will not be computed
+  4%|███▎                                                                                | 136924/3423100 [8:35:46<1030:12:58,  1.13s/it]Traceback (most recent call last):
+{'loss': 0.862, 'grad_norm': 0.8829343318939209, 'learning_rate': 9.801434581896805e-06, 'epoch': 1.0}
+  File "/home/zj2398@mc.cumc.columbia.edu/femr/femr_chao_meds_v3/src/femr/omop_meds_tutorial/pretrain.py", line 293, in <module>                     
+{'eval_loss': 0.8090280294418335, 'eval_runtime': 686.0955, 'eval_samples_per_second': 10.595, 'eval_steps_per_second': 5.298, 'epoch': 1.0}
+{'loss': 0.8026, 'grad_norm': 0.7446550130844116, 'learning_rate': 9.601405364342899e-06, 'epoch': 2.0}
+    main()
+  File "/home/zj2398@mc.cumc.columbia.edu/femr/femr_chao_meds_v3/src/femr/omop_meds_tutorial/pretrain.py", line 286, in main
+    train_result = trainer.train(resume_from_checkpoint=args.checkpoint_dir)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/anaconda3/envs/motor_chao/lib/python3.11/site-packages/transformers/trainer.py", line 2238, in train
+    return inner_training_loop(
+           ^^^^^^^^^^^^^^^^^^^^
+  File "/data/anaconda3/envs/motor_chao/lib/python3.11/site-packages/transformers/trainer.py", line 2698, in _inner_training_loop
+    self._maybe_log_save_evaluate(
+  File "/data/anaconda3/envs/motor_chao/lib/python3.11/site-packages/transformers/trainer.py", line 3137, in _maybe_log_save_evaluate
+    metrics = self._evaluate(trial, ignore_keys_for_eval)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/anaconda3/envs/motor_chao/lib/python3.11/site-packages/transformers/trainer.py", line 3086, in _evaluate
+    metrics = self.evaluate(ignore_keys=ignore_keys_for_eval)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/anaconda3/envs/motor_chao/lib/python3.11/site-packages/transformers/trainer.py", line 4254, in evaluate
+    output = eval_loop(
+             ^^^^^^^^^^
+  File "/data/anaconda3/envs/motor_chao/lib/python3.11/site-packages/transformers/trainer.py", line 4439, in evaluation_loop
+    for step, inputs in enumerate(dataloader):
+  File "/data/anaconda3/envs/motor_chao/lib/python3.11/site-packages/accelerate/data_loader.py", line 567, in __iter__
+    current_batch = next(dataloader_iter)
+                    ^^^^^^^^^^^^^^^^^^^^^
+  File "/data/anaconda3/envs/motor_chao/lib/python3.11/site-packages/torch/utils/data/dataloader.py", line 734, in __next__
+    data = self._next_data()
+           ^^^^^^^^^^^^^^^^^
+  File "/data/anaconda3/envs/motor_chao/lib/python3.11/site-packages/torch/utils/data/dataloader.py", line 1492, in _next_data
+    idx, data = self._get_data()
+                ^^^^^^^^^^^^^^^^
+  File "/data/anaconda3/envs/motor_chao/lib/python3.11/site-packages/torch/utils/data/dataloader.py", line 1444, in _get_data
+    success, data = self._try_get_data()
+                    ^^^^^^^^^^^^^^^^^^^^
+  File "/data/anaconda3/envs/motor_chao/lib/python3.11/site-packages/torch/utils/data/dataloader.py", line 1285, in _try_get_data
+    data = self._data_queue.get(timeout=timeout)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/anaconda3/envs/motor_chao/lib/python3.11/queue.py", line 180, in get
+    self.not_empty.wait(remaining)
+  File "/data/anaconda3/envs/motor_chao/lib/python3.11/threading.py", line 331, in wait
+    gotit = waiter.acquire(True, timeout)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+KeyboardInterrupt
+[rank0]: Traceback (most recent call last):
+[rank0]:   File "/home/zj2398@mc.cumc.columbia.edu/femr/femr_chao_meds_v3/src/femr/omop_meds_tutorial/pretrain.py", line 293, in <module>
+[rank0]:     main()
+[rank0]:   File "/home/zj2398@mc.cumc.columbia.edu/femr/femr_chao_meds_v3/src/femr/omop_meds_tutorial/pretrain.py", line 286, in main
+[rank0]:     train_result = trainer.train(resume_from_checkpoint=args.checkpoint_dir)
+[rank0]:                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/data/anaconda3/envs/motor_chao/lib/python3.11/site-packages/transformers/trainer.py", line 2238, in train
+[rank0]:     return inner_training_loop(
+[rank0]:            ^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/data/anaconda3/envs/motor_chao/lib/python3.11/site-packages/transformers/trainer.py", line 2698, in _inner_training_loop
+[rank0]:     self._maybe_log_save_evaluate(
+[rank0]:   File "/data/anaconda3/envs/motor_chao/lib/python3.11/site-packages/transformers/trainer.py", line 3137, in _maybe_log_save_evaluate
+[rank0]:     metrics = self._evaluate(trial, ignore_keys_for_eval)
+[rank0]:               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/data/anaconda3/envs/motor_chao/lib/python3.11/site-packages/transformers/trainer.py", line 3086, in _evaluate
+[rank0]:     metrics = self.evaluate(ignore_keys=ignore_keys_for_eval)
+[rank0]:               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/data/anaconda3/envs/motor_chao/lib/python3.11/site-packages/transformers/trainer.py", line 4254, in evaluate
+[rank0]:     output = eval_loop(
+[rank0]:              ^^^^^^^^^^
+[rank0]:   File "/data/anaconda3/envs/motor_chao/lib/python3.11/site-packages/transformers/trainer.py", line 4439, in evaluation_loop
+[rank0]:     for step, inputs in enumerate(dataloader):
+[rank0]:   File "/data/anaconda3/envs/motor_chao/lib/python3.11/site-packages/accelerate/data_loader.py", line 567, in __iter__
+[rank0]:     current_batch = next(dataloader_iter)
+[rank0]:                     ^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/data/anaconda3/envs/motor_chao/lib/python3.11/site-packages/torch/utils/data/dataloader.py", line 734, in __next__
+[rank0]:     data = self._next_data()
+[rank0]:            ^^^^^^^^^^^^^^^^^
+[rank0]:   File "/data/anaconda3/envs/motor_chao/lib/python3.11/site-packages/torch/utils/data/dataloader.py", line 1492, in _next_data
+[rank0]:     idx, data = self._get_data()
+[rank0]:                 ^^^^^^^^^^^^^^^^
+[rank0]:   File "/data/anaconda3/envs/motor_chao/lib/python3.11/site-packages/torch/utils/data/dataloader.py", line 1444, in _get_data
+[rank0]:     success, data = self._try_get_data()
+[rank0]:                     ^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/data/anaconda3/envs/motor_chao/lib/python3.11/site-packages/torch/utils/data/dataloader.py", line 1285, in _try_get_data
+[rank0]:     data = self._data_queue.get(timeout=timeout)
+[rank0]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/data/anaconda3/envs/motor_chao/lib/python3.11/queue.py", line 180, in get
+[rank0]:     self.not_empty.wait(remaining)
+[rank0]:   File "/data/anaconda3/envs/motor_chao/lib/python3.11/threading.py", line 331, in wait
+[rank0]:     gotit = waiter.acquire(True, timeout)
+[rank0]:             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank0]: KeyboardInterrupt
