@@ -274,14 +274,13 @@ def main():
     print(f"CONFIRMATION: The actual per_device_train_batch_size is {trainer_config.per_device_train_batch_size}")
 
 
-
     trainer = transformers.Trainer(
         model=model,
         data_collator=processor.collate,
         train_dataset=train_batches,
         eval_dataset=val_batches,
         args=trainer_config,
-        callbacks=[CustomEarlyStoppingCallback(early_stopping_patience=2, early_stopping_threshold=0.001)],
+        callbacks=[CustomEarlyStoppingCallback(early_stopping_patience=3, early_stopping_threshold=0.001)],
     )
 
     train_result = trainer.train(resume_from_checkpoint=args.checkpoint_dir)
@@ -341,7 +340,7 @@ CUDA_VISIBLE_DEVICES=4,5,6,7 accelerate launch \
 
 kuvira
 
-export CUDA_VISIBLE_DEVICES=1
+export CUDA_VISIBLE_DEVICES=3
 python pretrain.py \
     --pretraining_data /data2/processed_datasets/zj2398/femr/cumc_0.1/mtpp \
     --meds_reader /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/post_transform_0.1_reader \
@@ -352,10 +351,10 @@ python pretrain.py \
 
 
 python pretrain.py \
-    --pretraining_data /data2/processed_datasets/zj2398/femr/cumc_0.1/tpp \
+    --pretraining_data /data2/processed_datasets/zj2398/femr/cumc_0.1/motor \
     --meds_reader /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/post_transform_0.1_reader \
-    --output_dir /data2/processed_datasets/zj2398/femr/cumc_0.1/tpp/transformer_continue \
-    --checkpoint_dir /data2/processed_datasets/zj2398/femr/cumc_0.1/tpp/transformer/best_10746 \
+    --checkpoint_dir /data2/processed_datasets/zj2398/femr/cumc_0.1/motor/transformer/best_17925 \
+    --output_dir /data2/processed_datasets/zj2398/femr/cumc_0.1/motor/transformer_continue \
     --model transformer \
     --hf_run_name motor_cumc_0.1_continue \
     --loss_type motor
@@ -370,19 +369,5 @@ python pretrain.py \
     --loss_type mtpp
 
 
-# CUDA_VISIBLE_DEVICES=0,2 accelerate launch \
-#   --num_processes 2 \
-#   --mixed_precision bf16 \
-#   --gpu_ids "0,2" \
-
-python  pretrain.py \
-  --pretraining_data /data2/processed_datasets/zj2398/femr/mimic/deephit_tpp/ \
-  --meds_reader /data/raw_data/mimic/files/mimiciv/meds_v0.6/3.1/MEDS_cohort-reader/ \
-  --per_device_train_batch_size 1 \
-  --output_dir /data2/processed_datasets/zj2398/femr/mimic/deephit_tpp/output_transformer_test \
-  --model transformer \
-  --loss_type tpp 
-  
-#   --n_layers 12
 
 '''
