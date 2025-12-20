@@ -26,12 +26,12 @@ echo
 #   >"$PREP_LOG" 2>&1 &
 
 python prepare_motor/prepare_mtpp.py \
-    --pretraining_data /data/models/zj2398/femr/cumc_full/tpp/ \
+    --pretraining_data /data2/processed_datasets/zj2398/femr/cumc/motor \
     --athena_path "" \
     --num_bins 8 \
     --value_count_threshold 100 \
-    --loss_type tpp \
-    --num_threads 40  \
+    --loss_type motor \
+    --num_threads 32  \
     --meds_reader /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/post_transform_meds_reader
   >"$PREP_LOG" 2>&1 &
 
@@ -44,14 +44,13 @@ python prepare_motor/prepare_mtpp.py \
 accelerate launch --gpu_ids 2,3 \
   --num_processes 2 \
   pretrain.py \
-  --pretraining_data /data/models/zj2398/femr/cumc_full/tpp/  \
+  --pretraining_data /data2/processed_datasets/zj2398/femr/cumc/motor  \
   --meds_reader /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/post_transform_meds_reader \
-  --checkpoint_dir /data/models/zj2398/femr/cumc_full/tpp/transformer/checkpoint-68462 \
   --per_device_train_batch_size 1 \
-  --output_dir /data/models/zj2398/femr/cumc_full/tpp/transformer  \
-  --hf_run_name cumc_full_tpp \
+  --output_dir /data2/processed_datasets/zj2398/femr/cumc/motor/transformer  \
+  --hf_run_name cumc_full_motor \
   --model transformer \
-  --loss_type tpp 
+  --loss_type motor
 
 #single gpu
 # python pretrain.py \
@@ -61,15 +60,3 @@ accelerate launch --gpu_ids 2,3 \
 #     --model transformer \
 #     --hf_run_name cumc_full_tpp \
 #     --loss_type tpp
-
-# CUDA_VISIBLE_DEVICES=0,1,2,4 accelerate launch \
-#   --num_processes 4 \
-#     pretrain.py \
-#     --pretraining_data /user/zj2398/cache/mtpp_8k_num_bin5 \
-#     --meds_reader /shared/share_mala/zj2398/mimic/data/meds_v0.6_reader \
-#     --output_dir /shared/share_mala/zj2398/models/mtpp_8k/mtpp_mean_all_shared_bin_5 \
-#     --model transformer \
-#     --hf_run_name mimic_mtpp_shared_bin_5 \
-#     --loss_type mtpp_shared
-
-#  825, 8, 6100] torch.Size([825, 8, 6100])

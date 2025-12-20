@@ -153,7 +153,7 @@ def main(args):
         if not train_batches_path.exists():
             print("Convert batches")
             # But generally we want to convert entire datasets
-            train_batches = processor.convert_dataset(train_database, tokens_per_batch=args.tokens_per_batch, num_proc=32)
+            train_batches = processor.convert_dataset(train_database, tokens_per_batch=args.tokens_per_batch, num_proc=50)
 
             print("Convert batches to pytorch")
             # Convert our batches to pytorch tensors
@@ -163,7 +163,7 @@ def main(args):
         val_batches_path = pretraining_data_path / 'val_batches'
         if not val_batches_path.exists():
             print("Convert val batches")
-            val_batches = processor.convert_dataset(val_database, tokens_per_batch=args.tokens_per_batch, num_proc=32)
+            val_batches = processor.convert_dataset(val_database, tokens_per_batch=args.tokens_per_batch, num_proc=50)
             # Convert our batches to pytorch tensors
             val_batches.set_format("pt")
             val_batches.save_to_disk(val_batches_path)

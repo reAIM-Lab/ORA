@@ -210,7 +210,7 @@ done
 
 echo "All selected tasks processed."
 
-#export CUDA_VISIBLE_DEVICES=5
+#export CUDA_VISIBLE_DEVICES=1
 # bilirubin,creatinine,pao2,platelets
 
 # bash run_regression.sh \
@@ -278,6 +278,21 @@ echo "All selected tasks processed."
 #   --main_split_path    /data2/processed_datasets/zj2398/femr/cumc/mtpp_vocab_all/cumc_split.csv \
 #   --cohort_dir   /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/task_labels/regression/ \
 #   --output_dir   /data/results/zj2398/femr/cumc_0.1/regression \
+#   --tasks "platelets,bilirubin,creatinine" \
+#   --regression 
+
+# bash run_regression.sh \
+#   --meds_reader         /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/post_transform_meds_reader \
+#   --num_proc           50 \
+#   --model_path         /data/models/zj2398/femr/cumc_full/tpp/transformer/checkpoint-410772 \
+#   --model_name         tpp \
+#   --tokens_per_batch   65536 \
+#   --device             cuda:0 \
+#   --min_subjects_per_batch 8 \
+#   --ontology_path      /data/models/zj2398/femr/cumc_full/tpp/ontology.pkl \
+#   --main_split_path    /data/models/zj2398/femr/cumc_full/tpp/main_split.csv \
+#   --cohort_dir   /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/task_labels/regression/ \
+#   --output_dir   /data/results/zj2398/femr/cumc/regression \
 #   --tasks "platelets,bilirubin,creatinine" \
 #   --regression 
 
