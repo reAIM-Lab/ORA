@@ -623,7 +623,7 @@ class FEMRBatchProcessor:
             num_proc=num_proc // 4,
             writer_batch_size=8,
             # cache_dir="/shared/share_mala/zj2398/huggingface/datasets",
-            cache_dir = "/data/huggingface/zj2398"
+            cache_dir = "/data2/huggingface/zj2398"
         )
 
         # batch_dataset = datasets.Dataset.from_generator(

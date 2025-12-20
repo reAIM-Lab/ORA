@@ -45,7 +45,7 @@ for task in ["bilirubin"]:
         test_by_subject[row['subject_id']].append({
             'index': idx,
             'prediction_time': row['prediction_time'],
-            'code': row['code'],
+            # 'code': row['code'],
             'true_value': row['numerical_value']
         })
 
