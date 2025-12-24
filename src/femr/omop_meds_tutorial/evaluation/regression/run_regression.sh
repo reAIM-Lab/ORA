@@ -265,48 +265,64 @@ echo "All selected tasks processed."
 #   --tasks "pao2,platelets,bilirubin,creatinine" \
 #   --regression 
 
-# kuvira
+# kuvira cumc
 # bash run_regression.sh \
 #   --meds_reader         /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/post_transform_meds_reader \
-#   --num_proc           50 \
+#   --num_proc           24 \
 #   --model_path         /data/models/zj2398/femr/cumc_0.1/mtpp_shared/transformer/best_39446 \
 #   --model_name         mtpp_shared_10 \
 #   --tokens_per_batch   65536 \
 #   --device             cuda:0 \
 #   --min_subjects_per_batch 8 \
 #   --ontology_path      /data2/processed_datasets/zj2398/femr/ontology.pkl \
-#   --main_split_path    /data2/processed_datasets/zj2398/femr/cumc/mtpp_vocab_all/cumc_split.csv \
-#   --cohort_dir   /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/task_labels/regression/ \
-#   --output_dir   /data/results/zj2398/femr/cumc_0.1/regression \
+#   --main_split_path    /data2/processed_datasets/zj2398/femr/cumc/motor/main_split.csv \
+#   --cohort_dir   /data2/processed_datasets/zj2398/cumc_data/regression_6-9/ \
+#   --output_dir   /data/results/zj2398/femr/cumc_0.1/regression_6_9_months \
 #   --tasks "platelets,bilirubin,creatinine" \
 #   --regression 
 
 # bash run_regression.sh \
 #   --meds_reader         /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/post_transform_meds_reader \
-#   --num_proc           50 \
-#   --model_path         /data/models/zj2398/femr/cumc_full/tpp/transformer/checkpoint-410772 \
-#   --model_name         tpp \
-#   --tokens_per_batch   65536 \
-#   --device             cuda:0 \
-#   --min_subjects_per_batch 8 \
-#   --ontology_path      /data/models/zj2398/femr/cumc_full/tpp/ontology.pkl \
-#   --main_split_path    /data/models/zj2398/femr/cumc_full/tpp/main_split.csv \
-#   --cohort_dir   /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/task_labels/regression/ \
-#   --output_dir   /data/results/zj2398/femr/cumc/regression \
-#   --tasks "platelets,bilirubin,creatinine" \
-#   --regression 
-
-# bash run_regression.sh \
-#   --meds_reader         /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/post_transform_meds_reader \
-#   --num_proc           50 \
+#   --num_proc           32 \
 #   --model_path         /data2/processed_datasets/zj2398/femr/cumc_0.1/motor/transformer/best_17925 \
 #   --model_name         motor \
 #   --tokens_per_batch   65536 \
 #   --device             cuda:0 \
 #   --min_subjects_per_batch 8 \
 #   --ontology_path      /data2/processed_datasets/zj2398/femr/ontology.pkl \
-#   --main_split_path    /data2/processed_datasets/zj2398/femr/cumc/mtpp_vocab_all/cumc_split.csv \
-#   --cohort_dir   /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/task_labels/regression/ \
-#   --output_dir   /data/results/zj2398/femr/cumc_0.1/regression \
+#   --main_split_path    /data2/processed_datasets/zj2398/femr/cumc/motor/main_split.csv  \
+#   --cohort_dir   /data2/processed_datasets/zj2398/cumc_data/regression_6-9/  \
+#   --output_dir  /data/results/zj2398/femr/cumc_0.1/regression_6_9_months \
+#   --tasks "platelets" \
+#   --regression 
+
+
+# bash run_regression.sh \
+#   --meds_reader        /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/post_transform_meds_reader \
+#   --num_proc          32 \
+#   --model_path         /data2/processed_datasets/zj2398/femr/cumc_0.1/motor/transformer/epoch_9_137304 \
+#   --model_name         motor \
+#   --tokens_per_batch   65536 \
+#   --device             cuda:0 \
+#   --min_subjects_per_batch 8 \
+#   --ontology_path      /data2/processed_datasets/zj2398/femr/cumc_0.1/motor/ontology.pkl \
+#   --main_split_path    /data2/processed_datasets/zj2398/femr/cumc/motor/main_split.csv  \
+#   --cohort_dir   /data2/processed_datasets/zj2398/cumc_data/regression_2-5/  \
+#   --output_dir  /data/results/zj2398/femr/cumc_0.1/regression_2_5_months \
+#   --tasks "platelets,bilirubin,creatinine" \
+#   --regression 
+
+# bash run_regression.sh \
+#   --meds_reader        /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/post_transform_meds_reader \
+#   --num_proc          32 \
+#   --model_path         /data2/processed_datasets/zj2398/femr/cumc_0.1/mtpp/transformer/epoch_9_137304 \
+#   --model_name         mtpp \
+#   --tokens_per_batch   65536 \
+#   --device             cuda:0 \
+#   --min_subjects_per_batch 8 \
+#   --ontology_path      /data2/processed_datasets/zj2398/femr/cumc_0.1/motor/ontology.pkl \
+#   --main_split_path    /data2/processed_datasets/zj2398/femr/cumc/motor/main_split.csv  \
+#   --cohort_dir   /data2/processed_datasets/zj2398/cumc_data/regression_2-5/  \
+#   --output_dir  /data/results/zj2398/femr/cumc_0.1/regression_2_5_months \
 #   --tasks "platelets,bilirubin,creatinine" \
 #   --regression 

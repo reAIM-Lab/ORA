@@ -42,7 +42,7 @@ def main(args):
             ontology.prune_to_dataset(
                 database,
                 prune_all_descriptions=True,
-                remove_ontologies={'SPL', 'HemOnc', 'LOINC'}
+                # remove_ontologies={'SPL', 'HemOnc', 'LOINC'}
             )
 
             with open(ontology_path, 'wb') as f:
@@ -292,33 +292,8 @@ python prepare_motor.py \
     --num_bins 8 \
     --loss_type tpp \
     --num_threads 32 \
-    --meds_reader /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/post_transform_0.1_reader
-
-python prepare_motor.py \
-    --pretraining_data /data2/processed_datasets/zj2398/femr/cumc_0.1/mtpp \
-    --athena_path "" \
-    --num_bins 8 \
-    --loss_type mtpp \
-    --num_threads 8 \
-    --meds_reader /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/post_transform_0.1_reader    
-    
-python prepare_motor.py \
-    --pretraining_data /data/models/zj2398/femr/cumc_0.1/mtpp_5_bin \
-    --athena_path "" \
-    --num_bins 8 \
-    --num_value_bins 5 \
-    --loss_type mtpp \
-    --num_threads 16 \
-    --meds_reader /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/post_transform_0.1_reader   
-
-python prepare_motor.py \
-    --pretraining_data /data/models/zj2398/femr/cumc_0.1/mtpp_3_bin \
-    --athena_path "" \
-    --num_bins 8 \
-    --num_value_bins 3 \
-    --loss_type mtpp \
-    --num_threads 16 \
     --meds_reader /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/post_transform_0.1_reader 
+    
 
     
 python prepare_motor.py \
