@@ -134,7 +134,7 @@ def get_model_name(label_name: str, model_name: str, observation_window: Optiona
 
 def main():
     args = create_arg_parser().parse_args()
-    with meds_reader.SubjectDatabase(args.meds_reader, num_threads=6) as database:
+    with meds_reader.SubjectDatabase(args.meds_reader, num_threads=24) as database:
         # pretraining_data = pathlib.Path(args.pretraining_data)
         # output_root = pathlib.Path(args.output_root) if args.output_root else pretraining_data
         output_root = pathlib.Path(args.output_root)

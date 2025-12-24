@@ -24,14 +24,16 @@ import meds_reader
 
 # Lab codes to extract
 CODE_DICT = {
-    "LOINC/26515-7//UCUM/10*9/L": "Platelets",
-    "LOINC/2160-0//UCUM/mg/dL": "Creatinine",
-    "LOINC/1968-7//UCUM/mg/dL": "Bilirubin",
+    "LOINC/26515-7//UCUM/10*9/L": "platelets",
+    "LOINC/2160-0//UCUM/mg/dL": "creatinine",
+    "LOINC/1968-7//UCUM/mg/dL": "bilirubin",
 }
 
 # Prediction window parameters (in seconds)
 WINDOW_START_DAYS = 60   # ~2 months
 WINDOW_END_DAYS = 150    # ~5 months
+# WINDOW_START_DAYS = 180   # ~2 months
+# WINDOW_END_DAYS = 270    # ~5 months
 WINDOW_START_SECS = WINDOW_START_DAYS * 86400
 WINDOW_END_SECS = WINDOW_END_DAYS * 86400
 
@@ -162,7 +164,7 @@ def build_cohort_for_code(
     For each subject:
         For each visit end (prediction_time):
             Find first event in [pred_time + 2mo, pred_time + 5mo] that's within any visit
-            Record (subject_id, prediction_time, event_time, regression_value)
+            Record (subject_id, prediction_time, event_time, numerical_value)
     
     Args:
         subject_iter: Iterator of subjects from MEDS database
@@ -171,7 +173,7 @@ def build_cohort_for_code(
         visits_dict: Dictionary mapping person_id -> numpy array of visit windows
     
     Returns:
-        List of dicts with keys: subject_id, prediction_time, event_time, regression_value
+        List of dicts with keys: subject_id, prediction_time, event_time, numerical_value
     """
     results = []
     target_codes = {target_code}
@@ -234,7 +236,7 @@ def build_cohort_for_code(
                         'subject_id': subject_id,
                         'prediction_time': pred_datetime,
                         'event_time': event_datetime,
-                        'regression_value': event_values[idx]
+                        'numerical_value': event_values[idx]
                     })
                     break  # Take first qualifying event only
     
@@ -345,7 +347,7 @@ def build_all_cohorts(
                             'subject_id': subject_id,
                             'prediction_time': pred_datetime,
                             'event_time': event_datetime,
-                            'regression_value': event_values[idx]
+                            'numerical_value': event_values[idx]
                         })
                         break
     
@@ -380,7 +382,7 @@ def main():
     visits_parquet_path = "/data2/processed_datasets/zj2398/cumc_data/outpatient_visits_new.parquet"  # Output from Task 1
     # meds_path = "xxx"  # Path to your MEDS data
     # visits_parquet_path = "xxx"  # Path to visits parquet from Task 1
-    output_dir = "/data2/processed_datasets/zj2398/cumc_data/regression"  # Output directory for cohort files
+    output_dir = "/data2/processed_datasets/zj2398/cumc_data/regression_2-5"  # Output directory for cohort files
     
     # Create output directory if it doesn't exist
     os.makedirs(output_dir, exist_ok=True)
@@ -390,7 +392,7 @@ def main():
     
     # Step 2: Initialize MEDS database
     print(f"\nInitializing MEDS database from {meds_path}...")
-    db = meds_reader.SubjectDatabase(meds_path, num_threads=1)
+    db = meds_reader.SubjectDatabase(meds_path, num_threads=40)
     
     # Step 3: Process subjects and build all cohorts in parallel
     print(f"\nProcessing subjects to build regression cohorts...")
@@ -422,21 +424,23 @@ def main():
             df['subject_id'] = df['subject_id'].astype('int64')
             df['prediction_time'] = pd.to_datetime(df['prediction_time'])
             df['event_time'] = pd.to_datetime(df['event_time'])
-            df['regression_value'] = df['regression_value'].astype('float64')
+            df['numerical_value'] = df['numerical_value'].astype('float64')
             
             # Sort by subject_id and prediction_time
             df = df.sort_values(['subject_id', 'prediction_time']).reset_index(drop=True)
-            
+            df = df[df['numerical_value'] != 0]
             # Save to parquet
-            output_path = os.path.join(output_dir, f"cohort_{lab_name}.parquet")
+            output_path = os.path.join(output_dir,lab_name)
+            os.makedirs(output_path,exist_ok=True)
+            output_path = os.path.join(output_path, f"{lab_name}.parquet")
             df.to_parquet(output_path, index=False)
             
             print(f"  {lab_name}: {len(df):,} samples -> {output_path}")
             
             # Print sample statistics
             print(f"    Subject IDs: {df['subject_id'].nunique():,} unique")
-            print(f"    Regression value - mean: {df['regression_value'].mean():.2f}, "
-                  f"std: {df['regression_value'].std():.2f}")
+            print(f"    Regression value - mean: {df['numerical_value'].mean():.2f}, "
+                  f"std: {df['numerical_value'].std():.2f}")
         else:
             print(f"  {lab_name}: No samples found")
     

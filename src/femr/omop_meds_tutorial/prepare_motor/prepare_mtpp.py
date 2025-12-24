@@ -42,7 +42,8 @@ def main(args):
             ontology.prune_to_dataset(
                 database,
                 prune_all_descriptions=True,
-                remove_ontologies={'SPL', 'HemOnc', 'LOINC'}
+                remove_ontologies={'SPL', 'HemOnc'}
+                # remove_ontologies={'SPL', 'HemOnc', 'LOINC'}
             )
 
             with open(ontology_path, 'wb') as f:
@@ -103,7 +104,7 @@ def main(args):
                     final_layer_size=512,
                     codes_to_skip=codes_to_skip
                 )
-            if args.loss_type == "mtpp":
+            if args.loss_type == "mtpp" or args.loss_type == "mtpp_shared":
                 print("mtpp choosen")
                 # task = MTPP_Task.fit_pretraining_task_info(
                 #     main_database, tokenizer,
@@ -139,7 +140,7 @@ def main(args):
         # example_subject_id = list(train_database)[0]
         # example_subject = train_database[example_subject_id]
 
-        # # We can do this one subject at a time
+        # We can do this one subject at a time
         # print("Convert a single subject")
         # example_batch = processor.collate([processor.convert_subject(example_subject, tensor_type='pt')])
         # print(f"example subject_id {example_subject_id} , example_subject: {example_subject}")
@@ -292,11 +293,36 @@ python prepare_motor_mtpp.py \
 kuvira cumc 0.1
 
 python prepare_motor.py \
-  --pretraining_data /data2/processed_datasets/zj2398/femr/cumc_0.1/motor \
+  --pretraining_data /data2/processed_datasets/zj2398/femr/cumc/motor_chao \
   --athena_path "" \
   --num_bins 8 \
   --loss_type motor \
+  --num_threads 50 \
+  --meds_reader /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/post_transform_meds_reader
+
+python prepare_motor.py \
+  --pretraining_data /data2/processed_datasets/zj2398/femr/cumc_0.1/motor_allow_all \
+  --athena_path /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3 \
+  --num_bins 8 \
+  --loss_type motor \
   --num_threads 32 \
+  --meds_reader /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/post_transform_0.1_reader
+
+python prepare_mtpp.py \
+  --pretraining_data /data2/processed_datasets/zj2398/femr/cumc_0.1/motor_allow_loinc \
+  --athena_path /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3 \
+  --num_bins 8 \
+  --loss_type motor \
+  --num_threads 32 \
+  --meds_reader /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/post_transform_0.1_reader
+
+
+python prepare_motor.py \
+  --pretraining_data /data2/processed_datasets/zj2398/femr/cumc_0.1/motor_chao_ontology \
+  --athena_path "" \
+  --num_bins 8 \
+  --loss_type motor \
+  --num_threads 50 \
   --meds_reader /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/post_transform_0.1_reader
 
 python prepare_motor.py \
@@ -315,42 +341,4 @@ python prepare_motor.py \
     --num_threads 8 \
     --meds_reader /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/post_transform_0.1_reader    
     
-python prepare_motor.py \
-    --pretraining_data /data/models/zj2398/femr/cumc_0.1/mtpp_5_bin \
-    --athena_path "" \
-    --num_bins 8 \
-    --num_value_bins 5 \
-    --loss_type mtpp \
-    --num_threads 16 \
-    --meds_reader /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/post_transform_0.1_reader   
-
-python prepare_motor.py \
-    --pretraining_data /data/models/zj2398/femr/cumc_0.1/mtpp_3_bin \
-    --athena_path "" \
-    --num_bins 8 \
-    --num_value_bins 3 \
-    --loss_type mtpp \
-    --num_threads 16 \
-    --meds_reader /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/post_transform_0.1_reader 
-
-    
-python prepare_motor.py \
-    --pretraining_data /data/models/zj2398/femr/cumc_0.1/mtpp_value_100 \
-    --athena_path "" \
-    --num_bins 8 \
-    --num_value_bins 10 \
-    --loss_type mtpp \
-    --num_threads 32 \
-    --value_count_threshold 100 \
-    --meds_reader /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/post_transform_0.1_reader 
-    
-
-
-cumc-kuvira
-python prepare_motor.py \
-  --pretraining_data /data/processed_datasets/processed_datasets/zj2398/femr/cumc/motor_cumc_bin_8 \
-  --athena_path " " \
-  --num_bins 8 \
-  --num_threads 8 \
-  --meds_reader /data/processed_datasets/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/post_transform_meds_reader
 '''

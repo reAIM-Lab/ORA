@@ -57,6 +57,7 @@ class Ontology:
             os.path.join(athena_path, "CONCEPT_RELATIONSHIP.csv"), separator="\t", infer_schema_length=0
         )
         relationship_id = pl.col("relationship_id")
+        # only keep 'map to' relationship
         relationship = relationship.filter(
             relationship_id == "Maps to", pl.col("concept_id_1") != pl.col("concept_id_2")
         )
@@ -65,9 +66,11 @@ class Ontology:
             .collect()
             .rows()
         ):
+            # for nonstandard concept, “Maps to” is treated as a parent link. if code1 maps to code2, self.parents_map[code1] = code2
             if concept_id_1 in non_standard_concepts:
                 self.parents_map[concept_id_to_code_map[concept_id_1]].add(concept_id_to_code_map[concept_id_2])
 
+        # update parent relationship with CONCEPT_ANCESTOR.csv
         ancestor = pl.scan_csv(os.path.join(athena_path, "CONCEPT_ANCESTOR.csv"), separator="\t", infer_schema_length=0)
         ancestor = ancestor.filter(pl.col("min_levels_of_separation") == "1")
         for concept_id, parent_concept_id in (
@@ -81,19 +84,26 @@ class Ontology:
 
         if code_metadata_path is not None:
             code_metadata = pl.scan_parquet(code_metadata_path)
+            print(code_metadata)
+            # code_metadat_items = (
+            #     code_metadata.select(pl.col("code"), pl.col("description"), pl.col("parent_codes")).collect().to_dicts()
+            # )
             code_metadat_items = (
-                code_metadata.select(pl.col("code"), pl.col("description"), pl.col("parent_codes")).collect().to_dicts()
+                code_metadata.select(pl.col("code")).collect().to_dicts()
             )
 
             # Have to add after OMOP to overwrite ...
             for code_info in code_metadat_items:
                 code = code_info.get("code")
                 if code is not None:
+                    # If description present → overwrite description_map[code]
+                    # If parent_codes present → overwrite parents_map[code] with that set (filtered for non-None)
                     if code_info.get("description") is not None:
                         self.description_map[code] = code_info["description"]
                     if code_info.get("parent_codes") is not None:
                         self.parents_map[code] = set(i for i in code_info["parent_codes"] if i is not None)
 
+        # create
         self.children_map = collections.defaultdict(set)
         for code, parents in self.parents_map.items():
             for parent in parents:
@@ -112,13 +122,19 @@ class Ontology:
         for chunk_codes in data_pool.map(_get_all_codes_map):
             valid_codes |= chunk_codes
 
+        # prune_all_descriptions is set to true in motor
         if prune_all_descriptions:
             self.description_map = {}
 
         all_parents = set()
 
+        # every valid code + all ontology ancestors reachable via parents_map
         for code in valid_codes:
             all_parents |= self.get_all_parents(code)
+
+        # keep a code if either:
+        # it’s directly present in your dataset, always keep
+        # OR it’s an ancestor of some dataset code, but only if its vocabulary is not removed
 
         def is_valid(code):
             ontology = code.split("/")[0]
@@ -128,9 +144,11 @@ class Ontology:
         for code in codes:
             m: Any
             if is_valid(code):
+                # update children_map and parents_map to only include valid elements
                 for m in (self.children_map, self.parents_map):
                     m[code] = {a for a in m[code] if is_valid(a)}
             else:
+                # delete code from all dictionaries
                 for m in (self.children_map, self.parents_map, self.description_map):
                     if code in m:
                         del m[code]
@@ -169,6 +187,7 @@ class Ontology:
             result |= self.get_all_children(code)
         return result
 
+    # recurviseluy get all grandparents of current code
     def get_all_parents(self, code: str) -> Set[str]:
         """Get all parents, including through the ontology."""
         if code not in self.all_parents_map:

@@ -26,13 +26,13 @@ echo
 #   >"$PREP_LOG" 2>&1 &
 
 python prepare_motor/prepare_mtpp.py \
-    --pretraining_data /data2/processed_datasets/zj2398/femr/cumc/motor \
+    --pretraining_data /data2/processed_datasets/zj2398/femr/cumc_0.1/motor \
     --athena_path "" \
     --num_bins 8 \
     --value_count_threshold 100 \
     --loss_type motor \
-    --num_threads 32  \
-    --meds_reader /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/post_transform_meds_reader
+    --num_threads 24  \
+    --meds_reader /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/post_transform_0.1_reader
   >"$PREP_LOG" 2>&1 &
 
 # PREP_PID=$!
@@ -41,14 +41,15 @@ python prepare_motor/prepare_mtpp.py \
 # ---- job 2: training (background) ----
 # multi-gpu pretraining
 # export CUDA_VISIBLE_DEVICES=0,1 
-accelerate launch --gpu_ids 2,3 \
-  --num_processes 2 \
-  pretrain.py \
-  --pretraining_data /data2/processed_datasets/zj2398/femr/cumc/motor  \
-  --meds_reader /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/post_transform_meds_reader \
+
+# accelerate launch --gpu_ids 2,3 \
+#   --num_processes 2 \
+python pretrain.py \
+  --pretraining_data /data2/processed_datasets/zj2398/femr/cumc_0.1/motor  \
+  --meds_reader /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/post_transform_0.1_reader \
   --per_device_train_batch_size 1 \
-  --output_dir /data2/processed_datasets/zj2398/femr/cumc/motor/transformer  \
-  --hf_run_name cumc_full_motor \
+  --output_dir /data2/processed_datasets/zj2398/femr/cumc_0.1/motor/transformer  \
+  --hf_run_name cumc_0.1_new_ontology_motor \
   --model transformer \
   --loss_type motor
 

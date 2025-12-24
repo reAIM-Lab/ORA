@@ -21,9 +21,11 @@ from collections import defaultdict
 # ============================================================================
 # Configuration
 # ============================================================================
-COHORT_DIR = Path("/data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/task_labels/regression/")
+# COHORT_DIR = Path("/data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/task_labels/regression/")
+COHORT_DIR = Path("/data2/processed_datasets/zj2398/cumc_data/regression_6-9")
 MEDS_PATH = "/data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/post_transform_meds_reader"
-SPLIT_PATH = "/data2/processed_datasets/zj2398/femr/cumc/mtpp_vocab_all/cumc_split.csv"
+SPLIT_PATH = "/data/models/zj2398/femr/cumc_full/tpp/main_split.csv"
+OUTPUT_DIR = "/data/results/zj2398/femr/cumc_0.1/regression_2_5_months/most_recent"
 
 CODE_DICT = {
     "platelets": "LOINC/26515-7//UCUM/10*9/L",
@@ -83,6 +85,7 @@ def process_subjects(
     results = {}
     
     for subject in subject_iter:
+        count = [0,0]
         sid = subject.subject_id
         
         # Skip subjects not in test set
@@ -96,21 +99,27 @@ def process_subjects(
             for event in subject.events
             if event.code == target_code 
             and event.time is not None 
-            and event.numeric_value is not None
+            and event.numeric_value is not None and event.numeric_value != 0
         ]
         
         # Process each test sample for this subject
         for row_idx, pred_time in test_lookup[sid]:
             # Find most recent value before prediction_time
             # Since history is sorted, we iterate and keep updating
+
             last_val = None
             for event_time, event_val in history:
                 if event_time < pred_time:
                     last_val = event_val
                 else:
                     break  # Past prediction time, stop
-            
+            if last_val is not None:
+                count[0] += 1
+            else:
+                count[1] += 1
             results[row_idx] = last_val if last_val is not None else train_mean
+            # results[row_idx] = train_mean
+        # print(f"subject {subject.subject_id} ratio of last event is {count[0]/(count[0]+count[1])}")
     
     return results
 
@@ -129,28 +138,29 @@ def evaluate(test_df: pd.DataFrame, predictions: Dict[int, float], task: str) ->
     test_df = test_df.copy()
     test_df['prediction'] = test_df.index.map(predictions)
     
-    valid_mask = ~test_df['prediction'].isna()
-    n_valid = valid_mask.sum()
-    n_total = len(test_df)
+    # valid_mask = ~test_df['prediction'].isna()
+    # n_valid = valid_mask.sum()
+    # n_total = len(test_df)
     
     print(f"\nResults for {task}:")
-    print(f"  Valid predictions: {n_valid}/{n_total} ({100*n_valid/n_total:.1f}%)")
+    # print(f"  Valid predictions: {n_valid}/{n_total} ({100*n_valid/n_total:.1f}%)")
     
-    if n_valid > 0:
-        y_true = test_df.loc[valid_mask, 'numerical_value']
-        y_pred = test_df.loc[valid_mask, 'prediction']
-        
-        rmse = np.sqrt(mean_squared_error(y_true, y_pred))
-        mae = mean_absolute_error(y_true, y_pred)
-        r2 = r2_score(y_true, y_pred)
-        
-        print(f"  RMSE: {rmse:.4f}")
-        print(f"  MAE:  {mae:.4f}")
-        print(f"  R²:   {r2:.4f}")
-        
-        return {'task': task, 'rmse': rmse, 'mae': mae, 'r2': r2, 'n_valid': n_valid}
+    # if n_valid > 0:
+    #     y_true = test_df.loc[valid_mask, 'numerical_value']
+    #     y_pred = test_df.loc[valid_mask, 'prediction']
     
-    return {'task': task, 'rmse': None, 'mae': None, 'r2': None, 'n_valid': 0}
+    y_true = test_df['numerical_value']
+    y_pred = test_df['prediction']
+    rmse = np.sqrt(mean_squared_error(y_true, y_pred))
+    mae = mean_absolute_error(y_true, y_pred)
+    r2 = r2_score(y_true, y_pred)
+    
+    print(f"  RMSE: {rmse:.4f}")
+    print(f"  MAE:  {mae:.4f}")
+    print(f"  R²:   {r2:.4f}")
+    
+    return {'task': task, 'rmse': rmse, 'mae': mae, 'r2': r2}
+    
 
 
 # ============================================================================
