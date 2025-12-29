@@ -209,6 +209,7 @@ class MTPP_Task(Task):
             db: meds_reader.SubjectDatabase,
             tokenizer: femr.models.tokenizer.HierarchicalTokenizer,
             num_tasks: int,
+            num_final_tasks: int,
             num_bins: int,
             final_layer_size: int,
             value_count_threshold: int,
@@ -272,8 +273,6 @@ class MTPP_Task(Task):
             task_data.append((task, rate, task_stats[0], task_stats[1], task_stats[2].mean()))
             
 
-            
-
             # Create value bins for numerical tasks (tasks with value samples)
             if value_sample_count > 0:
                 # Generate robust bins from the collected value samples
@@ -282,6 +281,7 @@ class MTPP_Task(Task):
                 numerical_task_time_bins[-1] = float("inf")
                 numerical_time_bins.append(list(numerical_task_time_bins))
             
+                task_value_bins = np.percentile(task_value_samples[i].samples, np.linspace(0, 100, num_value_bins + 1))
                 task_value_bins = np.percentile(task_value_samples[i].samples, np.linspace(0, 100, num_value_bins + 1))
                 task_value_bins[0] = float("-inf")
                 task_value_bins[-1] = float("inf")
@@ -652,9 +652,7 @@ class MTPP_Task(Task):
         bin_ends = time_bins_tensor[:, 1:].T.unsqueeze(0)     # [1, num_bins, task_points]
         bin_widths = bin_ends - bin_starts
 
-        # print(f"time_expanded shape {time_expanded.shape}")
-        # print(f"censor shape {censor_times_expanded.shape}")
-        # print(f"bin_starts shape {bin_starts.shape}")
+
         
         # For events: check which bin each event time falls into
         event_in_bin = (has_future_event.unsqueeze(1) & 

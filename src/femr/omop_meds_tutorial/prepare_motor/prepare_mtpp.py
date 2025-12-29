@@ -11,7 +11,7 @@ import polars as pl
 import logging
 from femr.models.tasks.motor import MOTOR_Task as MOTOR_Task
 from femr.models.tasks.tpp import TPP_Task as TPP_Task
-from femr.models.tasks.mtpp_origin import MTPP_Task as MTPP_Task
+from femr.models.tasks.mtpp import MTPP_Task as MTPP_Task
 
 logging.basicConfig(
     level=logging.INFO,
@@ -120,6 +120,7 @@ def main(args):
                 task = MTPP_Task.fit_pretraining_task_info(
                     main_database, tokenizer,
                     num_tasks=8 * 1024,
+                    num_final_tasks= args.num_final_tasks,
                     num_bins=args.num_bins,
                     final_layer_size=512,
                     codes_to_skip=codes_to_skip,
@@ -134,40 +135,40 @@ def main(args):
             with open(task_path, 'rb') as f:
                 task = pickle.load(f)
 
-        # print(f"Motor task length: {len(motor_task.pretraining_task_codes)}")
-        processor = femr.models.processor.FEMRBatchProcessor(tokenizer, task)
+        # # print(f"Motor task length: {len(motor_task.pretraining_task_codes)}")
+        # processor = femr.models.processor.FEMRBatchProcessor(tokenizer, task)
 
-        # example_subject_id = list(train_database)[0]
-        # example_subject = train_database[example_subject_id]
+        # # example_subject_id = list(train_database)[0]
+        # # example_subject = train_database[example_subject_id]
 
-        # We can do this one subject at a time
-        # print("Convert a single subject")
-        # example_batch = processor.collate([processor.convert_subject(example_subject, tensor_type='pt')])
-        # print(f"example subject_id {example_subject_id} , example_subject: {example_subject}")
-        # print(f"example_batch keys: {example_batch['batch'].keys()}")
-        # for key in example_batch['batch'].keys():
-        #     print(f"example_batch[{key}], shape: {example_batch['batch'][key].shape}, values: {example_batch['batch'][key]}")
+        # # We can do this one subject at a time
+        # # print("Convert a single subject")
+        # # example_batch = processor.collate([processor.convert_subject(example_subject, tensor_type='pt')])
+        # # print(f"example subject_id {example_subject_id} , example_subject: {example_subject}")
+        # # print(f"example_batch keys: {example_batch['batch'].keys()}")
+        # # for key in example_batch['batch'].keys():
+        # #     print(f"example_batch[{key}], shape: {example_batch['batch'][key].shape}, values: {example_batch['batch'][key]}")
 
-        train_batches_path = pretraining_data_path / 'train_batches'
+        # train_batches_path = pretraining_data_path / 'train_batches'
 
 
-        if not train_batches_path.exists():
-            print("Convert batches")
-            # But generally we want to convert entire datasets
-            train_batches = processor.convert_dataset(train_database, tokens_per_batch=args.tokens_per_batch, num_proc=50)
+        # if not train_batches_path.exists():
+        #     print("Convert batches")
+        #     # But generally we want to convert entire datasets
+        #     train_batches = processor.convert_dataset(train_database, tokens_per_batch=args.tokens_per_batch, num_proc=50)
 
-            print("Convert batches to pytorch")
-            # Convert our batches to pytorch tensors
-            train_batches.set_format("pt")
-            train_batches.save_to_disk(train_batches_path)
+        #     print("Convert batches to pytorch")
+        #     # Convert our batches to pytorch tensors
+        #     train_batches.set_format("pt")
+        #     train_batches.save_to_disk(train_batches_path)
 
-        val_batches_path = pretraining_data_path / 'val_batches'
-        if not val_batches_path.exists():
-            print("Convert val batches")
-            val_batches = processor.convert_dataset(val_database, tokens_per_batch=args.tokens_per_batch, num_proc=50)
-            # Convert our batches to pytorch tensors
-            val_batches.set_format("pt")
-            val_batches.save_to_disk(val_batches_path)
+        # val_batches_path = pretraining_data_path / 'val_batches'
+        # if not val_batches_path.exists():
+        #     print("Convert val batches")
+        #     val_batches = processor.convert_dataset(val_database, tokens_per_batch=args.tokens_per_batch, num_proc=50)
+        #     # Convert our batches to pytorch tensors
+        #     val_batches.set_format("pt")
+        #     val_batches.save_to_disk(val_batches_path)
 
 
 def create_omop_meds_tutorial_argparser():
@@ -233,6 +234,15 @@ def create_omop_meds_tutorial_argparser():
     )
 
     parser.add_argument(
+        "--num_final_tasks",
+        dest="num_final_tasks",
+        action="store",
+        required=False,
+        type=int,
+        default=8192,
+    )
+
+    parser.add_argument(
         "--num_value_bins",
         dest="num_value_bins",
         action="store",
@@ -292,28 +302,13 @@ python prepare_motor_mtpp.py \
 
 kuvira cumc 0.1
 
-python prepare_motor.py \
-  --pretraining_data /data2/processed_datasets/zj2398/femr/cumc/motor_chao \
-  --athena_path "" \
-  --num_bins 8 \
-  --loss_type motor \
-  --num_threads 50 \
-  --meds_reader /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/post_transform_meds_reader
-
-python prepare_motor.py \
-  --pretraining_data /data2/processed_datasets/zj2398/femr/cumc_0.1/motor_allow_all \
-  --athena_path /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3 \
-  --num_bins 8 \
-  --loss_type motor \
-  --num_threads 32 \
-  --meds_reader /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/post_transform_0.1_reader
-
 python prepare_mtpp.py \
-  --pretraining_data /data2/processed_datasets/zj2398/femr/cumc_0.1/motor_allow_loinc \
-  --athena_path /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3 \
+  --pretraining_data /data2/processed_datasets/zj2398/femr/cumc_0.1/mtpp_7399 \
+  --athena_path "" \
+  --num_final_tasks 7399 \
   --num_bins 8 \
-  --loss_type motor \
-  --num_threads 32 \
+  --loss_type mtpp \
+  --num_threads 40 \
   --meds_reader /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/post_transform_0.1_reader
 
 

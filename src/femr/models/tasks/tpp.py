@@ -452,7 +452,6 @@ class TPP_Task(Task):
         bin_widths = bin_ends - bin_starts
         
         # bin_starts [1, 20, 8192]
-        # print(f"bin_starts: {bin_starts}, bin_starts.shape: {bin_starts.shape}")
         # For events: check which bin each event time falls into
         # Shape: [pred_points, num_bins, task_points]
         event_in_bin = (has_future_event.unsqueeze(1) & 
@@ -467,19 +466,10 @@ class TPP_Task(Task):
         
         censor_time_ratio = ((censor_times_expanded - bin_starts) / bin_widths) * censor_in_bin
       
-        # logging.info(f"event_in_bin.shape: {event_in_bin.shape}")
-        # logging.info(f"distribution of event_in_bin: {event_in_bin.sum(dim=0).sum(dim=1)/event_in_bin.sum()}")
-        # logging.info(f"censor_in_bin.shape: {censor_in_bin.shape}")
-        # logging.info(f"distribution of censor_in_bin: {censor_in_bin.sum(dim=0).sum(dim=1)/censor_in_bin.sum()}")
         
         # Combine event and censoring cases
         # Shape: [pred_points, num_bins, task_points]
         is_event = event_in_bin | censor_in_bin
-        # logging.info(f"is_event {is_event}, is_event.shape: {is_event.shape}")
-        # logging.info(f"distribution of is_event: {is_event.sum(dim=0).sum(dim=1)/is_event.sum()}")
-        
-        # Set is_censored flag: True where we used censoring
-        # Shape: [pred_points, task_points]
         is_censored = ~has_future_event
         
         # Validation: ensure exactly one bin per prediction-task combination

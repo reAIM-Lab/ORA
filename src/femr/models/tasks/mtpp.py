@@ -12,9 +12,6 @@ import numpy as np
 import scipy.sparse
 import torch
 import warnings
-from collections import defaultdict
-from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
-import multiprocessing as mp
 
 import femr.models.config
 import femr.models.tokenizer
@@ -23,8 +20,6 @@ import femr.pat_utils
 import femr.stat_utils
 import random
 import logging
-from collections import defaultdict
-
 
 class Task(abc.ABC):
     def __init__(self):
@@ -206,68 +201,15 @@ def keep_unique_bins(value_samples, num_bins):
     unique_bins_augmented = np.concatenate([unique_bins,np.array((num_bins+1-len(unique_bins))*[float("inf")])])
     mask = np.concatenate([np.ones(len(unique_bins)),np.zeros(num_bins+1-len(unique_bins))])
     return unique_bins_augmented, mask
-
-def count_codes_for_subjects(args):
-    """Process a chunk of subjects and return local code counts"""
-    subject_ids_chunk, meds_path = args
-    database = meds_reader.SubjectDatabase(meds_path)
-    local_stats = defaultdict(int)
-    
-    for subject_id in subject_ids_chunk:
-        subject_num = database[subject_id]
-        for event in subject_num.events:
-            if (event.numeric_value is not None and 
-                isinstance(event.numeric_value, (int, float)) and 
-                event.text_value is None):
-                local_stats[event.code] += 1
-    
-    return dict(local_stats)
-
-def calculate_numeric_distribution(meds_reader_path, train_subject_ids, n_workers=32):    
-    # Split subject IDs into chunks
-    database = meds_reader.SubjectDatabase(str(meds_reader_path))
-    # subject_ids = list(database)
-    chunk_size = max(1, len(train_subject_ids) // n_workers)
-    chunks = [train_subject_ids[i:i + chunk_size] 
-            for i in range(0, len(train_subject_ids), chunk_size)]
-    
-    # Prepare arguments for each worker
-    args_list = [(chunk, meds_reader_path) for chunk in chunks]
-    
-    # Process chunks in parallel (use ThreadPoolExecutor if database isn't picklable)
-    code_stats = defaultdict(int)
-    
-    # Try ProcessPoolExecutor first (faster for CPU-bound), fallback to ThreadPoolExecutor
-    # try:
-    with ProcessPoolExecutor(max_workers=n_workers) as executor:
-        results = executor.map(count_codes_for_subjects, args_list)
-        # results = 
-        
-        # Merge results
-        for local_stats in results:
-            for code, count in local_stats.items():
-                code_stats[code] += count
-    
-    # Filter: keep only codes with 100 <= count <= 10^6
-    filtered_stats = {code: count for code, count in code_stats.items() 
-                    if 100 <= count}
-    
-    # Sort by frequency (count) in descending order and return only keys
-    sorted_codes = [code for code, count in 
-                    sorted(filtered_stats.items(), key=lambda x: x[1], reverse=True)]
-    
-    return sorted_codes
     
 class MTPP_Task(Task):
     @classmethod
-
     def fit_pretraining_task_info(
             cls,
             db: meds_reader.SubjectDatabase,
             tokenizer: femr.models.tokenizer.HierarchicalTokenizer,
-            train_subject_ids,
-            meds_reader_path,
             num_tasks: int,
+            num_final_tasks: int,
             num_bins: int,
             final_layer_size: int,
             value_count_threshold: int,
@@ -275,9 +217,7 @@ class MTPP_Task(Task):
             num_value_bins: int = 10
     ) -> MTPP_Task:
         tasks = []
-        print(f"inside the meds reader is {meds_reader_path} type is {type(meds_reader_path)}")
-        numerical_codes = calculate_numeric_distribution(meds_reader_path,train_subject_ids, n_workers=32)
-
+        print("using mtpp origin")
         for dict_entry in tokenizer.dictionary["vocab"]:
             if dict_entry["type"] == "code":
                 # Skip the codes that are in the codes_to_skip
@@ -287,108 +227,136 @@ class MTPP_Task(Task):
                 if len(tasks) == num_tasks:
                     break
 
-        # append all numerical codes from highest happening rate to lowest
-        for i in range(0,len(numerical_codes)):
-            if numerical_codes[i] not in tasks:
-            # print(numerical_codes[i])
-                tasks.append(numerical_codes[i])
-
         if len(tasks) < num_tasks:
             warnings.warn(f"Could not find enough tasks in the provided tokenizer {len(tasks)}")
 
         print(f"Processing {len(tasks)} tasks for fitting")
-        logging.info(f"Processing {len(tasks)} tasks for fitting")
-
         print(f"Using {num_bins} time bins and {num_value_bins} value bins")
-        # apply _prefit_motor_map
-        # print("before functools.reduce")
+        
+        # Apply parallel processing - ORDER IS PRESERVED by index
         task_length_samples, stats, task_value_samples = functools.reduce(
             _prefit_motor_agg, db.map(functools.partial(_prefit_motor_map, tasks=tasks, ontology=tokenizer.ontology))
         )
 
-        # Create time bins for each task separately, but all with the same number of bins
+        # First pass: classify and filter tasks, preserving order
+        numerical_tasks_info = []  # List of (index, task, task_stats, rate, value_sample_count)
+        non_numerical_tasks_info = []  # List of (index, task, task_stats, rate)
+
+        for i, (task, task_stats) in enumerate(zip(tasks, stats)):
+            frac_events = task_stats[1] / (task_stats[0] + task_stats[1])
+            rate = frac_events / task_stats[2].mean()
+
+            if rate == 0:
+                print(f"Ran into task of rate 0: {task}, frac_events={frac_events}, "
+                    f"censored={task_stats[0]}, events={task_stats[1]}, mean_time={task_stats[2].mean()}")
+                continue
+
+            value_sample_count = len(task_value_samples[i].samples)
+            
+            if value_sample_count > 0:
+                # Numerical task - stricter filtering
+                if frac_events < 1 / 1000 or value_sample_count < value_count_threshold:
+                    print(f"Filtered out numerical task {task}: frac_events={frac_events}, "
+                        f"value_count={value_sample_count}")
+                    continue
+                numerical_tasks_info.append((i, task, task_stats, rate, value_sample_count))
+            else:
+                # Non-numerical task - original threshold
+                if frac_events < 1 / 1000:
+                    print(f"Filtered out rare non-numerical task {task}: frac_events={frac_events}, "
+                        f"censored={task_stats[0]}, events={task_stats[1]}, mean_time={task_stats[2].mean()}")
+                    continue
+                non_numerical_tasks_info.append((i, task, task_stats, rate))
+
+        # Apply num_final_tasks limit
+        total_filtered = len(numerical_tasks_info) + len(non_numerical_tasks_info)
+        print(f"After filtering: {len(numerical_tasks_info)} numerical + "
+            f"{len(non_numerical_tasks_info)} non-numerical = {total_filtered} tasks")
+        
+        if total_filtered > num_final_tasks:
+            max_non_numerical = num_final_tasks - len(numerical_tasks_info)
+            if max_non_numerical < 0:
+                warnings.warn(f"Number of numerical tasks ({len(numerical_tasks_info)}) exceeds "
+                            f"num_final_tasks ({num_final_tasks}). Keeping all numerical tasks anyway.")
+                max_non_numerical = 0
+            
+            original_non_num_count = len(non_numerical_tasks_info)
+            non_numerical_tasks_info = non_numerical_tasks_info[:max_non_numerical]
+            
+            print(f"Limited non-numerical tasks from {original_non_num_count} to {len(non_numerical_tasks_info)} "
+                f"to stay within num_final_tasks={num_final_tasks}")
+            print(f"Final: {len(numerical_tasks_info)} numerical + {len(non_numerical_tasks_info)} "
+                f"non-numerical = {len(numerical_tasks_info) + len(non_numerical_tasks_info)} tasks")
+
+        # Second pass: create bins for selected tasks in the correct order
         numerical_time_bins = []
         non_numerical_time_bins = []
-        value_bins = []  # Store value bins for numerical tasks
-        value_valid_mask = [] # store mask for valid bins
+        value_bins = []
+        value_valid_mask = []
         numerical_task_list = []
         task_data = []
 
-        not_valid_numerical = []
-        task_num = 0
-        numerical_task_num = 0
-
-        for i, (task, task_stats) in enumerate(zip(tasks, stats)):
-            if task_num > num_tasks-1 and numerical_task_num >= 1000:
-                break
-            task_num += 1
-            frac_events = task_stats[1] / (task_stats[0] + task_stats[1])
-            rate = frac_events / task_stats[2].mean()  # happening rate of the task num_points/time
-
-            if rate == 0:
-                print("Ran into task of rate 0?", task, frac_events, task_stats[0], task_stats[1], task_stats[2].mean())
-                logging.info("Ran into task of rate 0?", task, frac_events, task_stats[0], task_stats[1], task_stats[2].mean())
-                continue
-
-            # Apply filtering based on whether task has numerical values
-            value_sample_count = len(task_value_samples[i].samples) 
+        # Process numerical tasks first
+        for i, task, task_stats, rate, value_sample_count in numerical_tasks_info:
+            task_data.append((task, rate, task_stats[0], task_stats[1], task_stats[2].mean()))
             
-            if value_sample_count > 0:
-                # This is a numerical task: tte > 1/1000 & value count > 1000
-                if frac_events < 1 / 1000:
-                    not_valid_numerical.append(task)
-                    print(f"Filtered out numerical task {task}: frac_events={frac_events}, value_count={value_sample_count}")
-                    logging.info(f"Filtered out numerical task {task}: frac_events={frac_events}, value_count={value_sample_count}")
-                    continue
-                numerical_task_num += 1
-            else:
-                # This is a non-numerical task: original threshold
-                if frac_events < 1 / 1000:
-                    print("Ran into very rare nonnumerical task with less than 0.1% events", task, frac_events, task_stats[0],
-                          task_stats[1], task_stats[2].mean())
-                    continue
+            # Create time bins for numerical task
+            numerical_task_time_bins = np.percentile(
+                task_length_samples[i].samples, np.linspace(0, 100, num_bins + 1)
+            )
+            numerical_task_time_bins[0] = 0
+            numerical_task_time_bins[-1] = float("inf")
+            numerical_time_bins.append(list(numerical_task_time_bins))
 
-            task_data.append((task, rate, task_stats[0], task_stats[1], task_stats[2].mean(),value_sample_count,not_valid_numerical))
+            # Create value bins
+            task_value_bins = np.percentile(
+                task_value_samples[i].samples, np.linspace(0, 100, num_value_bins + 1)
+            )
+            task_value_bins[0] = float("-inf")
+            task_value_bins[-1] = float("inf")
+            unique_bins, mask = keep_unique_bins(task_value_bins, num_value_bins)
+
+            value_bins.append(unique_bins)
+            value_valid_mask.append(mask)
+            numerical_task_list.append(task)
             
+            print(f"Created {int(sum(mask))} valid value bins for numerical task {task} "
+                f"from {value_sample_count} samples")
 
+        # Process non-numerical tasks
+        for i, task, task_stats, rate in non_numerical_tasks_info:
+            task_data.append((task, rate, task_stats[0], task_stats[1], task_stats[2].mean()))
             
+            # Create time bins for non-numerical task
+            non_numerical_task_time_bins = np.percentile(
+                task_length_samples[i].samples, np.linspace(0, 100, num_bins + 1)
+            )
+            non_numerical_task_time_bins[0] = 0
+            non_numerical_task_time_bins[-1] = float("inf")
+            non_numerical_time_bins.append(list(non_numerical_task_time_bins))
 
-            # Create value bins for numerical tasks (tasks with value samples)
-            if value_sample_count > 0:
-                # Generate robust bins from the collected value samples
-                numerical_task_time_bins = np.percentile(task_length_samples[i].samples, np.linspace(0, 100, num_bins + 1))
-                numerical_task_time_bins[0] = 0
-                numerical_task_time_bins[-1] = float("inf")
-                numerical_time_bins.append(list(numerical_task_time_bins))
-            
-                task_value_bins = np.percentile(task_value_samples[i].samples, np.linspace(0, 100, num_value_bins + 1))
-                task_value_bins[0] = float("-inf")
-                task_value_bins[-1] = float("inf")
-                unique_bins, mask = keep_unique_bins(task_value_bins, num_value_bins)
-
-                value_bins.append(unique_bins)
-                value_valid_mask.append(mask)
-                numerical_task_list.append(task)
-            
-                print(f"Created {sum(mask)} valid value bins for numerical task {task} from {value_sample_count} samples")
-                logging.info(f"Created {sum(mask)} valid value bins for numerical task {task} from {value_sample_count} samples")
-            
-            else:
-                # Create time bins
-                non_numerical_task_time_bins = np.percentile(task_length_samples[i].samples, np.linspace(0, 100, num_bins + 1))
-                non_numerical_task_time_bins[0] = 0
-                non_numerical_task_time_bins[-1] = float("inf")
-                non_numerical_time_bins.append(list(non_numerical_task_time_bins))
-
-
-        non_numerical_time_bins = np.array(non_numerical_time_bins)
-        numerical_time_bins = np.array(numerical_time_bins)
-        value_bins = np.array(value_bins)
-        value_valid_mask = np.array(value_valid_mask)
+        # Convert to arrays
+        non_numerical_time_bins = np.array(non_numerical_time_bins) if non_numerical_time_bins else np.array([]).reshape(0, num_bins + 1)
+        numerical_time_bins = np.array(numerical_time_bins) if numerical_time_bins else np.array([]).reshape(0, num_bins + 1)
+        value_bins = np.array(value_bins) if value_bins else np.array([]).reshape(0, num_value_bins + 1)
+        value_valid_mask = np.array(value_valid_mask) if value_valid_mask else np.array([]).reshape(0, num_value_bins + 1)
+        
         print(f"Final task count: {len(task_data)}")
-        print(f"Numerical tasks with value bins shape: {value_bins.shape}")
+        print(f"Numerical tasks: {len(numerical_task_list)}, Non-numerical tasks: {len(task_data) - len(numerical_task_list)}")
+        print(f"Numerical time bins shape: {numerical_time_bins.shape}")
+        print(f"Non-numerical time bins shape: {non_numerical_time_bins.shape}")
+        print(f"Value bins shape: {value_bins.shape}")
 
-        return MTPP_Task(task_data, non_numerical_time_bins, numerical_time_bins, final_layer_size, value_bins, value_valid_mask, num_value_bins, numerical_task_list)
+        return MTPP_Task(
+            task_data, 
+            non_numerical_time_bins, 
+            numerical_time_bins, 
+            final_layer_size, 
+            value_bins, 
+            value_valid_mask, 
+            num_value_bins, 
+            numerical_task_list
+        )
 
     def __init__(self, pretraining_task_info: List[Tuple[str, float]], non_numerical_time_bins: np.ndarray, numerical_time_bins: np.ndarray, final_layer_size: int,
                  value_bins: Optional[np.ndarray] = None, value_valid_mask: Optional[np.ndarray] = None, num_value_bins: int = 10, numerical_task_list: List[str] = None):
@@ -732,9 +700,7 @@ class MTPP_Task(Task):
         bin_ends = time_bins_tensor[:, 1:].T.unsqueeze(0)     # [1, num_bins, task_points]
         bin_widths = bin_ends - bin_starts
 
-        # print(f"time_expanded shape {time_expanded.shape}")
-        # print(f"censor shape {censor_times_expanded.shape}")
-        # print(f"bin_starts shape {bin_starts.shape}")
+
         
         # For events: check which bin each event time falls into
         event_in_bin = (has_future_event.unsqueeze(1) & 
