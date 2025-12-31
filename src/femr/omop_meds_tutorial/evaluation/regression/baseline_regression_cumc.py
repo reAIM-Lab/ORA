@@ -22,15 +22,16 @@ from collections import defaultdict
 # Configuration
 # ============================================================================
 # COHORT_DIR = Path("/data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/task_labels/regression/")
-COHORT_DIR = Path("/data2/processed_datasets/zj2398/cumc_data/regression_6-9")
+COHORT_DIR = Path("/data2/processed_datasets/zj2398/cumc_data/regression_100k/")
 MEDS_PATH = "/data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/post_transform_meds_reader"
-SPLIT_PATH = "/data/models/zj2398/femr/cumc_full/tpp/main_split.csv"
-OUTPUT_DIR = "/data/results/zj2398/femr/cumc_0.1/regression_2_5_months/most_recent"
+SPLIT_PATH = "/data2/processed_datasets/zj2398/femr/cumc/motor/main_split.csv"
+# OUTPUT_DIR = "/data/results/zj2398/femr/cumc_0.1/regression_2_5_months/most_recent"
 
 CODE_DICT = {
     "platelets": "LOINC/26515-7//UCUM/10*9/L",
     "creatinine": "LOINC/2160-0//UCUM/mg/dL",
     "bilirubin": "LOINC/1968-7//UCUM/mg/dL",
+    "spo2":"LOINC/2708-6//UCUM/%",
 }
 
 
