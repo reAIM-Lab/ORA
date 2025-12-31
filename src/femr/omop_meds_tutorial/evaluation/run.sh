@@ -365,6 +365,7 @@ echo "All tasks processed."
 
 # kuvira
 
+
 # bash run.sh \
 #   --pretraining_data    /data/models/zj2398/femr/cumc_0.1/mtpp_shared \
 #   --meds_reader        /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/post_transform_meds_reader \
