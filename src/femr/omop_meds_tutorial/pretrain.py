@@ -340,7 +340,7 @@ CUDA_VISIBLE_DEVICES=4,5,6,7 accelerate launch \
 
 kuvira
 
-export CUDA_VISIBLE_DEVICES=3
+export CUDA_VISIBLE_DEVICES=2
 python pretrain.py \
     --pretraining_data /data2/processed_datasets/zj2398/femr/cumc_0.1/mtpp \
     --meds_reader /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/post_transform_0.1_reader \

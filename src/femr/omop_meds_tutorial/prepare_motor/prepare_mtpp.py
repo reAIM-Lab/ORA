@@ -135,40 +135,40 @@ def main(args):
             with open(task_path, 'rb') as f:
                 task = pickle.load(f)
 
-        # # print(f"Motor task length: {len(motor_task.pretraining_task_codes)}")
-        # processor = femr.models.processor.FEMRBatchProcessor(tokenizer, task)
+        # print(f"Motor task length: {len(motor_task.pretraining_task_codes)}")
+        processor = femr.models.processor.FEMRBatchProcessor(tokenizer, task)
 
-        # # example_subject_id = list(train_database)[0]
-        # # example_subject = train_database[example_subject_id]
+        # example_subject_id = list(train_database)[0]
+        # example_subject = train_database[example_subject_id]
 
-        # # We can do this one subject at a time
-        # # print("Convert a single subject")
-        # # example_batch = processor.collate([processor.convert_subject(example_subject, tensor_type='pt')])
-        # # print(f"example subject_id {example_subject_id} , example_subject: {example_subject}")
-        # # print(f"example_batch keys: {example_batch['batch'].keys()}")
-        # # for key in example_batch['batch'].keys():
-        # #     print(f"example_batch[{key}], shape: {example_batch['batch'][key].shape}, values: {example_batch['batch'][key]}")
+        # We can do this one subject at a time
+        # print("Convert a single subject")
+        # example_batch = processor.collate([processor.convert_subject(example_subject, tensor_type='pt')])
+        # print(f"example subject_id {example_subject_id} , example_subject: {example_subject}")
+        # print(f"example_batch keys: {example_batch['batch'].keys()}")
+        # for key in example_batch['batch'].keys():
+        #     print(f"example_batch[{key}], shape: {example_batch['batch'][key].shape}, values: {example_batch['batch'][key]}")
 
-        # train_batches_path = pretraining_data_path / 'train_batches'
+        train_batches_path = pretraining_data_path / 'train_batches'
 
 
-        # if not train_batches_path.exists():
-        #     print("Convert batches")
-        #     # But generally we want to convert entire datasets
-        #     train_batches = processor.convert_dataset(train_database, tokens_per_batch=args.tokens_per_batch, num_proc=50)
+        if not train_batches_path.exists():
+            print("Convert batches")
+            # But generally we want to convert entire datasets
+            train_batches = processor.convert_dataset(train_database, tokens_per_batch=args.tokens_per_batch, num_proc=50)
 
-        #     print("Convert batches to pytorch")
-        #     # Convert our batches to pytorch tensors
-        #     train_batches.set_format("pt")
-        #     train_batches.save_to_disk(train_batches_path)
+            print("Convert batches to pytorch")
+            # Convert our batches to pytorch tensors
+            train_batches.set_format("pt")
+            train_batches.save_to_disk(train_batches_path)
 
-        # val_batches_path = pretraining_data_path / 'val_batches'
-        # if not val_batches_path.exists():
-        #     print("Convert val batches")
-        #     val_batches = processor.convert_dataset(val_database, tokens_per_batch=args.tokens_per_batch, num_proc=50)
-        #     # Convert our batches to pytorch tensors
-        #     val_batches.set_format("pt")
-        #     val_batches.save_to_disk(val_batches_path)
+        val_batches_path = pretraining_data_path / 'val_batches'
+        if not val_batches_path.exists():
+            print("Convert val batches")
+            val_batches = processor.convert_dataset(val_database, tokens_per_batch=args.tokens_per_batch, num_proc=50)
+            # Convert our batches to pytorch tensors
+            val_batches.set_format("pt")
+            val_batches.save_to_disk(val_batches_path)
 
 
 def create_omop_meds_tutorial_argparser():

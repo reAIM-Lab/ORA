@@ -1,0 +1,152 @@
+Using configuration:
+  COHORT_BASE_DIR:          /data2/processed_datasets/zj2398/cumc_data/regression_100k/
+  OMOP_MEDS_READER:         /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/post_transform_meds_reader
+  NUM_PROC:                 24
+  TOKENS_PER_BATCH:         65536
+  OBSERVATION_WINDOW:       Not specified
+  REGRESSION:               true
+  PYTHONPATH head:          /home/zj2398@mc.cumc.columbia.edu/femr/femr_chao_meds_v3/src
+  RUN_ROOT (outputs):       /home/zj2398@mc.cumc.columbia.edu/femr/femr_chao_meds_v3/src/femr/omop_meds_tutorial/evaluation/regression
+
+[1] Found task: bilirubin
+[2] Found task: creatinine
+[3] Found task: platelets
+[4] Found task: spo2
+[1/4] Processing task: bilirubin
+cohort_base_dir: /data2/processed_datasets/zj2398/cumc_data/regression_100k/
+Task directory: /data2/processed_datasets/zj2398/cumc_data/regression_100k/bilirubin/
+Executing: python -u "/home/zj2398@mc.cumc.columbia.edu/femr/femr_chao_meds_v3/src/femr/omop_meds_tutorial/evaluation/generate_features.py"         --model_path "/data2/processed_datasets/zj2398/femr/cumc_0.1/tpp/transformer/epoch_9_137304"         --model_name "tpp"         --meds_reader "/data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/post_transform_meds_reader"         --num_proc "24"         --tokens_per_batch "65536"         --device "cuda:0"         --min_subjects_per_batch "8"         --cohort_dir "/data2/processed_datasets/zj2398/cumc_data/regression_100k/bilirubin/"         --ontology_path "/data2/processed_datasets/zj2398/femr/ontology.pkl"         --output_root "/data/results/zj2398/femr/cumc_0.1/regression_100k"         --loss_type labeled_subjects         --task_type regression 
+label_name of cohort_dir: bilirubin
+/data2/processed_datasets/zj2398/cumc_data/regression_100k/bilirubin/bilirubin.parquet
+Loading labels from  /data/results/zj2398/femr/cumc_0.1/regression_100k/tpp/labels/bilirubin.parquet
+labels head:    subject_id     prediction_time          event_time  numerical_value
+0     7767093 2023-02-13 05:16:00 2023-02-13 09:16:00              0.1
+1    13746246 2022-06-09 07:33:00 2022-06-09 11:33:00              0.1
+2      271583 2018-12-06 02:17:00 2018-12-06 06:17:00              0.1
+3     1382322 2017-06-23 00:43:00 2017-06-23 04:43:00              0.1
+4     9287749 2016-05-18 14:44:00 2016-05-18 18:44:00              0.1
+task type is regression
+typed_labels length: 100000
+Loading model from /data2/processed_datasets/zj2398/femr/cumc_0.1/tpp/transformer/epoch_9_137304
+use_linear_interpolation: False
+loss type is labeled_subjects
+starting loading model
+the hidden size is 768
+create loss type is labeled_subjects
+the report is LoadReport(renamed_keys=[], dropped_keys=['task_model.final_layer.bias', 'task_model.final_layer.weight', 'task_model.norm.weight', 'task_model.task_layer.bias', 'task_model.task_layer.weight'], missing_keys=[], unexpected_keys=[])
+The maximum context length is 8192.0,  8 subjects and 65536 tokens per batch
+max_length: 8192
+Using configuration:
+  COHORT_BASE_DIR:          /data2/processed_datasets/zj2398/cumc_data/regression_100k/
+  OMOP_MEDS_READER:         /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/post_transform_meds_reader
+  NUM_PROC:                 24
+  TOKENS_PER_BATCH:         65536
+  OBSERVATION_WINDOW:       Not specified
+  REGRESSION:               true
+  PYTHONPATH head:          /home/zj2398@mc.cumc.columbia.edu/femr/femr_chao_meds_v3/src
+  RUN_ROOT (outputs):       /home/zj2398@mc.cumc.columbia.edu/femr/femr_chao_meds_v3/src/femr/omop_meds_tutorial/evaluation/regression
+
+[1] Found task: bilirubin
+[2] Found task: creatinine
+[3] Found task: platelets
+[4] Found task: spo2
+[1/4] Processing task: bilirubin
+cohort_base_dir: /data2/processed_datasets/zj2398/cumc_data/regression_100k/
+Task directory: /data2/processed_datasets/zj2398/cumc_data/regression_100k/bilirubin/
+Executing: python -u "/home/zj2398@mc.cumc.columbia.edu/femr/femr_chao_meds_v3/src/femr/omop_meds_tutorial/evaluation/generate_features.py"         --model_path "/data2/processed_datasets/zj2398/femr/cumc_0.1/mtpp_7399_5bin/transformer/checkpoint-137304"         --model_name "mtpp_shared_5"         --meds_reader "/data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/post_transform_meds_reader"         --num_proc "24"         --tokens_per_batch "65536"         --device "cuda:0"         --min_subjects_per_batch "8"         --cohort_dir "/data2/processed_datasets/zj2398/cumc_data/regression_100k/bilirubin/"         --ontology_path "/data2/processed_datasets/zj2398/femr/ontology.pkl"         --output_root "/data/results/zj2398/femr/cumc_0.1/regression_100k"         --loss_type labeled_subjects         --task_type regression 
+label_name of cohort_dir: bilirubin
+/data2/processed_datasets/zj2398/cumc_data/regression_100k/bilirubin/bilirubin.parquet
+Loading labels from  /data/results/zj2398/femr/cumc_0.1/regression_100k/mtpp_shared_5/labels/bilirubin.parquet
+labels head:    subject_id     prediction_time          event_time  numerical_value
+0     7767093 2023-02-13 05:16:00 2023-02-13 09:16:00              0.1
+1    13746246 2022-06-09 07:33:00 2022-06-09 11:33:00              0.1
+2      271583 2018-12-06 02:17:00 2018-12-06 06:17:00              0.1
+3     1382322 2017-06-23 00:43:00 2017-06-23 04:43:00              0.1
+4     9287749 2016-05-18 14:44:00 2016-05-18 18:44:00              0.1
+task type is regression
+typed_labels length: 100000
+Loading model from /data2/processed_datasets/zj2398/femr/cumc_0.1/mtpp_7399_5bin/transformer/checkpoint-137304
+use_linear_interpolation: False
+loss type is labeled_subjects
+starting loading model
+the hidden size is 768
+create loss type is labeled_subjects
+the report is LoadReport(renamed_keys=[], dropped_keys=['task_model.non_numerical_final_layer.bias', 'task_model.non_numerical_final_layer.weight', 'task_model.non_numerical_task_layer.bias', 'task_model.non_numerical_task_layer.weight', 'task_model.norm.weight', 'task_model.numerical_final_layer.bias', 'task_model.numerical_final_layer.weight', 'task_model.numerical_task_layer.bias', 'task_model.numerical_task_layer.weight'], missing_keys=[], unexpected_keys=[])
+The maximum context length is 8192.0,  8 subjects and 65536 tokens per batch
+max_length: 8192
+Using configuration:
+  COHORT_BASE_DIR:          /data2/processed_datasets/zj2398/cumc_data/regression_100k/
+  OMOP_MEDS_READER:         /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/post_transform_meds_reader
+  NUM_PROC:                 24
+  TOKENS_PER_BATCH:         65536
+  OBSERVATION_WINDOW:       Not specified
+  REGRESSION:               true
+  PYTHONPATH head:          /home/zj2398@mc.cumc.columbia.edu/femr/femr_chao_meds_v3/src
+  RUN_ROOT (outputs):       /home/zj2398@mc.cumc.columbia.edu/femr/femr_chao_meds_v3/src/femr/omop_meds_tutorial/evaluation/regression
+
+[1] Found task: bilirubin
+[2] Found task: creatinine
+[3] Found task: platelets
+[4] Found task: spo2
+[1/4] Processing task: bilirubin
+cohort_base_dir: /data2/processed_datasets/zj2398/cumc_data/regression_100k/
+Task directory: /data2/processed_datasets/zj2398/cumc_data/regression_100k/bilirubin/
+Executing: python -u "/home/zj2398@mc.cumc.columbia.edu/femr/femr_chao_meds_v3/src/femr/omop_meds_tutorial/evaluation/generate_features.py"         --model_path "/data2/processed_datasets/zj2398/femr/cumc_0.1/mtpp_7399/transformer/checkpoint-137304"         --model_name "mtpp_shared_10"         --meds_reader "/data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/post_transform_meds_reader"         --num_proc "24"         --tokens_per_batch "65536"         --device "cuda:0"         --min_subjects_per_batch "8"         --cohort_dir "/data2/processed_datasets/zj2398/cumc_data/regression_100k/bilirubin/"         --ontology_path "/data2/processed_datasets/zj2398/femr/ontology.pkl"         --output_root "/data/results/zj2398/femr/cumc_0.1/regression_100k"         --loss_type labeled_subjects         --task_type regression 
+label_name of cohort_dir: bilirubin
+/data2/processed_datasets/zj2398/cumc_data/regression_100k/bilirubin/bilirubin.parquet
+Loading labels from  /data/results/zj2398/femr/cumc_0.1/regression_100k/mtpp_shared_10/labels/bilirubin.parquet
+labels head:    subject_id     prediction_time          event_time  numerical_value
+0     7767093 2023-02-13 05:16:00 2023-02-13 09:16:00              0.1
+1    13746246 2022-06-09 07:33:00 2022-06-09 11:33:00              0.1
+2      271583 2018-12-06 02:17:00 2018-12-06 06:17:00              0.1
+3     1382322 2017-06-23 00:43:00 2017-06-23 04:43:00              0.1
+4     9287749 2016-05-18 14:44:00 2016-05-18 18:44:00              0.1
+task type is regression
+typed_labels length: 100000
+Loading model from /data2/processed_datasets/zj2398/femr/cumc_0.1/mtpp_7399/transformer/checkpoint-137304
+use_linear_interpolation: False
+loss type is labeled_subjects
+starting loading model
+the hidden size is 768
+create loss type is labeled_subjects
+the report is LoadReport(renamed_keys=[], dropped_keys=['task_model.non_numerical_final_layer.bias', 'task_model.non_numerical_final_layer.weight', 'task_model.non_numerical_task_layer.bias', 'task_model.non_numerical_task_layer.weight', 'task_model.norm.weight', 'task_model.numerical_final_layer.bias', 'task_model.numerical_final_layer.weight', 'task_model.numerical_task_layer.bias', 'task_model.numerical_task_layer.weight'], missing_keys=[], unexpected_keys=[])
+The maximum context length is 8192.0,  8 subjects and 65536 tokens per batch
+max_length: 8192
+Using configuration:
+  COHORT_BASE_DIR:          /data2/processed_datasets/zj2398/cumc_data/regression_100k/
+  OMOP_MEDS_READER:         /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/post_transform_meds_reader
+  NUM_PROC:                 24
+  TOKENS_PER_BATCH:         65536
+  OBSERVATION_WINDOW:       Not specified
+  REGRESSION:               true
+  PYTHONPATH head:          /home/zj2398@mc.cumc.columbia.edu/femr/femr_chao_meds_v3/src
+  RUN_ROOT (outputs):       /home/zj2398@mc.cumc.columbia.edu/femr/femr_chao_meds_v3/src/femr/omop_meds_tutorial/evaluation/regression
+
+[1] Found task: bilirubin
+[2] Found task: creatinine
+[3] Found task: platelets
+[4] Found task: spo2
+[1/4] Processing task: bilirubin
+cohort_base_dir: /data2/processed_datasets/zj2398/cumc_data/regression_100k/
+Task directory: /data2/processed_datasets/zj2398/cumc_data/regression_100k/bilirubin/
+Executing: python -u "/home/zj2398@mc.cumc.columbia.edu/femr/femr_chao_meds_v3/src/femr/omop_meds_tutorial/evaluation/generate_features.py"         --model_path "/data2/processed_datasets/zj2398/femr/cumc_0.1/motor/transformer/epoch_9_137304"         --model_name "motor"         --meds_reader "/data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/post_transform_meds_reader"         --num_proc "24"         --tokens_per_batch "65536"         --device "cuda:0"         --min_subjects_per_batch "8"         --cohort_dir "/data2/processed_datasets/zj2398/cumc_data/regression_100k/bilirubin/"         --ontology_path "/data2/processed_datasets/zj2398/femr/ontology.pkl"         --output_root "/data/results/zj2398/femr/cumc_0.1/regression_100k"         --loss_type labeled_subjects         --task_type regression 
+label_name of cohort_dir: bilirubin
+/data2/processed_datasets/zj2398/cumc_data/regression_100k/bilirubin/bilirubin.parquet
+Loading labels from  /data/results/zj2398/femr/cumc_0.1/regression_100k/motor/labels/bilirubin.parquet
+labels head:    subject_id     prediction_time          event_time  numerical_value
+0     7767093 2023-02-13 05:16:00 2023-02-13 09:16:00              0.1
+1    13746246 2022-06-09 07:33:00 2022-06-09 11:33:00              0.1
+2      271583 2018-12-06 02:17:00 2018-12-06 06:17:00              0.1
+3     1382322 2017-06-23 00:43:00 2017-06-23 04:43:00              0.1
+4     9287749 2016-05-18 14:44:00 2016-05-18 18:44:00              0.1
+task type is regression
+typed_labels length: 100000
+Loading model from /data2/processed_datasets/zj2398/femr/cumc_0.1/motor/transformer/epoch_9_137304
+use_linear_interpolation: False
+loss type is labeled_subjects
+starting loading model
+the hidden size is 768
+create loss type is labeled_subjects
+the report is LoadReport(renamed_keys=[], dropped_keys=['task_model.final_layer.bias', 'task_model.final_layer.weight', 'task_model.norm.weight', 'task_model.task_layer.bias', 'task_model.task_layer.weight', 'task_model.task_time_bias'], missing_keys=[], unexpected_keys=[])
+The maximum context length is 8192.0,  8 subjects and 65536 tokens per batch
+max_length: 8192
