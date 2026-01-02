@@ -260,7 +260,7 @@ def main():
     """
     # Configuration - UPDATE THESE PATHS
     meds_path = "/data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/post_transform_meds_reader/"  # Path to your MEDS data
-    visits_parquet_path = "/data2/processed_datasets/zj2398/cumc_data/outpatient_visits_new.parquet"  # Output from Task 1
+    visits_parquet_path = "/data2/processed_datasets/zj2398/cumc_data/inpatient_visits.parquet"  # Output from Task 1
     
     
     # Step 1: Load visits and create lookup structure
@@ -296,7 +296,7 @@ def main():
     
     # Step 5: Plot distributions
     print(f"\nGenerating plots...")
-    plot_distributions_days(all_interval_days)
+    plot_distributions_days(all_interval_days,"interval_plots_inpatient")
     
     # Clean up
     db.terminate()
