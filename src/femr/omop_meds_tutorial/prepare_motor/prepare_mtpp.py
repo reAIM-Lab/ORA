@@ -136,7 +136,7 @@ def main(args):
                 task = pickle.load(f)
 
         # print(f"Motor task length: {len(motor_task.pretraining_task_codes)}")
-        processor = femr.models.processor.FEMRBatchProcessor(tokenizer, task)
+        processor = femr.models.processor.FEMRBatchProcessor(tokenizer, task, args.hf_cache_path)
 
         # example_subject_id = list(train_database)[0]
         # example_subject = train_database[example_subject_id]
@@ -240,6 +240,14 @@ def create_omop_meds_tutorial_argparser():
         required=False,
         type=int,
         default=8192,
+    )
+
+    parser.add_argument(
+        "--hf_cache_path",
+        dest="hf_cache_path",
+        action="store",
+        required=False,
+        type=int,
     )
 
     parser.add_argument(

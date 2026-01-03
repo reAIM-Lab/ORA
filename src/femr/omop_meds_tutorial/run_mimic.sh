@@ -15,13 +15,14 @@ echo
 
 # ---- job 1: data prep (background) ----
 python prepare_motor/prepare_mtpp.py \
-  --pretraining_data /shared/share_mala/zj2398/models/mtpp_8k/mtpp_all_shared_6100_bin_5 \
+  --pretraining_data /user/zj2398/cache/mtpp_all_shared_6100_bin_5 \
   --athena_path "" \
   --num_bins 8 \
   --num_value_bins 5 \
   --loss_type mtpp \
   --num_final_tasks 6100 \
   --num_threads 32 \
+  --hf_cache_path /shared/share_mala/zj2398/huggingface/datasets \
   --meds_reader /shared/share_mala/zj2398/mimic/data/meds_v0.6_reader
 
 
@@ -47,9 +48,10 @@ accelerate launch \
   --num_processes 4 \
   --gpu_ids "0,1,2,3" \
   pretrain.py \
-  --pretraining_data /shared/share_mala/zj2398/models/mtpp_8k/mtpp_all_shared_6100_bin_5 \
+  --pretraining_data /user/zj2398/cache/mtpp_all_shared_6100_bin_5 \
   --meds_reader /shared/share_mala/zj2398/mimic/data/meds_v0.6_reader \
-  --output_dir /shared/share_mala/zj2398/models/mtpp_8k/mtpp_all_shared_6100_bin_5/transformer \
+  --hf_cache_path /shared/share_mala/zj2398/huggingface/datasets \
+  --output_dir /user/zj2398/cache/mtpp_all_shared_6100_bin_5/transformer \
   --model transformer \
   --hf_run_name mimic_mtpp_shared_aligned_task_bin_5 \
   --loss_type mtpp_shared
