@@ -247,7 +247,6 @@ def create_omop_meds_tutorial_argparser():
         dest="hf_cache_path",
         action="store",
         required=False,
-        type=int,
     )
 
     parser.add_argument(
