@@ -14,16 +14,16 @@ echo "  train   -> $TRAIN_LOG"
 echo
 
 # ---- job 1: data prep (background) ----
-python prepare_motor/prepare_mtpp.py \
-  --pretraining_data /user/zj2398/cache/mtpp_all_shared_6100_bin_5 \
-  --athena_path "" \
-  --num_bins 8 \
-  --num_value_bins 5 \
-  --loss_type mtpp \
-  --num_final_tasks 6100 \
-  --num_threads 32 \
-  --hf_cache_path /shared/share_mala/zj2398/huggingface/datasets \
-  --meds_reader /shared/share_mala/zj2398/mimic/data/meds_v0.6_reader
+# python prepare_motor/prepare_mtpp.py \
+#   --pretraining_data /user/zj2398/cache/mtpp_all_shared_6100_bin_5 \
+#   --athena_path "" \
+#   --num_bins 8 \
+#   --num_value_bins 5 \
+#   --loss_type mtpp \
+#   --num_final_tasks 6100 \
+#   --num_threads 32 \
+#   --hf_cache_path /shared/share_mala/zj2398/huggingface/datasets \
+#   --meds_reader /shared/share_mala/zj2398/mimic/data/meds_v0.6_reader
 
 
 # PREP_PID=$!
