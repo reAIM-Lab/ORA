@@ -471,8 +471,9 @@ def _add_dimension(data: Any) -> Any:
 class FEMRBatchProcessor:
     """The FEMR Batch processor creates batches for processing by a transformer."""
 
-    def __init__(self, tokenizer, task=None):
+    def __init__(self, tokenizer, task=None,cache_path = None):
         self.creator = BatchCreator(tokenizer, task)
+        self.cache_path = cache_path
 
     def convert_subject(
         self,
@@ -622,7 +623,7 @@ class FEMRBatchProcessor:
             },
             num_proc=num_proc // 4,
             writer_batch_size=8,
-            cache_dir="/shared/share_mala/zj2398/huggingface/datasets",
+            cache_dir=self.cache_path,
             # cache_dir = "/data2/huggingface/zj2398"
         )
 
