@@ -46,7 +46,6 @@ python prepare_motor/prepare_mtpp.py \
 
 accelerate launch \
   --num_processes 4 \
-  --gpu_ids "0,1,2,3" \
   pretrain.py \
   --pretraining_data /user/zj2398/cache/mtpp_all_shared_6100_bin_5 \
   --meds_reader /shared/share_mala/zj2398/mimic/data/meds_v0.6_reader \
