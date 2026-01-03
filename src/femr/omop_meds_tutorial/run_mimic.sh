@@ -49,7 +49,6 @@ accelerate launch \
   pretrain.py \
   --pretraining_data /user/zj2398/cache/mtpp_all_shared_6100_bin_5 \
   --meds_reader /shared/share_mala/zj2398/mimic/data/meds_v0.6_reader \
-  --hf_cache_path /shared/share_mala/zj2398/huggingface/datasets \
   --output_dir /user/zj2398/cache/mtpp_all_shared_6100_bin_5/transformer \
   --model transformer \
   --hf_run_name mimic_mtpp_shared_aligned_task_bin_5 \
