@@ -15,13 +15,14 @@ echo
 
 # ---- job 1: data prep (background) ----
 python prepare_motor/prepare_mtpp.py \
-  --pretraining_data /shared/share_mala/zj2398/fomoh/motor \
+  --pretraining_data /shared/share_mala/zj2398/models/mtpp_8k/mtpp_all_shared_6100_bin_5 \
   --athena_path "" \
   --num_bins 8 \
+  --num_value_bins 5 \
   --loss_type mtpp \
-  --num_final_tasks 7399 \
+  --num_final_tasks 6100 \
   --num_threads 32 \
-  --meds_reader /shared/share_mala/zj2398/mimic/meds_v0.6_reader
+  --meds_reader /shared/share_mala/zj2398/mimic/data/meds_v0.6_reader
 
 
 # PREP_PID=$!
@@ -29,7 +30,7 @@ python prepare_motor/prepare_mtpp.py \
 
 # ---- job 2: training (background) ----
 # multi-gpu pretraining
-# export CUDA_VISIBLE_DEVICES=0,1 
+# export CUDA_VISIBLE_DEVICES=4,5,6,7
 
 # accelerate launch --gpu_ids 2,3 \
 #   --num_processes 2 \
@@ -42,13 +43,13 @@ python prepare_motor/prepare_mtpp.py \
 #   --model transformer \
 #   --loss_type tpp
 
-CUDA_VISIBLE_DEVICES=4,5,6,7 accelerate launch \
+accelerate launch \
   --num_processes 4 \
-  --gpu_ids "4,5,6,7" \
-    pretrain.py \
-    --pretraining_data /user/zj2398/cache/mtpp_8k \
-    --meds_reader /shared/share_mala/zj2398/mimic/meds_v0.6_reader \
-    --output_dir /shared/share_mala/zj2398/models/mtpp_8k/mtpp_mean_all_shared \
-    --model transformer \
-    --hf_run_name mimic_mtpp_shared_aligned_task_codes \
-    --loss_type mtpp_shared
+  --gpu_ids "0,1,2,3" \
+  pretrain.py \
+  --pretraining_data /shared/share_mala/zj2398/models/mtpp_8k/mtpp_all_shared_6100_bin_5 \
+  --meds_reader /shared/share_mala/zj2398/mimic/data/meds_v0.6_reader \
+  --output_dir /shared/share_mala/zj2398/models/mtpp_8k/mtpp_all_shared_6100_bin_5/transformer \
+  --model transformer \
+  --hf_run_name mimic_mtpp_shared_aligned_task_bin_5 \
+  --loss_type mtpp_shared
