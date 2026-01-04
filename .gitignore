@@ -15,3 +15,8 @@ _version.py
 wandb/
 **/wandb/
 *.wandb
+
+# wandb artifacts
+wandb/
+**/wandb/
+*.wandb
