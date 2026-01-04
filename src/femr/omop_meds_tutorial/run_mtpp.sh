@@ -19,14 +19,14 @@ python prepare_motor/prepare_mtpp.py \
   --num_bins 8 \
   --loss_type mtpp \
   --num_threads 32 \
-  --num_final_tasks 7399 \
+  --num_final_tasks 6972 \
   --hf_cache_path /data2/huggingface/zj2398 \
   --meds_reader /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/post_transform_meds_reader
   # >"$PREP_LOG" 2>&1 &
 
 # ---- job 2: training (background) ----
 # multi-gpu pretraining
-# export CUDA_VISIBLE_DEVICES=0,1 
+# export CUDA_VISIBLE_DEVICES=3 
 
 # accelerate launch --gpu_ids 2,3 \
 #   --num_processes 2 \
