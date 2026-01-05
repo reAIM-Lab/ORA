@@ -10,3 +10,13 @@ ignore/*
 tutorials/trash
 tutorials/tmp_trainer
 _version.py
+
+# wandb artifacts
+wandb/
+**/wandb/
+*.wandb
+
+# wandb artifacts
+wandb/
+**/wandb/
+*.wandb
