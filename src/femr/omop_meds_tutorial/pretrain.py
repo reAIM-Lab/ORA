@@ -100,7 +100,7 @@ def create_arg_parser():
         "--loss_type",
         dest="loss_type",
         type=str,
-        choices=["motor", "tpp","mtpp","mtpp_shared"],
+        choices=["motor", "tpp","mtpp","mtpp_shared","ntp"],
         default="motor",
         required=True,
     )
@@ -162,7 +162,7 @@ def main():
     # import femr.models.tasks as _tasks_mod
     # _tasks_mod.MOTORTask = _MOTORImpl
 
-    model_type = args.loss_type.split("_")[0]
+    model_type = args.loss_type
     task_path = pretraining_data / f'{model_type}_task.pkl'
     with open(task_path, 'rb') as f:
         task = pickle.load(f)

@@ -10,20 +10,17 @@ import pandas as pd
 import polars as pl
 import logging
 from femr.models.tasks.motor import MOTOR_Task as MOTOR_Task
+from femr.models.tasks.ntp import CLMBRTask as CLMBRTask
 from femr.models.tasks.tpp import TPP_Task as TPP_Task
 from femr.models.tasks.mtpp import MTPP_Task as MTPP_Task
 
-logging.basicConfig(
-    level=logging.INFO,
-    filename='motor.log',
-    filemode='w',
-)
 
 def main(args):
     pretraining_data_path = pathlib.Path(args.pretraining_data)
     meds_reader_path = pathlib.Path(args.meds_reader)
     subject_splits_path = meds_reader_path / "metadata/subject_splits.parquet"
     code_metadata_path = meds_reader_path / "metadata/codes.parquet"
+    num_threads = args.num_threads
     codes_to_skip = []
     if args.motor_codes_to_skip:
         codes_to_skip = pl.read_parquet(args.motor_codes_to_skip)
@@ -104,19 +101,8 @@ def main(args):
                     final_layer_size=512,
                     codes_to_skip=codes_to_skip
                 )
-            if args.loss_type == "mtpp" or args.loss_type == "mtpp_shared":
+            elif args.loss_type == "mtpp" or args.loss_type == "mtpp_shared":
                 print("mtpp choosen")
-                # task = MTPP_Task.fit_pretraining_task_info(
-                #     main_database, tokenizer,
-                #     main_split.train_subject_ids,
-                #     args.meds_reader,
-                #     num_tasks=8 * 1024,
-                #     num_bins=args.num_bins,
-                #     final_layer_size=512,
-                #     codes_to_skip=codes_to_skip,
-                #     num_value_bins=args.num_value_bins,
-                #     value_count_threshold=args.value_count_threshold
-                # )
                 task = MTPP_Task.fit_pretraining_task_info(
                     main_database, tokenizer,
                     num_tasks=8 * 1024,
@@ -127,7 +113,9 @@ def main(args):
                     num_value_bins=args.num_value_bins,
                     value_count_threshold=args.value_count_threshold
                 )
-
+            elif args.loss_type == "ntp":
+                print("ntp choosen")
+                task = CLMBRTask(clmbr_vocab_size=len(tokenizer.original_code_to_id))
             with open(task_path, 'wb') as f:
                 pickle.dump(task, f)
 
@@ -155,7 +143,7 @@ def main(args):
         if not train_batches_path.exists():
             print(f"Convert batches, saving to {train_batches_path}")
             # But generally we want to convert entire datasets
-            train_batches = processor.convert_dataset(train_database, tokens_per_batch=args.tokens_per_batch, num_proc=50)
+            train_batches = processor.convert_dataset(train_database, tokens_per_batch=args.tokens_per_batch, num_proc=num_threads)
 
             print("Convert batches to pytorch")
             # Convert our batches to pytorch tensors
@@ -165,7 +153,7 @@ def main(args):
         val_batches_path = pretraining_data_path / 'val_batches'
         if not val_batches_path.exists():
             print(f"Convert val batches, saving to {val_batches_path}")
-            val_batches = processor.convert_dataset(val_database, tokens_per_batch=args.tokens_per_batch, num_proc=50)
+            val_batches = processor.convert_dataset(val_database, tokens_per_batch=args.tokens_per_batch, num_proc=num_threads)
             # Convert our batches to pytorch tensors
             val_batches.set_format("pt")
             val_batches.save_to_disk(val_batches_path)
@@ -272,7 +260,7 @@ def create_omop_meds_tutorial_argparser():
         dest="loss_type",
         action="store",
         required=True,
-        choices=["motor","tpp","mtpp"],
+        choices=["motor","tpp","mtpp","ntp"],
         type=str,
         default=8,
     )

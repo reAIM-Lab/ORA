@@ -13,6 +13,7 @@ import torch.utils.data
 
 import femr.models.tokenizer
 import femr.pat_utils
+from femr.models.tasks import CLMBRTask
 import logging
 logger = logging.getLogger(__name__)
 
@@ -99,7 +100,7 @@ class BatchCreator:
         self.offsets = []
         self.subject_lengths = []
 
-        if False:
+        if isinstance(self.tokenizer, femr.models.tokenizer.FlatTokenizer):
             self.tokens = []
         elif isinstance(self.tokenizer, femr.models.tokenizer.HierarchicalTokenizer):
             self.hierarchical_tokens = []
@@ -131,7 +132,6 @@ class BatchCreator:
             max_length: The maximum length of the batch sequence. There is no max when left at None.
 
         """
-        # print(f"add_subject starts --------------------")
         current_date = None
         last_time = None
 
@@ -174,17 +174,16 @@ class BatchCreator:
             ):
                 # Get features and weights for the current event
                 features, weights = self.tokenizer.get_feature_codes(event)
+                
                 per_subject_hierarchical_tokens.extend(features)
                 per_subject_hierarchical_weights.extend(weights)
 
         # Purpose: capture all pre‑birth or “person” table codes as a single initial timestep.
         per_subject_token_indices.append(len(per_subject_hierarchical_tokens))
         per_subject_ages.append((event.time - birth) / datetime.timedelta(days=1))
-        # per_subject_ages.append((birth - birth) / datetime.timedelta(days=1))
         per_subject_time_data.append([1, 0, 0, 0, 0])
         per_subject_timestamps.append(event.time.replace(tzinfo=datetime.timezone.utc).timestamp())
                 
-        
         for event in subject.events:
             if event.time is None or (
                     event.time.date() <= birth.date()
@@ -199,7 +198,6 @@ class BatchCreator:
 
             # Get the age of the event, delta time to last time
             age = max(datetime.timedelta(seconds=0), event.time - birth)
-            # print(f"age: {age}")
             if last_time is not None:
                 delta = event.time - last_time
             else:
@@ -207,7 +205,6 @@ class BatchCreator:
 
             # Get features and weights for the current event
             features, weights = self.tokenizer.get_feature_codes(event)
-            # print(f"for event {event} features: {features}, weights: {weights}")
 
             # Ignore events with no features
             if len(features) == 0:
@@ -219,7 +216,6 @@ class BatchCreator:
 
             codes_seen_today |= set(features)
 
-            # print(f"iterate event {self.task}, last_time is {last_time}, event.time is {event.time}, features is {features}, actually_add is {actually_add} --------------------")
             #  Label Generation  don't understand
             if (self.task is not None) and (last_time is not None):
                 # Now we have to consider whether or not to have labels for this time step
@@ -228,14 +224,16 @@ class BatchCreator:
                     #Ask the task how many labels to place at the previous timestep index. 
                     # num_added = 0/1, depneding on if there is still future tte event to predict
                     #Append that many copies of the current age‐index into per_subject_label_indices
-                    num_added = self.task.add_event(last_time, event.time, features, actually_add=actually_add)
-                    # print(f"num_added: {num_added}")
-                    # print(f"event is {event}, time is {event.time}, num_added: {num_added}")
+                    if isinstance(self.task, CLMBRTask):
+                        clmbr_token_id = self.tokenizer.get_event_code_token(event)
+                        clmbr_features = [clmbr_token_id] if clmbr_token_id is not None else None
+                        num_added = self.task.add_event(last_time, event.time, clmbr_features, actually_add=actually_add)
+                    else:
+                        num_added = self.task.add_event(last_time, event.time, features, actually_add=actually_add)
                     for _ in range(num_added):
-                        # print(f"len(per_subject_ages) - 1 is : {len(per_subject_ages) - 1}, per_subject_ages: {per_subject_ages}")
                         per_subject_label_indices.append(len(per_subject_ages) - 1)
 
-            if False:
+            if isinstance(self.tokenizer, femr.models.tokenizer.FlatTokenizer):
                 assert len(features) == 1
                 per_subject_tokens.append(features[0])
             elif isinstance(self.tokenizer, femr.models.tokenizer.HierarchicalTokenizer):
@@ -245,28 +243,20 @@ class BatchCreator:
                 per_subject_token_indices.append(len(per_subject_hierarchical_tokens)) 
             # Time Data updates, add age in days
             per_subject_ages.append((event.time - birth) / datetime.timedelta(days=1))
-            # print(f"per_subject_label_indices: {per_subject_label_indices}")
-            # logger.info(f"per_subject_label_indices: {per_subject_label_indices}")
-            # print(f"per_subject_ages: {per_subject_ages}")
-            # logger.info(f"per_subject_ages: {per_subject_ages}")
 
             # update time_data with normalized time features
             if last_time is None:
                 per_subject_time_data.append([-1] + self.tokenizer.get_time_data(age, delta)[:2] + [0, 0])
-                # print(f"last_time is None, per_subject_time_data added: {per_subject_time_data[-1]}")
             else:
                 per_subject_time_data.append([0] + self.tokenizer.get_time_data(age, delta))
-                # print(f"last_time is not None, per_subject_time_data added: {per_subject_time_data[-1]}")
 
             per_subject_timestamps.append(event.time.replace(tzinfo=datetime.timezone.utc).timestamp())
 
             last_time = event.time
-        # exit()
         # add labels for the last time step
         if self.task is not None and last_time is not None and last_time.date() > birth.date():
             num_added = self.task.add_event(last_time, None, None)
             for _ in range(num_added):
-                # print(f"len(per_subject_ages) - 1 is : {len(per_subject_ages) - 1}, per_subject_ages: {per_subject_ages}")
                 per_subject_label_indices.append(len(per_subject_ages) - 1)
 
         # Now we want to actually add the subject data to the batch.
@@ -297,7 +287,7 @@ class BatchCreator:
         self.time_data[start_index] = per_subject_time_data[0]
         self.timestamps[start_index] = per_subject_timestamps[0]
 
-        if False: #not self.tokenizer.is_hierarchical:
+        if isinstance(self.tokenizer, femr.models.tokenizer.FlatTokenizer): #not self.tokenizer.is_hierarchical:
             # Easy for simple tokenizer
             self.tokens.extend(per_subject_tokens[offset : offset + length_to_add])
         elif isinstance(self.tokenizer, femr.models.tokenizer.HierarchicalTokenizer):
@@ -352,7 +342,6 @@ class BatchCreator:
 
     def get_batch_data(self):
         """Convert the batch to numpy arrays. The data structure is defined inline in this function."""
-        # print(f"get_batch_data starts --------------------")
         if self.tokenizer.vocab_size <= 2**15:
             token_dtype = np.int16
         else:
@@ -373,7 +362,7 @@ class BatchCreator:
             "label_indices": np.array(self.label_indices, dtype=np.int32),
         }
 
-        if False: #not self.tokenizer.is_hierarchical:
+        if isinstance(self.tokenizer, femr.models.tokenizer.FlatTokenizer): #not self.tokenizer.is_hierarchical:
             # For a single tokenizer, these are simple the token indices
             transformer["tokens"] = np.array(self.tokens, dtype=token_dtype)
         elif isinstance(self.tokenizer, femr.models.tokenizer.HierarchicalTokenizer):
@@ -393,33 +382,8 @@ class BatchCreator:
 
         # Add the task data
         if self.task is not None and transformer["label_indices"].shape[0] > 0:
-            # for key in final:
-            #     if key == "transformer":
-            #         for key2 in final[key]:
-            #             print(f"transformer key: {key2}")
-            #             if isinstance(final[key][key2], np.ndarray):
-            #                 print(f"value shape {final[key][key2].shape}, value {final[key][key2]}")
-            #             else:
-            #                 print(f"value {final[key][key2]}")
-            #     else:
-            #         print(f"key: {key}")
-            #         if isinstance(final[key], np.ndarray):
-            #             print(f"shape {final[key].shape},  value {final[key]}")
-            #         else:
-            #             print(f"value {final[key]}")
-            # exit()
             final["task"] = self.task.get_batch_data()
             final["needs_exact"] = self.task.needs_exact()
-            # print(f"final: {final['task']}")
-            # logger.info(f"final: {final['task']}")
-            # print(f"final: {final['needs_exact']}")
-            # logger.info(f"final: {final['needs_exact']}")
-            # print(f"final: {final}")
-            # logger.info(f"final: {final}")
-            # for key in final["task"]:
-            #     print(f"key: {key}")
-            #     print(f"value shape: {final['task'][key].shape}, value: {final['task'][key]}")
-            # exit()
         return final
 
     def cleanup_batch(self, batch: Dict[str, Any]) -> Dict[str, Any]:
@@ -503,7 +467,6 @@ class FEMRBatchProcessor:
             A batch, ready to be fed into a FEMR transformer model
         """
         self.creator.start_batch()
-        # print(f"convert_subject starts --------------------")
         self.creator.add_subject(subject, offset=offset, max_length=max_length, actually_add=actually_add)
         batch_data = self.creator.get_batch_data()
         # by default, tensor_type is None
@@ -514,11 +477,6 @@ class FEMRBatchProcessor:
 
     def collate(self, batches: List[Mapping[str, Any]]) -> Mapping[str, Any]:
         """A collate function that prepares batches for being fed into a dataloader."""
-        # if len(batches) > 1:
-        # print(f"collate batches: {len(batches)}")
-        # print(f"the batch 0 is {batches[0]}")
-        # print(f"the batch 1 is {batches[1]}")
-        # assert len(batches) == 1, "Can only have one batch when collating"
         return {"batch": _add_dimension(self.creator.cleanup_batch(batches[0]))}
 
     def convert_dataset(
@@ -558,15 +516,11 @@ class FEMRBatchProcessor:
 
         assert len(lengths) != 0
 
-        # Column 2 is sequence length
-        # Column 3 is fraction of labels to sample
-        # Column 1 is start_index
-        # Column 0 is subject_id
+        # Lengths has 4 dimensions: subject_id,start_index,sequence length,fraction of labels to sample
         current_batch_length = 0
 
         batch_offsets = [0]
 
-        # Column 2 is sequence length
         for i, length in enumerate(lengths[:, 2]):
             if current_batch_length + length > tokens_per_batch:
                 batch_offsets.append(i)
@@ -576,11 +530,7 @@ class FEMRBatchProcessor:
 
         batch_offsets.append(len(lengths))
 
-        # print(f"batch_offsets: {batch_offsets}")
-
-        # batches is a list of tuples (start_index, end_index) indicating the start and end subject indices of each batch
         batches = list(zip(batch_offsets, batch_offsets[1:]))
-        # print(f"batches: {batches}")
         print("Got batches", len(batches))
 
         split_batches = np.array_split(batches, num_proc)

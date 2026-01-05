@@ -29,7 +29,9 @@ def agg_statistics(stats1, stats2):
 
         for k, v in stats2["code_counts"].items():
             stats1["code_counts"][k] += v
-
+        for code in stats2["original_codes"]:
+            if code not in stats1["original_codes"]:
+                stats1["original_codes"].append(code)
         for k in stats1["property_samples"]:
             v1 = stats1["property_samples"][k]
             v2 = stats2["property_samples"][k]
@@ -78,7 +80,7 @@ def map_statistics(
 ) -> Mapping[str, Any]:
     age_stats = collections.defaultdict(femr.stat_utils.OnlineStatistics)
     code_counts: Dict[str, float] = collections.defaultdict(float)
-
+    original_codes = set()
     
     bad_properties = {'code', 'time', 'visit_id', 'end'}
 
@@ -133,7 +135,7 @@ def map_statistics(
                     else:
                         pat_samples[k]['text_counts'].add(str(v))
 
-
+        original_codes |= code_set
         final_codes: Set[str] = set()
         for code in code_set:
             
@@ -154,6 +156,7 @@ def map_statistics(
         "age_stats": dict(age_stats),
         "code_counts": code_counts,
         "property_samples": property_samples,
+        "original_codes": list(original_codes),
     }
 
 
@@ -164,7 +167,7 @@ def convert_statistics_to_msgpack(
     statistics, vocab_size: int, num_numeric: int, ontology: femr.ontology.Ontology, min_fraction: float,
 ):
     vocab = []
-
+    original_codes = statistics["original_codes"]
     for code, weight in statistics["code_counts"].items():
         baseline = min([1] + [statistics["code_counts"][parent] for parent in ontology.get_parents(code)])
         weight = weight / baseline
@@ -210,8 +213,6 @@ def convert_statistics_to_msgpack(
 
             num_numeric_for_property = max(1, int(num_numeric * frac_numeric))
 
-            print()
-
             bins = sorted(list(set(np.quantile(numeric_samples, np.linspace(0, 1, num=num_numeric_for_property + 1)))))
             bins = bins[1:-1]
 
@@ -234,6 +235,10 @@ def convert_statistics_to_msgpack(
     min_entropy = entropy(min_fraction)
 
     vocab = [v for v in vocab if v["weight"] <= min_entropy]
+    original_codes = [
+        v["code_string"] for v in vocab
+        if "code_string" in v and v["code_string"] in original_codes
+    ]
 
     vocab.sort(key=lambda a: a["weight"])
     print(f"min fraction is {min_fraction}, min_entropy is {min_entropy}")
@@ -251,6 +256,7 @@ def convert_statistics_to_msgpack(
     result = {
         "vocab": vocab,
         "age_stats": age_stats_dict,
+        "original_codes" : original_codes,
     }
 
     return result
@@ -299,6 +305,10 @@ class HierarchicalTokenizer(transformers.utils.PushToHubMixin):
 
         self.dictionary = dictionary
         vocab = dictionary["vocab"]
+        # collect all event codes in the dataset. used for next token prediction
+        self.original_code_to_id = {
+            code : i for i, code in enumerate(dictionary["original_codes"])
+        }
 
         self.string_lookup = collections.defaultdict(dict)
         self.code_lookup = {}
@@ -418,21 +428,17 @@ class HierarchicalTokenizer(transformers.utils.PushToHubMixin):
         ]
         
         weights = [1 / len(codes) for _ in codes]
-        # print(f"event: {event}")
-        # print(f"before appending, codes: {codes}, weights: {weights}")
         for k, v in event:
-            # print(f"k: {k}, v: {v}")
             if k in self.numeric_indices and ((possib_float := try_float(v)) is not None):
-                # print(f"k: {k}, v: {v}, possib_float: {possib_float}")
                 codes.append(self.numeric_indices[k][bisect.bisect(self.numeric_values[k], possib_float)])
                 weights.append(1)
             elif k in self.string_lookup and ((possib_value := self.string_lookup[k].get(v)) is not None):
-                # print(f"k: {k}, v: {v}, possib_value: {possib_value}")
                 codes.append(possib_value)
                 weights.append(1)
-        # print(f"after get_feature_codes, codes: {codes}, weights: {weights}")
         return codes, weights
 
+    def get_event_code_token(self, event: meds_reader.Event) -> Optional[int]:
+        return self.original_code_to_id.get(event.code, None)
 
     def get_time_data(self, age: datetime.timedelta, delta: datetime.timedelta) -> float:
         result = []
