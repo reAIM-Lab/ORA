@@ -220,40 +220,30 @@ class FEMRMamba(nn.Module):
         super().__init__()
         self.config = config
 
-        # Build embeddings like transformer for identical input pipeline
-        hidden_size = config.hidden_size
-        emb_dim = hidden_size if hidden_size is not None else 768
-        if not self.config.is_hierarchical:
-            self.embed = nn.Embedding(self.config.vocab_size, emb_dim)
-        else:
-            self.embed_bag = nn.EmbeddingBag(
-                num_embeddings=self.config.vocab_size,
-                embedding_dim=emb_dim,
-                mode="sum",
-                include_last_offset=True,
-            )
-
-        self.in_norm = femr.models.rmsnorm.RMSNorm(emb_dim)
-        self.out_norm = femr.models.rmsnorm.RMSNorm(emb_dim)
-
-        # Load HF Mamba config and apply overrides
+        # Load HF Mamba config and apply overrides FIRST to get final d_model
         hf_config = transformers.AutoConfig.from_pretrained(self.config.hf_name, trust_remote_code=True)
 
         # Adopt model size defaults from HF unless explicitly overridden
-        hf_config.intermediate_size = self.config.intermediate_size
-        hf_config.d_model = self.config.hidden_size
-        hf_config.n_layer = self.config.n_layers
-        hf_config.num_hidden_layers = self.config.n_layers
-        hf_config.d_state = self.config.d_state
+        if self.config.intermediate_size is not None:
+            hf_config.intermediate_size = self.config.intermediate_size
+        if self.config.hidden_size is not None:
+            hf_config.d_model = self.config.hidden_size
+        if self.config.n_layers is not None:
+            hf_config.n_layer = self.config.n_layers
+            hf_config.num_hidden_layers = self.config.n_layers
+        if hasattr(hf_config, "d_state"):
+            hf_config.d_state = self.config.d_state
         hf_config.vocab_size = self.config.vocab_size
 
         # Freeform overrides
-        # for key, val in (self.config.config_kwargs or {}).items():
-        #     if hasattr(hf_config, key):
-        #         setattr(hf_config, key, val)
+        for key, val in (self.config.config_kwargs or {}).items():
+            if hasattr(hf_config, key):
+                setattr(hf_config, key, val)
 
-        # Update embed dims and norms to match final d_model
-        d_model = getattr(hf_config, "d_model", emb_dim)
+        # Determine final d_model
+        d_model = getattr(hf_config, "d_model", self.config.hidden_size)
+
+        # Build embeddings with final d_model (only once, no duplication)
         if not self.config.is_hierarchical:
             self.embed = nn.Embedding(self.config.vocab_size, d_model)
         else:
@@ -263,10 +253,12 @@ class FEMRMamba(nn.Module):
                 mode="sum",
                 include_last_offset=True,
             )
+
         self.in_norm = femr.models.rmsnorm.RMSNorm(d_model)
         self.out_norm = femr.models.rmsnorm.RMSNorm(d_model)
+        self.d_model = d_model
 
-        # Instantiate backbone; use CausalLM variant for maximum compatibility
+        # Instantiate backbone
         print(f"the hf_config is {hf_config}")
         backbone_model = transformers.AutoModelForCausalLM.from_config(hf_config, trust_remote_code=True)
         if hasattr(backbone_model, "backbone"):
@@ -275,6 +267,39 @@ class FEMRMamba(nn.Module):
             self.backbone = backbone_model.model
         else:
             self.backbone = backbone_model
+
+        # Remove backbone's internal embedding to avoid DDP unused parameter error
+        # We use our own self.embed/self.embed_bag and pass inputs_embeds
+        if hasattr(self.backbone, "embeddings"):
+            del self.backbone.embeddings
+            self.backbone.embeddings = None
+        if hasattr(self.backbone, "embed_tokens"):
+            del self.backbone.embed_tokens
+            self.backbone.embed_tokens = None
+
+        # Extract layers for per-layer time injection (like transformer)
+        # Common attribute names for Mamba layers
+        self.mamba_layers = None
+        self.layer_norm_f = None
+        for attr in ["layers", "mixer_layers", "blocks"]:
+            if hasattr(self.backbone, attr):
+                self.mamba_layers = getattr(self.backbone, attr)
+                break
+        # Get final norm if present
+        for attr in ["norm_f", "final_layernorm", "ln_f", "norm"]:
+            if hasattr(self.backbone, attr):
+                self.layer_norm_f = getattr(self.backbone, attr)
+                break
+
+    def _inject_time_features(self, hidden_states: torch.Tensor, time_pad: torch.Tensor, C: int, D: int):
+        """Inject time features into hidden states (same as transformer per-layer injection)."""
+        if C <= D:
+            hidden_states[:, :, -C:] = time_pad.to(dtype=hidden_states.dtype)
+        else:
+            # Fallback: project if time dims exceed model dims
+            proj = torch.eye(C, D, device=hidden_states.device, dtype=hidden_states.dtype)
+            hidden_states = hidden_states + torch.matmul(time_pad.to(hidden_states.dtype), proj)
+        return hidden_states
 
     def forward(self, batch: Mapping[str, torch.Tensor], s):
         # Embedding path identical to transformer
@@ -285,26 +310,67 @@ class FEMRMamba(nn.Module):
 
         x = self.in_norm(x)
 
-        # Inject normalized ages/time features as in transformer
-        if self.config.use_normed_ages:
-            time_data = batch["time_data"]
-            all_time = torch.concatenate((time_data, time_data ** 2), axis=-1)
-            x[:, -all_time.shape[1]:] = all_time.to(dtype=x.dtype)
+        # Vectorized pad of packed sequences using subject_lengths
+        lengths_raw = batch["subject_lengths"]
+        if isinstance(lengths_raw, torch.Tensor):
+            lengths = lengths_raw.to(device=x.device, dtype=torch.long)
+        else:
+            lengths = torch.as_tensor(lengths_raw, device=x.device, dtype=torch.long)  # (S,)
+        if lengths.numel() == 0:
+            return self.out_norm(x)
+        L_max = int(torch.max(lengths).item())
+        B = lengths.shape[0]
+        D = x.shape[-1]
 
-        # Efficient per-subject batching: pad sequences and process in parallel
-        lengths = torch.tensor(batch["subject_lengths"],device=x.device)  # (S,)
-        seqs = torch.split(x, lengths.tolist())  # List[(L_i, D)]
-        padded = nn.utils.rnn.pad_sequence(seqs, batch_first=True)  # (S, L_max, D)
-        attn_mask = torch.arange(padded.size(1), device=padded.device)[None, :].expand(len(seqs), -1) < lengths[:, None]
+        # build attention mask?
+        ar = torch.arange(L_max, device=x.device).unsqueeze(0)  # (1, Lmax)
+        mask = ar < lengths.unsqueeze(1)  # (B, Lmax)
 
+        padded = x.new_zeros((B, L_max, D))
+        padded.view(-1, D)[mask.view(-1)] = x
 
-        # Forward through backbone using inputs_embeds; attention_mask may be ignored by some Mamba impls
-        out = self.backbone(inputs_embeds=padded, attention_mask=attn_mask)
-        last_hidden = out.last_hidden_state if hasattr(out, "last_hidden_state") else (out[0] if isinstance(out, tuple) else out)
+        # Prepare time features for per-layer injection (like transformer)
+        time_pad = None
+        C = 0
+        if self.config.use_normed_ages and ("time_data" in batch):
+            td_raw = batch["time_data"]
+            if isinstance(td_raw, torch.Tensor):
+                td = td_raw.to(device=x.device)
+            else:
+                td = torch.as_tensor(td_raw, device=x.device)
+            # Concatenate time and time^2
+            all_time = torch.concatenate((td, td ** 2), axis=-1)
+            C = all_time.shape[-1]
+            time_pad = padded.new_zeros((B, L_max, C))
+            time_pad.view(-1, C)[mask.view(-1)] = all_time
+
+        # Per-layer forward with time injection (like transformer)
+        if self.mamba_layers is not None and time_pad is not None:
+            # Manual layer iteration with time injection at each layer
+            hidden_states = padded
+            for layer in self.mamba_layers:
+                # Inject time features BEFORE each layer (same as transformer)
+                hidden_states = self._inject_time_features(hidden_states, time_pad, C, D)
+                # Forward through Mamba layer
+                layer_output = layer(hidden_states)
+                # Handle different return types from Mamba layers
+                if isinstance(layer_output, tuple):
+                    hidden_states = layer_output[0]
+                else:
+                    hidden_states = layer_output
+            # Apply final norm if present
+            if self.layer_norm_f is not None:
+                hidden_states = self.layer_norm_f(hidden_states)
+            last_hidden = hidden_states
+        else:
+            # Fallback: single time injection at input, use backbone directly
+            if time_pad is not None:
+                padded = self._inject_time_features(padded, time_pad, C, D)
+            out = self.backbone(inputs_embeds=padded, attention_mask=mask)
+            last_hidden = out.last_hidden_state if hasattr(out, "last_hidden_state") else (out[0] if isinstance(out, tuple) else out)
 
         # Unpad back to flattened order
-        chunks: List[torch.Tensor] = [last_hidden[i, : lengths[i], :] for i in range(len(seqs))]
-        final = torch.cat(chunks, dim=0)  # (T, D)
+        final = last_hidden.view(-1, D)[mask.view(-1)]  # (T, D)
         final = self.out_norm(final)
         return final
 
@@ -1198,6 +1264,9 @@ class FEMRModel(transformers.PreTrainedModel):
             assert self.config.mamba_config is not None
             self.backbone = FEMRMamba(self.config.mamba_config)
             self.hidden_size = self.config.mamba_config.hidden_size
+            if self.hidden_size is None:
+                # Fallback to backbone dimension for compatibility
+                self.hidden_size = self.backbone.out_norm.weight.shape[0]
             
             # if self.hidden_size is None:
             #     self.hidden_size = self.backbone.out_norm.weight.shape[0]

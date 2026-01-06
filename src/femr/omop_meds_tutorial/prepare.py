@@ -31,7 +31,7 @@ def main(args):
     with meds_reader.SubjectDatabase(str(meds_reader_path), num_threads=args.num_threads) as database:
         subject_ids = [_ for _ in database]
         print(f"subject_ids length: {len(subject_ids)}")
-        ontology_path = args.ontology_path / 'ontology.pkl'
+        ontology_path = pathlib.Path(args.ontology_path)
         print(f"ontology_path: {ontology_path}")
         if not ontology_path.exists():
             print("Creating ontology")

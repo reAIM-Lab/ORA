@@ -87,6 +87,7 @@ python prepare.py \
   --value_bins discretized_value_bins \
   --loss_type loss_type \
   --num_final_tasks pretraining_task_num \
+  --hf_cache_path cache_path \ 
   --num_threads num_threads \
   --meds_reader /path/to/meds_reader
 
