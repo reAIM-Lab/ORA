@@ -13,9 +13,9 @@ echo "  prepare -> $PREP_LOG"
 echo "  train   -> $TRAIN_LOG"
 echo
 
-python prepare_motor/prepare_mtpp.py \
+python prepare.py \
   --pretraining_data /data2/processed_datasets/zj2398/femr/cumc/mtpp \
-  --athena_path "" \
+  --ontology_path  ontology_path \
   --num_bins 8 \
   --loss_type mtpp \
   --num_threads 32 \

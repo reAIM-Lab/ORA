@@ -13,7 +13,7 @@ import torch.utils.data
 
 import femr.models.tokenizer
 import femr.pat_utils
-from femr.models.tasks import CLMBRTask
+from femr.models.tasks.ntp import CLMBRTask
 import logging
 logger = logging.getLogger(__name__)
 

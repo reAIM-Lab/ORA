@@ -240,18 +240,6 @@ class FEMRMamba(nn.Module):
         hf_config = transformers.AutoConfig.from_pretrained(self.config.hf_name, trust_remote_code=True)
 
         # Adopt model size defaults from HF unless explicitly overridden
-        # if self.config.hidden_size is not None:
-        #     hf_config.d_model = self.config.hidden_size
-        # if self.config.n_layers is not None:
-        #     if hasattr(hf_config, "n_layer"):
-        #         hf_config.n_layer = self.config.n_layers
-        #     if hasattr(hf_config, "num_hidden_layers"):
-        #         hf_config.num_hidden_layers = self.config.n_layers
-        # if self.config.d_state is not None and hasattr(hf_config, "d_state"):
-        #     hf_config.d_state = self.config.d_state
-        # if hasattr(hf_config, "vocab_size"):
-        #     hf_config.vocab_size = self.config.vocab_size
-
         hf_config.intermediate_size = self.config.intermediate_size
         hf_config.d_model = self.config.hidden_size
         hf_config.n_layer = self.config.n_layers
@@ -312,13 +300,6 @@ class FEMRMamba(nn.Module):
 
         # Forward through backbone using inputs_embeds; attention_mask may be ignored by some Mamba impls
         out = self.backbone(inputs_embeds=padded, attention_mask=attn_mask)
-        # try:
-        #     out = self.backbone(inputs_embeds=padded, attention_mask=attn_mask)
-        # except TypeError:
-        #     out = self.backbone(inputs_embeds=padded)
-        # except Exception:
-        #     out = self.backbone(padded)
-
         last_hidden = out.last_hidden_state if hasattr(out, "last_hidden_state") else (out[0] if isinstance(out, tuple) else out)
 
         # Unpad back to flattened order

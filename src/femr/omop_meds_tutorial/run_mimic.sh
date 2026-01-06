@@ -14,11 +14,11 @@ echo "  train   -> $TRAIN_LOG"
 echo
 
 # ---- job 1: data prep (background) ----
-# python prepare_motor/prepare_mtpp.py \
+# python prepare.py \
 #   --pretraining_data /user/zj2398/cache/mtpp_all_shared_6100_bin_5 \
-#   --athena_path "" \
-#   --num_bins 8 \
-#   --num_value_bins 5 \
+#   --ontology_path  ontology_path \
+#   --time_bins 8 \
+#   --value_bins 5 \
 #   --loss_type mtpp \
 #   --num_final_tasks 6100 \
 #   --num_threads 32 \
@@ -33,23 +33,22 @@ echo
 # multi-gpu pretraining
 # export CUDA_VISIBLE_DEVICES=4,5,6,7
 
-# accelerate launch --gpu_ids 2,3 \
-#   --num_processes 2 \
-# python pretrain.py \
-#   --pretraining_data /data2/processed_datasets/zj2398/femr/cumc/tpp  \
-#   --meds_reader /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/post_transform_meds_reader \
+# accelerate launch \
+#   --num_processes 4 \
+#   pretrain.py \
+#   --pretraining_data /user/zj2398/cache/mtpp_all_shared_6100_bin_5 \
+#   --meds_reader /shared/share_mala/zj2398/mimic/data/meds_v0.6_reader \
 #   --per_device_train_batch_size 1 \
-#   --output_dir /data2/processed_datasets/zj2398/femr/cumc_0.1/mtpp_7399/transformer  \
-#   --hf_run_name cumc_tpp_new_ontology \
-#   --model transformer \
-#   --loss_type tpp
+#   --output_dir /user/zj2398/cache/mtpp_all_shared_6100_bin_5/mamba \
+#   --model mamba \
+#   --hf_run_name mimic_mamba_mtpp_shared_6100_bin_5 \
+#   --loss_type mtpp_shared
 
-accelerate launch \
-  --num_processes 4 \
-  pretrain.py \
-  --pretraining_data /user/zj2398/cache/mtpp_all_shared_6100_bin_5 \
-  --meds_reader /shared/share_mala/zj2398/mimic/data/meds_v0.6_reader \
-  --output_dir /user/zj2398/cache/mtpp_all_shared_6100_bin_5/transformer \
-  --model transformer \
-  --hf_run_name mimic_mtpp_shared_aligned_task_bin_5 \
-  --loss_type mtpp_shared
+python pretrain.py \
+--pretraining_data /user/zj2398/cache/mtpp_all_shared_6100_bin_5 \
+--meds_reader /shared/share_mala/zj2398/mimic/data/meds_v0.6_reader \
+--per_device_train_batch_size 1 \
+--output_dir /user/zj2398/cache/mtpp_all_shared_6100_bin_5/mamba \
+--model mamba \
+--hf_run_name mimic_mamba_mtpp_shared_6100_bin_5 \
+--loss_type mtpp_shared

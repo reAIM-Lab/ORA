@@ -152,9 +152,14 @@ def main():
         ontology = pickle.load(f)
 
     tokenizer_path = pretraining_data / 'tokenizer'
-    tokenizer = femr.models.tokenizer.HierarchicalTokenizer.from_pretrained(
-        tokenizer_path, ontology=ontology
-    )
+    if args.loss_type == "ntp":
+        tokenizer = femr.models.tokenizer.CLMBRTokenizer.from_pretrained(
+            tokenizer_path, ontology=ontology
+        )
+    else:
+        tokenizer = femr.models.tokenizer.HierarchicalTokenizer.from_pretrained(
+            tokenizer_path, ontology=ontology
+        )
     print(f"Tokenizer vocab size: {tokenizer.vocab_size}")
 
 
@@ -162,7 +167,7 @@ def main():
     # import femr.models.tasks as _tasks_mod
     # _tasks_mod.MOTORTask = _MOTORImpl
 
-    model_type = args.loss_type
+    model_type = args.loss_type.split("_")[0]
     task_path = pretraining_data / f'{model_type}_task.pkl'
     with open(task_path, 'rb') as f:
         task = pickle.load(f)
@@ -191,7 +196,7 @@ def main():
             model_cfg_dict["n_layers"] = args.n_layers
         model_config = femr.models.config.FEMRTransformerConfig(
             vocab_size=tokenizer.vocab_size,
-            is_hierarchical=isinstance(tokenizer, femr.models.tokenizer.HierarchicalTokenizer),
+            is_hierarchical=(isinstance(tokenizer, femr.models.tokenizer.HierarchicalTokenizer) or isinstance(tokenizer, femr.models.tokenizer.CLMBRTokenizer)),
             hidden_size=model_cfg_dict.get("hidden_size"),
             intermediate_size=model_cfg_dict.get("intermediate_size"),
             n_heads=model_cfg_dict.get("n_heads"),
@@ -208,7 +213,7 @@ def main():
             model_cfg_dict["n_layers"] = args.n_layers
         model_config = femr.models.config.FEMRMambaConfig(
             vocab_size=tokenizer.vocab_size,
-            is_hierarchical=isinstance(tokenizer, femr.models.tokenizer.HierarchicalTokenizer),
+            is_hierarchical=(isinstance(tokenizer, femr.models.tokenizer.HierarchicalTokenizer) or isinstance(tokenizer, femr.models.tokenizer.CLMBRTokenizer)),
             hf_name=model_cfg_dict.get("hf_name"),
             hidden_size=model_cfg_dict.get("hidden_size"),
             intermediate_size=model_cfg_dict.get("intermediate_size"),
@@ -245,8 +250,8 @@ def main():
 
         weight_decay=0.1,
         adam_beta2=0.95,
-        # report_to="none",
-        report_to=["wandb"],
+        report_to="none",
+        # report_to=["wandb"],
         run_name=args.hf_run_name,
         # run_name="motor_pretrain_mimic",
         num_train_epochs=args.n_epochs,

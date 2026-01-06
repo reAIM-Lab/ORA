@@ -4,6 +4,7 @@ import meds_reader
 import pickle
 import femr.splits
 from femr.models.tokenizer.hierarchical_tokenizer import HierarchicalTokenizer
+from femr.models.tokenizer.clmbr_tokenizer import CLMBRTokenizer
 import femr.models.tasks
 import femr.models.processor
 import pandas as pd
@@ -30,7 +31,7 @@ def main(args):
     with meds_reader.SubjectDatabase(str(meds_reader_path), num_threads=args.num_threads) as database:
         subject_ids = [_ for _ in database]
         print(f"subject_ids length: {len(subject_ids)}")
-        ontology_path = pretraining_data_path / 'ontology.pkl'
+        ontology_path = args.ontology_path / 'ontology.pkl'
         print(f"ontology_path: {ontology_path}")
         if not ontology_path.exists():
             print("Creating ontology")
@@ -66,16 +67,26 @@ def main(args):
         tokenizer_path = pretraining_data_path / 'tokenizer'
         if not tokenizer_path.exists():
             print("Train tokenizer")
-            tokenizer = HierarchicalTokenizer.train(
-                main_database,
-                vocab_size=args.vocab_size,
-                ontology=ontology
-            )
+            if args.loss_type == "ntp":
+                tokenizer = CLMBRTokenizer.train(
+                    main_database,
+                    vocab_size=args.vocab_size,
+                    ontology=ontology
+                )
+            else:
+                tokenizer = HierarchicalTokenizer.train(
+                    main_database,
+                    vocab_size=args.vocab_size,
+                    ontology=ontology
+                )
             # Save the tokenizer to the same directory as the model
             tokenizer.save_pretrained(tokenizer_path)
         else:
             print("Loading tokenizer")
-            tokenizer = HierarchicalTokenizer.from_pretrained(tokenizer_path, ontology=ontology)
+            if args.loss_type == "ntp":
+                tokenizer = CLMBRTokenizer.from_pretrained(tokenizer_path, ontology=ontology)
+            else:
+                tokenizer = HierarchicalTokenizer.from_pretrained(tokenizer_path, ontology=ontology)
 
         task_path = pretraining_data_path / f'{args.loss_type}_task.pkl'
 
@@ -88,7 +99,7 @@ def main(args):
                 task = MOTOR_Task.fit_pretraining_task_info(
                     main_database, tokenizer,
                     num_tasks=8 * 1024,
-                    num_bins=args.num_bins,
+                    num_bins=args.time_bins,
                     final_layer_size=512,
                     codes_to_skip=codes_to_skip
                 )
@@ -97,7 +108,7 @@ def main(args):
                 task = TPP_Task.fit_pretraining_task_info(
                     main_database, tokenizer,
                     num_tasks=8 * 1024,
-                    num_bins=args.num_bins,
+                    num_bins=args.time_bins,
                     final_layer_size=512,
                     codes_to_skip=codes_to_skip
                 )
@@ -107,15 +118,18 @@ def main(args):
                     main_database, tokenizer,
                     num_tasks=8 * 1024,
                     num_final_tasks= args.num_final_tasks,
-                    num_bins=args.num_bins,
+                    num_bins=args.time_bins,
                     final_layer_size=512,
                     codes_to_skip=codes_to_skip,
-                    num_value_bins=args.num_value_bins,
+                    num_value_bins=args.value_bins,
                     value_count_threshold=args.value_count_threshold
                 )
             elif args.loss_type == "ntp":
                 print("ntp choosen")
                 task = CLMBRTask(clmbr_vocab_size=len(tokenizer.original_code_to_id))
+            else:
+                print("no task matched")
+
             with open(task_path, 'wb') as f:
                 pickle.dump(task, f)
 
@@ -169,6 +183,12 @@ def create_omop_meds_tutorial_argparser():
         required=True,
     )
     parser.add_argument(
+        "--ontology_path",
+        dest="ontology_path",
+        action="store",
+        required=True,
+    )
+    parser.add_argument(
         "--meds_reader",
         dest="meds_reader",
         action="store",
@@ -178,7 +198,8 @@ def create_omop_meds_tutorial_argparser():
         "--athena_path",
         dest="athena_path",
         action="store",
-        required=True,
+        required=False,
+        default="",
     )
     parser.add_argument(
         "--motor_codes_to_skip",
@@ -204,8 +225,8 @@ def create_omop_meds_tutorial_argparser():
         default=8192,
     )
     parser.add_argument(
-        "--num_bins",
-        dest="num_bins",
+        "--time_bins",
+        dest="time_bins",
         action="store",
         required=False,
         type=int,
@@ -238,8 +259,8 @@ def create_omop_meds_tutorial_argparser():
     )
 
     parser.add_argument(
-        "--num_value_bins",
-        dest="num_value_bins",
+        "--value_bins",
+        dest="value_bins",
         action="store",
         required=False,
         type=int,
@@ -278,7 +299,7 @@ gsb
 python prepare_motor.py \
   --pretraining_data /shared/share_mala/zj2398/fomoh/motor \
   --athena_path " " \
-  --num_bins 8 \
+  --time_bins 8 \
   --loss_type motor \
   --num_threads 100 \
   --meds_reader /shared/share_mala/zj2398/mimic/meds_v0.6_reader
@@ -289,7 +310,7 @@ kuvira
 python prepare_motor_mtpp.py \
   --pretraining_data /data2/processed_datasets/zj2398/femr/cumc_0.1/mtpp_vocab_num_1k \
   --athena_path " " \
-  --num_bins 8 \
+  --time_bins 8 \
   --loss_type mtpp \
   --num_threads 50 \
   --meds_reader /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/post_transform_0.1_reader
@@ -301,7 +322,7 @@ python prepare_mtpp.py \
   --pretraining_data /data2/processed_datasets/zj2398/femr/cumc_0.1/mtpp_7399 \
   --athena_path "" \
   --num_final_tasks 7399 \
-  --num_bins 8 \
+  --time_bins 8 \
   --loss_type mtpp \
   --num_threads 40 \
   --meds_reader /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/post_transform_0.1_reader
@@ -310,7 +331,7 @@ python prepare_mtpp.py \
 python prepare_motor.py \
   --pretraining_data /data2/processed_datasets/zj2398/femr/cumc_0.1/motor_chao_ontology \
   --athena_path "" \
-  --num_bins 8 \
+  --time_bins 8 \
   --loss_type motor \
   --num_threads 50 \
   --meds_reader /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/post_transform_0.1_reader
@@ -318,7 +339,7 @@ python prepare_motor.py \
 python prepare_motor.py \
     --pretraining_data /data2/processed_datasets/zj2398/femr/cumc_0.1/tpp \
     --athena_path "" \
-    --num_bins 8 \
+    --time_bins 8 \
     --loss_type tpp \
     --num_threads 32 \
     --meds_reader /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/post_transform_0.1_reader
@@ -326,7 +347,7 @@ python prepare_motor.py \
 python prepare_motor.py \
     --pretraining_data /data2/processed_datasets/zj2398/femr/cumc_0.1/mtpp \
     --athena_path "" \
-    --num_bins 8 \
+    --time_bins 8 \
     --loss_type mtpp \
     --num_threads 8 \
     --meds_reader /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/post_transform_0.1_reader    

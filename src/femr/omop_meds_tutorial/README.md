@@ -4,9 +4,7 @@
 FEMR Columbia MEDS Tutorial
 ======================
 
-This tutorial illustrates how to use the MOTOR foundation model with the FEMR EHR modeling library on MEDS formatted Columbia data.
-
-This involves multiple steps, including training baselines, training a MOTOR foundation model and applying that MOTOR foundation model.
+This tutorial illustrates how to use 
 
 Step 1. Converting into meds_reader
 ------------------------
@@ -46,9 +44,8 @@ Finally, you need to install FEMR.
 This code currently uses a branch of FEMR, mimic_tutorial, in order to function. However, soon these changes will be merged upstream into femr 2.4
 
 ```bash
-git clone https://github.com/ChaoPang/femr.git
-cd femr
-git checkout omop_meds_v3_tutorial
+git clone https://github.com/reAIM-Lab/EHR_TTE.git
+cd EHR_TTE
 pip install -e .
 pip install xformers
 ```
@@ -58,81 +55,189 @@ Make sure to also install the correct gpu enabled version of PyTorch
 
 Step 4. Preparing For Pretraining
 ------------------------
-We have a single script, prepare_motor that generates these splits and then training things like tokenizers to prepare for pretraining
+
+## Overview
+
+The pretraining pipeline consists of two main scripts:
+1. **prepare.py** - Prepares data, trains tokenizer, creates tasks, and generates training batches
+2. **pretrain.py** - Trains the foundation model using the prepared data
+
+## Loss Types Explained
+
+The framework supports multiple pretraining objectives:
+
+| Loss Type | Description | Use Case |
+|-----------|-------------|----------|
+| `motor` | MOTOR (Multi-task Temporal Risk) - Predicts time until multiple medical events | General purpose foundation model |
+| `tpp` | TPP (Temporal Point Process) - Models timing of medical events | Time-focused modeling |
+| `mtpp` | MTPP (Multivariate TPP) - Models both timing and lab values | When lab values are important |
+| `mtpp_shared` | Shared MTPP - MTPP with shared parameters across tasks | Memory-efficient MTPP variant |
+| `ntp` | NTP (Next Token Prediction) - CLMBR-style next code prediction | Language model-style pretraining |
+
+**Note:** `mtpp` and `mtpp_shared` support the `--value_bins` parameter for discretizing continuous lab values.
+
+## Quick Start Workflow
 
 ```bash
-python -u -m femr.omop_meds_tutorial.prepare_motor \
-  --pretraining_data $PRETRAINING_DATA \
-  --athena_path $ATHENA_DATA \
-  --meds_reader $OMOP_MEDS_READER
+# Step 1: Prepare data, tokenizer, and tasks
+python prepare.py \
+  --pretraining_data /path/to/output \
+  --ontology_path /path/to/ontology \
+  --time_bins discretized_time_bins \
+  --value_bins discretized_value_bins \
+  --loss_type loss_type \
+  --num_final_tasks pretraining_task_num \
+  --num_threads num_threads \
+  --meds_reader /path/to/meds_reader
+
+# Step 2: Train the model
+accelerate launch \
+  --num_processes 4 \
+  pretrain.py \
+  --pretraining_data /path/to/output \
+  --meds_reader /path/to/meds_reader \
+  --output_dir /path/to/output/transformer \
+  --model transformer \
+  --hf_run_name my_experiment \
+  --loss_type mtpp_shared
+```
+
+### 4.1. Running prepare.py
+
+The `prepare.py` script performs the following:
+- Creates train/validation/test splits
+- Generates or loads an ontology from Athena
+- Trains a hierarchical tokenizer
+- Creates pretraining tasks (MOTOR, TPP, MTPP, or NTP)
+- Converts patient data into batches for training
+
+**Example Usage:**
+
+```bash
+python prepare.py \
+  --pretraining_data /user/zj2398/cache/mtpp_all_shared_6100_bin_5 \
+  --ontology_path ontology_path \
+  --time_bins 8 \
+  --value_bins 5 \
+  --loss_type mtpp \
+  --num_final_tasks 6100 \
+  --num_threads 32 \
+  --hf_cache_path /shared/share_mala/zj2398/huggingface/datasets \
+  --meds_reader /shared/share_mala/zj2398/mimic/data/meds_v0.6_reader
+```
+
+**Parameters:**
+
+| Parameter | Required | Description |
+|-----------|----------|-------------|
+| `--pretraining_data` | Yes | **Output directory** that will store all generated artifacts: train/val splits, tokenizer, task definitions, and training/evaluation batches |
+| `--ontology_path` | Yes | Directory path where the ontology file (ontology.pkl) will be saved or loaded from |
+| `--meds_reader` | Yes | Path to the MEDS reader database containing the input patient data |
+| `--athena_path` | No | Path to Athena ontology data for creating the medical code ontology (optional if ontology already exists) |
+| `--time_bins` | No | Number of time bins for temporal discretization (default: 8) |
+| `--value_bins` | No | Number of bins for discretizing lab values in MTPP tasks (default: 10) |
+| `--loss_type` | Yes | Type of pretraining task: `motor`, `tpp`, `mtpp`, or `ntp` |
+| `--num_final_tasks` | No | Number of final prediction tasks for MTPP (default: 8192) |
+| `--num_threads` | No | Number of parallel threads for data processing (default: 16) |
+| `--hf_cache_path` | No | HuggingFace datasets cache directory |
+| `--vocab_size` | No | Tokenizer vocabulary size (default: 16384) |
+| `--tokens_per_batch` | No | Maximum tokens per training batch (default: 8192) |
+| `--value_count_threshold` | No | Minimum occurrence count for lab values to be included (default: 1000) |
+| `--motor_codes_to_skip` | No | Path to parquet file containing medical codes to exclude from pretraining |
+
+**Output Structure:**
+
+After running prepare.py, the `--pretraining_data` directory will contain:
+```
+pretraining_data/
+├── main_split.csv              # Train/test patient splits
+├── ontology.pkl                # Medical ontology
+├── tokenizer/                  # Trained tokenizer files
+├── {loss_type}_task.pkl        # Pretraining task definition
+├── train_batches/              # Training data batches
+└── val_batches/                # Validation data batches
+```
+
+### 4.2. Running pretrain.py
+
+The `pretrain.py` script trains a foundation model (Transformer or Mamba) using the prepared data. It supports multi-GPU training via Hugging Face Accelerate.
+
+**Example Usage (Multi-GPU):**
+
+```bash
+# Set visible GPUs (optional)
+export CUDA_VISIBLE_DEVICES=0,1,2,3
+
+# Launch training with accelerate
+accelerate launch \
+  --num_processes 4 \
+  pretrain.py \
+  --pretraining_data /user/zj2398/cache/mtpp_all_shared_6100_bin_5 \
+  --meds_reader /shared/share_mala/zj2398/mimic/data/meds_v0.6_reader \
+  --output_dir /user/zj2398/cache/mtpp_all_shared_6100_bin_5/transformer \
+  --model transformer \
+  --hf_run_name mimic_mtpp_shared_aligned_task_bin_5 \
+  --loss_type mtpp_shared
+```
+
+**Example Usage (Single GPU):**
+
+```bash
+python pretrain.py \
+  --pretraining_data /user/zj2398/cache/mtpp_all_shared_6100_bin_5 \
+  --meds_reader /shared/share_mala/zj2398/mimic/data/meds_v0.6_reader \
+  --output_dir /user/zj2398/cache/output \
+  --model transformer \
+  --hf_run_name my_run \
+  --loss_type mtpp \
+  --per_device_train_batch_size 1
+```
+
+**Parameters:**
+
+| Parameter | Required | Description |
+|-----------|----------|-------------|
+| `--pretraining_data` | Yes | **Same directory from prepare.py** containing tokenizer, task, and batches |
+| `--meds_reader` | Yes | Path to MEDS reader database (same as prepare.py) |
+| `--output_dir` | Yes | Directory where model checkpoints will be saved during training |
+| `--model` | Yes | Model architecture: `transformer` or `mamba` |
+| `--loss_type` | Yes | Type of pretraining loss: `motor`, `tpp`, `mtpp`, `mtpp_shared`, or `ntp` (must match prepare.py) |
+| `--hf_run_name` | Yes | Name for the training run (displayed in WandB) |
+| `--checkpoint_dir` | No | Path to checkpoint to resume training from |
+| `--learning_rate` | No | Learning rate for optimizer (default: 1e-5) |
+| `--n_layers` | No | Number of transformer/mamba layers (default: 11) |
+| `--n_epochs` | No | Number of training epochs (default: 50) |
+| `--per_device_train_batch_size` | No | Training batch size per GPU (default: 1) |
+| `--per_device_eval_batch_size` | No | Evaluation batch size per GPU (default: 1) |
+| `--linear_interpolation` | No | Use linear interpolation for time modeling (default: False) |
+
+**Important Notes:**
+
+1. **Loss Type Matching**: The `--loss_type` in pretrain.py must match the task created in prepare.py
+   - If you ran prepare.py with `--loss_type mtpp`, you must use `--loss_type mtpp` or `--loss_type mtpp_shared` in pretrain.py
+
+2. **Multi-GPU Training**: Use `accelerate launch` for distributed training:
+   ```bash
+   accelerate launch --num_processes N pretrain.py [args]
+   ```
+
+3. **Checkpoints**: The model automatically saves checkpoints to `--output_dir` after each epoch. The best checkpoint (lowest validation loss) is saved separately.
+
+4. **Monitoring**: Training metrics are logged to Weights & Biases (WandB) using the `--hf_run_name` identifier.
+
+5. **Memory Requirements**: Foundation model pretraining typically requires high-memory GPUs (24GB+ recommended). Adjust `--per_device_train_batch_size` based on your GPU memory.
+
+**Output:**
+
+Training produces checkpoints in the `--output_dir`:
+```
+output_dir/
+├── checkpoint-1000/
+├── checkpoint-2000/
+├── ...
+└── checkpoint-best/          # Best performing checkpoint
 ```
 
 Step 5. Generate Labels
-------------------------
-We use FEMR's built-in labeling tools to define two prediction tasks: long length of stay (7 days or more) and inpatient mortality. Both predictions are made 48 hours after admission.
 
-```bash
-python -u -m femr.omop_meds_tutorial.generate_labels \
-  --pretraining_data $PRETRAINING_DATA \
-  --meds_reader $OMOP_MEDS_READER
-```
-
-
-Step 6. Generate Tabular Features
-------------------------
-We use FEMR's built-in labeling tools to define two prediction tasks: long length of stay (7 days or more) and inpatient mortality. Both predictions are made 48 hours after admission.
-
-```bash
-python -u -m femr.omop_meds_tutorial.generate_tabular_features \
-  --pretraining_data $PRETRAINING_DATA \
-  --meds_reader $OMOP_MEDS_READER
-```
-
-Step 7. Train Tabular Baselines
-------------------------
-
-We can then train baselines on those labels and tabular features. We train two baselines in particular, LightGBM and logistic regresison.
-```bash
-python -u -m femr.omop_meds_tutorial.train_baseline \
-  --pretraining_data $PRETRAINING_DATA \ 
-  --meds_reader $OMOP_MEDS_READER
-```
-
-Step 8. Pretrain MOTOR
-------------------------
-You could probably also train on smaller GPUs, even 16GB but that might require some hyperparameter tweaks.
-
-```bash
-python -u -m femr.omop_meds_tutorial.pretrain_motor \
-  --pretraining_data $PRETRAINING_DATA \
-  --meds_reader $OMOP_MEDS_READER
-```
-
-When the model appears to have converged (after roughly 70,000 steps seems good enough for my experiments), copy the checkpoint to the `motor_model` directory.
-
-```bash
-cp -r tmp_trainer_1e-4/checkpoint-68000 $PRETRAINING_DATA/motor_model
-```
-
-
-Step 9. Generate MOTOR Embedddings
-------------------------
-
-We can then use MOTOR as an embedding model to obtain patient representations
-
-```bash
-python -u -m femr.omop_meds_tutorial.generate_motor_features \
-  --pretraining_data $PRETRAINING_DATA \
-  --meds_reader $OMOP_MEDS_READER
-```
-
-Step 10. Train Logistic Regression On MOTOR Embeddings
-------------------------
-
-Finally we can use MOTOR by training a linear head (aka a logistic regression model) on top of the frozen MOTOR embeddings to solve our prediction tasks.
-
-```bash
-python -u -m femr.omop_meds_tutorial.finetune_motor \
-  --pretraining_data $PRETRAINING_DATA \
-  --meds_reader $OMOP_MEDS_READER
-```
+TBD
