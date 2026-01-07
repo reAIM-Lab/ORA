@@ -29,7 +29,7 @@ python pretrain.py \
   --per_device_train_batch_size 1 \
   --output_dir /data2/processed_datasets/zj2398/femr/cumc/ntp/transformer \
   --model transformer \
-  --hf_run_name mimic_mamba_mtpp_shared_6100_bin_5 \
+  --hf_run_name mimic_transformer_ntp \
   --loss_type ntp
 
 
