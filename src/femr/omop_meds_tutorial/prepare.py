@@ -82,7 +82,7 @@ def main(args):
             # Save the tokenizer to the same directory as the model
             tokenizer.save_pretrained(tokenizer_path)
         else:
-            print("Loading tokenizer")
+            print(f"Loading tokenizer {args.loss_type}")
             if args.loss_type == "ntp":
                 tokenizer = CLMBRTokenizer.from_pretrained(tokenizer_path, ontology=ontology)
             else:

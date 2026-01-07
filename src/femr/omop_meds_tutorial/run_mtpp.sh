@@ -39,3 +39,13 @@ python pretrain.py \
   --model transformer \
   --loss_type mtpp_shared
 
+
+  # python pretrain.py  \
+  # --pretraining_data /user/zj2398/cache/mtpp_all_shared_6100_bin_5   \
+  # --meds_reader /shared/share_mala/zj2398/mimic/data/meds_v0.6_reader  \
+  # --per_device_train_batch_size 1   \
+  # --output_dir /user/zj2398/cache/mtpp_all_shared_6100_bin_5/mamba \
+  # --model mamba  \
+  # --n_layers 28  \
+  # --hf_run_name mimic_mamba_mtpp_shared_6100_bin_5  \
+  # --loss_type mtpp_shared

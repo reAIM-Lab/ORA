@@ -407,6 +407,7 @@ class MOTOR_Task(Task):
             next_features: Optional[Sequence[int]] = None,
             actually_add: bool = True,
     ) -> int:
+        # return 0 if current event has the same time with last event
         if next_date is None or next_date == current_date:
             return 0
 

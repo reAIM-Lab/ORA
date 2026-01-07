@@ -102,7 +102,7 @@ class BatchCreator:
 
         if isinstance(self.tokenizer, femr.models.tokenizer.FlatTokenizer):
             self.tokens = []
-        elif isinstance(self.tokenizer, femr.models.tokenizer.HierarchicalTokenizer):
+        elif isinstance(self.tokenizer, (femr.models.tokenizer.HierarchicalTokenizer,femr.models.tokenizer.CLMBRTokenizer)):
             self.hierarchical_tokens = []
             self.hierarchical_weights = []
             self.token_indices = [0]
@@ -216,7 +216,7 @@ class BatchCreator:
 
             codes_seen_today |= set(features)
 
-            #  Label Generation  don't understand
+            #  Label Generation  
             if (self.task is not None) and (last_time is not None):
                 # Now we have to consider whether or not to have labels for this time step
                 # The add_event function returns how many labels to assign for this time
@@ -236,7 +236,7 @@ class BatchCreator:
             if isinstance(self.tokenizer, femr.models.tokenizer.FlatTokenizer):
                 assert len(features) == 1
                 per_subject_tokens.append(features[0])
-            elif isinstance(self.tokenizer, femr.models.tokenizer.HierarchicalTokenizer):
+            elif isinstance(self.tokenizer, (femr.models.tokenizer.HierarchicalTokenizer,femr.models.tokenizer.CLMBRTokenizer)):
                 assert weights is not None
                 per_subject_hierarchical_tokens.extend(features)
                 per_subject_hierarchical_weights.extend(weights)
@@ -253,6 +253,7 @@ class BatchCreator:
             per_subject_timestamps.append(event.time.replace(tzinfo=datetime.timezone.utc).timestamp())
 
             last_time = event.time
+
         # add labels for the last time step
         if self.task is not None and last_time is not None and last_time.date() > birth.date():
             num_added = self.task.add_event(last_time, None, None)
@@ -290,7 +291,7 @@ class BatchCreator:
         if isinstance(self.tokenizer, femr.models.tokenizer.FlatTokenizer): #not self.tokenizer.is_hierarchical:
             # Easy for simple tokenizer
             self.tokens.extend(per_subject_tokens[offset : offset + length_to_add])
-        elif isinstance(self.tokenizer, femr.models.tokenizer.HierarchicalTokenizer):
+        elif isinstance(self.tokenizer, (femr.models.tokenizer.HierarchicalTokenizer,femr.models.tokenizer.CLMBRTokenizer)):
             # Hierarchical tokenizer is more complex since we have to shift the indices as well
             # Remember, these arrays are all designed for PyTorch EmbeddingBag
 
@@ -365,7 +366,7 @@ class BatchCreator:
         if isinstance(self.tokenizer, femr.models.tokenizer.FlatTokenizer): #not self.tokenizer.is_hierarchical:
             # For a single tokenizer, these are simple the token indices
             transformer["tokens"] = np.array(self.tokens, dtype=token_dtype)
-        elif isinstance(self.tokenizer, femr.models.tokenizer.HierarchicalTokenizer):
+        elif isinstance(self.tokenizer, (femr.models.tokenizer.HierarchicalTokenizer,femr.models.tokenizer.CLMBRTokenizer)):
             # See PyTorch's EmbeddingBag for what these numpy arrays mean.
             transformer["hierarchical_tokens"] = np.array(self.hierarchical_tokens, dtype=token_dtype)
             transformer["hierarchical_weights"] = np.array(self.hierarchical_weights, dtype=np.float16)

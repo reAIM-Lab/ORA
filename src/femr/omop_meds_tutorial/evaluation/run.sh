@@ -100,6 +100,10 @@ while [ $# -gt 0 ]; do
             MODEL_NAME="$2"
             shift 2
             ;;
+        --use_ntp)
+            USE_NTP="$2"
+            shift 2
+            ;;
         --loss_type)
             LOSS_TYPE="$2"
             shift 2
@@ -232,6 +236,7 @@ for TASK_DIR in "$COHORT_BASE_DIR"*/; do
       --cohort_dir \"$TASK_DIR\" \
       --ontology_path \"$ONTOLOGY_PATH\" \
       --output_root \"$OUTPUT_DIR\" \
+      --use_ntp \"$USE_NTP\" \
       --task_type "binary" \
       --loss_type "labeled_subjects" "
 

@@ -65,6 +65,7 @@ while [ $# -gt 0 ]; do
         --min_subjects_per_batch) MIN_SUBJECTS_PER_BATCH="$2"; shift 2 ;;
         --ontology_path) ONTOLOGY_PATH="$2"; shift 2 ;;
         --main_split_path) MAIN_SPLIT_PATH="$2"; shift 2 ;;
+        --use_ntp) USE_NTP="$2"; shift 2 ;;
         --cohort_dir) COHORT_BASE_DIR="$2"; shift 2 ;;
         --output_dir) OUTPUT_DIR="$2"; shift 2 ;;
         --tasks) TASK_LIST="$2"; shift 2 ;;   # <-- NEW
@@ -185,8 +186,9 @@ for TASK_DIR in "$COHORT_BASE_DIR"*/; do
         --cohort_dir \"$TASK_DIR\" \
         --ontology_path \"$ONTOLOGY_PATH\" \
         --output_root \"$OUTPUT_DIR\" \
+        --use_ntp \"$USE_NTP\" \
         --loss_type "labeled_subjects" \
-        --task_type "regression" "
+        --task_type "regression" " 
     [ -n "$OBSERVATION_WINDOW" ] && GENERATE_CMD="$GENERATE_CMD --observation_window \"$OBSERVATION_WINDOW\""
 
     echo "Executing: $GENERATE_CMD"

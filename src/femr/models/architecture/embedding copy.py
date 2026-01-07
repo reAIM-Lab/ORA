@@ -1301,7 +1301,7 @@ def to_device(data: Any, device: torch.device) -> Any:
         raise RuntimeError("Could not move item of type " + str(type(data)))
 
 
-def compute_features(
+def loss_type(
         db: meds_reader.SubjectDatabase,
         model_path: str,
         labels: List[meds.Label],

@@ -279,17 +279,34 @@ class FEMRMamba(nn.Module):
 
         # Extract layers for per-layer time injection (like transformer)
         # Common attribute names for Mamba layers
-        self.mamba_layers = None
-        self.layer_norm_f = None
+        # self.mamba_layers = None
+        # self.layer_norm_f = None
+        # for attr in ["layers", "mixer_layers", "blocks"]:
+        #     if hasattr(self.backbone, attr):
+        #         self.mamba_layers = getattr(self.backbone, attr)
+        #         break
+        # # Get final norm if present
+        # for attr in ["norm_f", "final_layernorm", "ln_f", "norm"]:
+        #     if hasattr(self.backbone, attr):
+        #         self.layer_norm_f = getattr(self.backbone, attr)
+        #         break
+
+        # Save attribute names only (strings), do NOT register modules twice
+        self._mamba_layers_attr = None
+        self._final_norm_attr = None
+
         for attr in ["layers", "mixer_layers", "blocks"]:
             if hasattr(self.backbone, attr):
-                self.mamba_layers = getattr(self.backbone, attr)
+                self._mamba_layers_attr = attr
                 break
-        # Get final norm if present
+
         for attr in ["norm_f", "final_layernorm", "ln_f", "norm"]:
             if hasattr(self.backbone, attr):
-                self.layer_norm_f = getattr(self.backbone, attr)
+                self._final_norm_attr = attr
                 break
+            
+        assert self._mamba_layers_attr is not None, "Could not find mamba layer list attr"
+
 
     def _inject_time_features(self, hidden_states: torch.Tensor, time_pad: torch.Tensor, C: int, D: int):
         """Inject time features into hidden states (same as transformer per-layer injection)."""
@@ -345,22 +362,34 @@ class FEMRMamba(nn.Module):
             time_pad.view(-1, C)[mask.view(-1)] = all_time
 
         # Per-layer forward with time injection (like transformer)
-        if self.mamba_layers is not None and time_pad is not None:
-            # Manual layer iteration with time injection at each layer
+        # if self.mamba_layers is not None and time_pad is not None:
+        #     # Manual layer iteration with time injection at each layer
+        #     hidden_states = padded
+        #     for layer in self.mamba_layers:
+        #         # Inject time features BEFORE each layer (same as transformer)
+        #         hidden_states = self._inject_time_features(hidden_states, time_pad, C, D)
+        #         # Forward through Mamba layer
+        #         layer_output = layer(hidden_states)
+        #         # Handle different return types from Mamba layers
+        #         if isinstance(layer_output, tuple):
+        #             hidden_states = layer_output[0]
+        #         else:
+        #             hidden_states = layer_output
+        #     # Apply final norm if present
+        #     if self.layer_norm_f is not None:
+        #         hidden_states = self.layer_norm_f(hidden_states)
+        #     last_hidden = hidden_states
+        layers = getattr(self.backbone, self._mamba_layers_attr) if self._mamba_layers_attr else None
+        final_norm = getattr(self.backbone, self._final_norm_attr) if self._final_norm_attr else None
+
+        if layers is not None and time_pad is not None:
             hidden_states = padded
-            for layer in self.mamba_layers:
-                # Inject time features BEFORE each layer (same as transformer)
+            for layer in layers:
                 hidden_states = self._inject_time_features(hidden_states, time_pad, C, D)
-                # Forward through Mamba layer
                 layer_output = layer(hidden_states)
-                # Handle different return types from Mamba layers
-                if isinstance(layer_output, tuple):
-                    hidden_states = layer_output[0]
-                else:
-                    hidden_states = layer_output
-            # Apply final norm if present
-            if self.layer_norm_f is not None:
-                hidden_states = self.layer_norm_f(hidden_states)
+                hidden_states = layer_output[0] if isinstance(layer_output, tuple) else layer_output
+            if final_norm is not None:
+                hidden_states = final_norm(hidden_states)
             last_hidden = hidden_states
         else:
             # Fallback: single time injection at input, use backbone directly
@@ -1297,7 +1326,7 @@ class FEMRModel(transformers.PreTrainedModel):
         # else:
         #     raise RuntimeError("Could not determine head for task " + task_type)
         print(f"create loss type is {self.loss_type}")
-        if self.loss_type == "clmbr":
+        if self.loss_type == "ntp":
             return CLMBRTaskHead(self.hidden_size, **task_kwargs)
         elif self.loss_type == "labeled_subjects":
             return LabeledSubjectTaskHead(self.hidden_size, **task_kwargs)
@@ -1382,7 +1411,7 @@ def compute_features(
         min_subjects_per_batch: int = 1,
         total_flops: TotalFlops = None,
         loss_type: str = None,
-        use_linear_interpolation: bool = False,
+        use_ntp: bool = False,
 ) -> Dict[str, np.ndarray]:
     """ "Compute features for a set of labels given a dataset and a model.
 
@@ -1405,7 +1434,6 @@ def compute_features(
     task = femr.models.tasks.motor.LabeledSubjectTask(labels, observation_window)
 
     print(f"Loading model from {model_path}")
-    print(f"use_linear_interpolation: {use_linear_interpolation}")
     print(f"loss type is {loss_type}")
     # Use the new from_pretrained method that supports linear_interpolation
     print("starting loading model")
@@ -1414,14 +1442,6 @@ def compute_features(
     #     task_config=task.get_task_config(),
     #     loss_type=loss_type,
     # )
-
-    # model, report = load_femr_model_with_compat(
-    #     model_path,
-    #     model_cls=femr.models.architecture.embedding.FEMRModel,
-    #     task_config=task.get_task_config(),
-    #     loss_type=loss_type,
-    # )
-
     model, report = load_femr_model_with_compat(
       model_path,
       model_cls=FEMRModel,
@@ -1431,8 +1451,10 @@ def compute_features(
     )
 
     print(f"the report is {report}")
-
-    tokenizer = femr.models.tokenizer.HierarchicalTokenizer.from_pretrained(model_path, ontology=ontology)
+    if use_ntp:
+        tokenizer = femr.models.tokenizer.CLMBRTokenizer.from_pretrained(model_path, ontology=ontology)
+    else:
+        tokenizer = femr.models.tokenizer.HierarchicalTokenizer.from_pretrained(model_path, ontology=ontology)
     processor = femr.models.processor.FEMRBatchProcessor(tokenizer, task=task)
 
     filtered_data = db.filter(list(task.label_map.keys()))

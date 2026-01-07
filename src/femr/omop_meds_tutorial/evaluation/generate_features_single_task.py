@@ -211,6 +211,7 @@ def main():
                 observation_window=args.observation_window,
                 min_subjects_per_batch=args.min_subjects_per_batch,
                 loss_type=args.loss_type
+                use_ntp=args.use_ntp
                 # total_flops=None
             )
 

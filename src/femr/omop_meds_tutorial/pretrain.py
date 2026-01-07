@@ -172,7 +172,7 @@ def main():
     with open(task_path, 'rb') as f:
         task = pickle.load(f)
     # print(f"{args.loss_type} task: {task}")
-    print(f"{args.loss_type} task length: {len(task.pretraining_task_codes)}")
+    # print(f"{args.loss_type} task length: {len(task.pretraining_task_codes)}")
     processor = femr.models.processor.FEMRBatchProcessor(tokenizer, task)
 
     train_batches_path = pretraining_data / 'train_batches'
@@ -250,8 +250,8 @@ def main():
 
         weight_decay=0.1,
         adam_beta2=0.95,
-        report_to="none",
-        # report_to=["wandb"],
+        # report_to="none",
+        report_to=["wandb"],
         run_name=args.hf_run_name,
         # run_name="motor_pretrain_mimic",
         num_train_epochs=args.n_epochs,

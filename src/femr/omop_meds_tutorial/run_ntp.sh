@@ -44,27 +44,30 @@ python prepare.py \
 
 
 # multi-gpu pretraining
-# export CUDA_VISIBLE_DEVICES=4,5,6,7
-# accelerate launch \
-#   --num_processes 4 \
-# python  pretrain.py \
-#   --pretraining_data /user/zj2398/cache/ntp \
-#   --meds_reader /shared/share_mala/zj2398/mimic/data/meds_v0.6_reader \
-#   --per_device_train_batch_size 1 \
-#   --output_dir /user/zj2398/cache/ntp/mamba \
-#   --model mamba \
-#   --n_layers 27 \
-#   --hf_run_name mimic_mamba_ntp_shared_6100 \
-#   --loss_type ntp
+# export CUDA_VISIBLE_DEVICES=0,1,2,3
+accelerate launch \
+  --num_processes 4 \
+  pretrain.py \
+  --pretraining_data /user/zj2398/cache/ntp \
+  --meds_reader /shared/share_mala/zj2398/mimic/data/meds_v0.6_reader \
+  --per_device_train_batch_size 1 \
+  --output_dir /shared/share_mala/zj2398/models/ntp_8k/mamba \
+  --model mamba \
+  --n_layers 28 \
+  --hf_run_name mimic_mamba_ntp_shared_6100 \
+  --loss_type ntp
+
+# export CUDA_VISIBLE_DEVICES=0,1,2,3
+# accelerate launch   \
+#   --num_processes 4   \
+#   pretrain.py  \
+#   --pretraining_data /user/zj2398/cache/mtpp_all_shared_6100_bin_5   \
+#   --meds_reader /shared/share_mala/zj2398/mimic/data/meds_v0.6_reader  \
+#   --per_device_train_batch_size 1   \
+#   --output_dir /user/zj2398/cache/mtpp_all_shared_6100_bin_5/mamba \
+#   --model mamba  \
+#   --n_layers 28  \
+#   --hf_run_name mimic_mamba_mtpp_shared_6100_bin_5  \
+#   --loss_type mtpp_shared
 
 
-# accelerate launch   --num_processes 4   
-# python pretrain.py  \
-# --pretraining_data /user/zj2398/cache/mtpp_all_shared_6100_bin_5   \
-# --meds_reader /shared/share_mala/zj2398/mimic/data/meds_v0.6_reader  \
-# --per_device_train_batch_size 1   \
-# --output_dir /user/zj2398/cache/mtpp_all_shared_6100_bin_5/mamba \
-# --model mamba  \
-# --n_layers 27  \
-# --hf_run_name mimic_mamba_mtpp_shared_6100_bin_5  \
-# --loss_type mtpp_shared

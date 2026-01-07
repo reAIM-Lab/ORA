@@ -104,6 +104,13 @@ def create_arg_parser():
         help="The loss type",
     )
     args.add_argument(
+        "--use_ntp",
+        dest="use_ntp",
+        type=bool,
+        default=False,
+        help="The loss type",
+    )
+    args.add_argument(
         "--task_type",
         dest="task_type",
         default="binary",
@@ -212,7 +219,8 @@ def main():
                 num_proc=args.num_proc,
                 observation_window=args.observation_window,
                 min_subjects_per_batch=args.min_subjects_per_batch,
-                loss_type=args.loss_type
+                loss_type=args.loss_type,
+                use_ntp=args.use_ntp
                 # total_flops=None
             )
 
