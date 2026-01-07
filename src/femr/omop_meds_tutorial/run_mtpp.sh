@@ -16,7 +16,7 @@ echo
 python prepare.py \
   --pretraining_data /data2/processed_datasets/zj2398/femr/cumc/mtpp \
   --ontology_path  ontology_path \
-  --num_bins 8 \
+  --time_bins 8 \
   --loss_type mtpp \
   --num_threads 32 \
   --num_final_tasks 6972 \

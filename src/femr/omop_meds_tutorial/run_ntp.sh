@@ -2,16 +2,16 @@
 set -euo pipefail
 
 # ---- config (edit if you like) ----
-LOG_DIR="${LOG_DIR:-./logs}"
-PREP_LOG="$LOG_DIR/prepare_motor_$(date +%Y%m%d_%H%M%S).log"
-TRAIN_LOG="$LOG_DIR/train_mamba_$(date +%Y%m%d_%H%M%S).log"
-mkdir -p "$LOG_DIR"
+# LOG_DIR="${LOG_DIR:-./logs}"
+# PREP_LOG="$LOG_DIR/prepare_motor_$(date +%Y%m%d_%H%M%S).log"
+# TRAIN_LOG="$LOG_DIR/train_mamba_$(date +%Y%m%d_%H%M%S).log"
+# mkdir -p "$LOG_DIR"
 
 echo "[$(date)] starting both jobs..."
-echo "Logs:"
-echo "  prepare -> $PREP_LOG"
-echo "  train   -> $TRAIN_LOG"
-echo
+# echo "Logs:"
+# echo "  prepare -> $PREP_LOG"
+# echo "  train   -> $TRAIN_LOG"
+# echo
 
 # kuvira
 # python prepare.py \
@@ -44,9 +44,9 @@ python prepare.py \
 
 
 # multi-gpu pretraining
-# export CUDA_VISIBLE_DEVICES=0,1,2,3
+# export CUDA_VISIBLE_DEVICES=4,5
 accelerate launch \
-  --num_processes 4 \
+  --num_processes 2 \
   pretrain.py \
   --pretraining_data /user/zj2398/cache/ntp \
   --meds_reader /shared/share_mala/zj2398/mimic/data/meds_v0.6_reader \
