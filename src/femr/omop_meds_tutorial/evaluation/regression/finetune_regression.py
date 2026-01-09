@@ -21,6 +21,7 @@ import femr.splits
 import argparse
 from femr.omop_meds_tutorial.evaluation.generate_features import get_model_name
 from sklearn.linear_model import LinearRegression
+from femr.omop_meds_tutorial.evaluation.eval_utils import _metric_mean_std, _update_metric_table
 
 from femr.omop_meds_tutorial.evaluation.generate_labels import (  # type: ignore
         create_omop_meds_tutorial_arg_parser,
@@ -85,6 +86,7 @@ def main():
 
     # Avoid variable shadowing: keep label_names for task iteration
     # label_names = LABEL_NAMES
+    summary_dir =  Path(args.output_root) / "summary_tables"
     output_root = Path(args.output_root)/args.model_name
     if args.cohort_label is not None:
         label_path = output_root / "labels" / (args.cohort_label + '.parquet')
@@ -219,6 +221,13 @@ def main():
         
         with open(test_result_file, "w") as f:
             json.dump(metrics, f, indent=4)
+
+        model_col = f"{args.model_name}"
+
+        _update_metric_table(summary_dir, "rmse", label_name, model_col, rmse, None)
+        _update_metric_table(summary_dir, "mae", label_name, model_col, mae, None)
+        _update_metric_table(summary_dir, "r2", label_name, model_col, r2, None)
+
 
         # y_train_mean = np.mean(y_train)
         # y_pred_baseline = np.full_like(test_data["numerical_value"], y_train_mean)

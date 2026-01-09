@@ -210,7 +210,8 @@ def main():
                 num_proc=args.num_proc,
                 observation_window=args.observation_window,
                 min_subjects_per_batch=args.min_subjects_per_batch,
-                loss_type=args.loss_type
+                loss_type=args.loss_type,
+                cache_path = args.cache_path,
                 use_ntp=args.use_ntp
                 # total_flops=None
             )

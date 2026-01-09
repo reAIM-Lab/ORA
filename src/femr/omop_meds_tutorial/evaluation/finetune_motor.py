@@ -17,6 +17,7 @@ import femr.splits
 import argparse
 from .generate_labels import LABEL_NAMES, create_omop_meds_tutorial_arg_parser
 from .generate_features import get_model_name
+from .eval_utils import _metric_mean_std, _update_metric_table
 
 from pycox.models import DeepHitSingle
 from pycox.evaluation import EvalSurv
@@ -158,13 +159,6 @@ def tte_evaluation(train_set, test_set):
         'batch': [1024, 2048]
     })
 
-    # grid = ParameterGrid({
-    #     'dropout': [0],
-    #     'lr': [0.001],
-    #     'batch': [1024]
-    # })
-
-
     # Hyperparameter selection
     best_nll = np.inf
     for param in grid:
@@ -190,18 +184,12 @@ def tte_evaluation(train_set, test_set):
 
     # times represent all discretized intervals
     times = surv.index.to_numpy()
-    # print("")
 
     # the index closest to 5 yeats
     index_truncation = np.argmin(np.abs(times - truncation))
 
-    # Create mask for time points within 5 years (for integrated Brier score)
-    # mask_5yr = times <= truncation
-    # times_5yr = times[mask_5yr]  # Time grid from 0 to ~5 years
     # print(f"times_5yr is {times_5yr}")
     results = {'C-Index': [], 'Int-Brier': []}
-
-
 
     # Create structured arrays with filtered data
     # Create format for sksurv
@@ -226,10 +214,6 @@ def tte_evaluation(train_set, test_set):
     
     for i in tqdm(range(100)):
         sample = np.random.choice(len(et_test), len(et_test))
-        
-        # =======================================================================
-        # C-INDEX: Use risk scores at 5 years
-        # =======================================================================
         surv_at_5yr = surv.iloc[index_truncation, sample]
         risk_at_5yr = 1 - surv_at_5yr
         
@@ -239,57 +223,24 @@ def tte_evaluation(train_set, test_set):
             risk_at_5yr,
             tau=truncation
         )
-        results['C-Index'].append(c_index[0])
-        
-        # =======================================================================
-        # INTEGRATED BRIER SCORE: Filter time points to valid range
-        # =======================================================================
-        
-        # Get the observed time range for this bootstrap sample
-        # min_time_sample = et_test[sample]['t'].min()
-        # max_time_sample = et_test[sample]['t'].max()
-        
-        # # Filter time grid to be within BOTH:
-        # # 1. The observed data range [min_time, max_time]
-        # # 2. The 5-year truncation window [0, 1825]
-        # eval_mask = (times >= min_time_sample) & \
-        #             (times <= max_time_sample) & \
-        #             (times <= truncation)
-        # times_eval = times[eval_mask]
-        # print(f"times_eval is {times_eval}")
-         
+        results['C-Index'].append(c_index[0])         
         
         # Safety check: need at least 2 time points for integration
         if len(times_eval) < 2:
             print(f"Warning: Bootstrap iteration {i} has insufficient time points "
                   f"(min={min_time_sample:.1f}, max={max_time_sample:.1f}), using fallback...")
-            # Fallback: use the closest valid time range
-            # if max_time_sample < truncation:
-            #     # If sample doesn't reach 5 years, evaluate up to max_time_sample
-            #     eval_mask = (times >= min_time_sample) & (times <= max_time_sample)
-            # else:
-            #     # If sample exceeds 5 years, evaluate up to truncation
-            #     eval_mask = (times >= min_time_sample) & (times <= truncation)
-            # times_eval = times[eval_mask]
         
         # Extract survival curves for the valid time points
         surv_eval = surv.iloc[eval_mask, sample].values.T
         
         # Compute integrated Brier score
-        try:
-            ibs = integrated_brier_score(
-                et_train,
-                et_test[sample],
-                surv_eval,
-                times_eval
-            )
-            results['Int-Brier'].append(ibs)
-        except ValueError as e:
-            print(f"Error in bootstrap iteration {i}: {e}")
-            print(f"  Sample time range: [{min_time_sample:.2f}, {max_time_sample:.2f}]")
-            print(f"  Eval times range: [{times_eval.min():.2f}, {times_eval.max():.2f}]")
-            print(f"  Skipping this iteration...")
-            continue
+        ibs = integrated_brier_score(
+            et_train,
+            et_test[sample],
+            surv_eval,
+            times_eval
+        )
+        results['Int-Brier'].append(ibs)
     
     # Display results
     print(f"\n{'='*70}")
@@ -305,7 +256,6 @@ def tte_evaluation(train_set, test_set):
     print(f"{'='*70}\n")
     
     return results
-
 
     
 def main():
@@ -323,6 +273,8 @@ def main():
 
     # labels = ["in_hospital_mortality","readmission","long_los"]
     output_dir = Path(output_root) / "results"
+    summary_dir = output_dir / "summary_tables"
+    model_col = f"{args.model_name}"
     with meds_reader.SubjectDatabase(args.meds_reader, num_threads=32) as database:
         for label_name in label_names:
             if args.observation_window:
@@ -438,16 +390,30 @@ def main():
                 "auroc": roc_auc,
                 "aucpr": pr_auc
             }
-            # if label_name in ["AMI","MASLD","Ischemic_Stroke","Celiac"]:
-            #     tte_results = tte_evaluation(train_set,test_set)
-            #     metrics['C-Index'] = (np.mean(tte_results['C-Index']), np.std(tte_results['C-Index']))
-            #     metrics['Int-Brier'] = (np.mean(tte_results['Int-Brier']), np.std(tte_results['Int-Brier']))
+            if label_name in ["AMI","MASLD","Ischemic_Stroke","Celiac"]:
+                tte_results = tte_evaluation(train_set,test_set)
+                metrics['C-Index'] = (np.mean(tte_results['C-Index']), np.std(tte_results['C-Index']))
+                metrics['Int-Brier'] = (np.mean(tte_results['Int-Brier']), np.std(tte_results['Int-Brier']))
             # tte_result_file = label_output_dir / 'tte_metrics.json'
             # with open(tte_result_file, "w") as f:
             #     json.dump(metrics, f, indent=4)
             with open(test_result_file, "w") as f:
                 json.dump(metrics, f, indent=4)
 
+            auroc_mean, auroc_std = _metric_mean_std(metrics, "auroc")
+            aucpr_mean, aucpr_std = _metric_mean_std(metrics, "aucpr")
+            cidx_mean, cidx_std   = _metric_mean_std(metrics, "C-Index")
+            ibr_mean,  ibr_std    = _metric_mean_std(metrics, "Int-Brier")
+
+            if auroc_mean is not None:
+                _update_metric_table(summary_dir, "auroc", label_name, model_col, auroc_mean, auroc_std)
+            if aucpr_mean is not None:
+                _update_metric_table(summary_dir, "auprc", label_name, model_col, aucpr_mean, aucpr_std)
+
+            if cidx_mean is not None:
+                _update_metric_table(summary_dir, "cindex", label_name, model_col, cidx_mean, cidx_std)
+            if ibr_mean is not None:
+                _update_metric_table(summary_dir, "int_brier", label_name, model_col, ibr_mean, ibr_std)
 
 
 

@@ -104,10 +104,6 @@ while [ $# -gt 0 ]; do
             USE_NTP="$2"
             shift 2
             ;;
-        --loss_type)
-            LOSS_TYPE="$2"
-            shift 2
-            ;;
         --output_dir) OUTPUT_DIR="$2"; shift 2 ;;
         -*)
             echo "Error: Unknown option: $1" >&2
@@ -136,9 +132,6 @@ if [ -z "$COHORT_BASE_DIR" ]; then
 fi
 
 # Use command line arguments if provided, otherwise use environment variables
-# if [ -n "$PRETRAINING_DATA_ARG" ]; then
-#     PRETRAINING_DATA="$PRETRAINING_DATA_ARG"
-# fi
 
 if [ -n "$OMOP_MEDS_READER_ARG" ]; then
     OMOP_MEDS_READER="$OMOP_MEDS_READER_ARG"
@@ -189,8 +182,6 @@ if [ "$TASK_COUNT" -eq 0 ]; then
     exit 0
 fi
 
-# echo "Found $TASK_COUNT prediction tasks."
-# echo
 
 # Process tasks
 CURRENT=0
@@ -218,7 +209,6 @@ for TASK_DIR in "$COHORT_BASE_DIR"*/; do
     echo "[$CURRENT/$TASK_COUNT] Processing task: $TASK_NAME"
     echo "cohort_base_dir: $COHORT_BASE_DIR"
     echo "Task directory: $TASK_DIR"
-
 
 
     # Run the first command: generate MOTOR features

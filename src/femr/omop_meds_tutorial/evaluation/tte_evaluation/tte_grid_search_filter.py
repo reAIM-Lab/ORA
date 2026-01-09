@@ -146,7 +146,6 @@ def tte_evaluation(train_set, test_set):
 
     # Evaluation best model
     surv = best_model.predict_surv_df(x_test)
-    # print(f"surv is {surv}")
     truncation = 5 * 365
 
     # times represent all discretized intervals
@@ -283,36 +282,36 @@ def run(tasks, old_phenotype_path_str):
             test_parquet  = pd.read_parquet(test_path)
             # only fetch updated cohort: the first event
             # if task in ["AMI","Ischemic_Stroke"]:
-            #     # print(f"task is {task}")
-            #     # print(f"before train_parquet {len(train_parquet)}")
-            #     # print(f"before test_parquet {len(test_parquet)}")
+                # print(f"task is {task}")
+                # print(f"before train_parquet {len(train_parquet)}")
+                # print(f"before test_parquet {len(test_parquet)}")
                 
-            #     train_label = pd.read_parquet(phenotype_label_dir/task/"train.parquet")
-            #     tuning_label = pd.read_parquet(phenotype_label_dir/task/"tuning.parquet")
-            #     train_label  = pd.concat([train_label, tuning_label], ignore_index=True)
-            #     test_label = pd.read_parquet(phenotype_label_dir/task/"held_out.parquet")
+                train_label = pd.read_parquet(phenotype_label_dir/task/"train.parquet")
+                tuning_label = pd.read_parquet(phenotype_label_dir/task/"tuning.parquet")
+                train_label  = pd.concat([train_label, tuning_label], ignore_index=True)
+                test_label = pd.read_parquet(phenotype_label_dir/task/"held_out.parquet")
 
-            #     train_keys = train_label[key_cols].drop_duplicates()
-            #     test_keys  = test_label[key_cols].drop_duplicates()
+                train_keys = train_label[key_cols].drop_duplicates()
+                test_keys  = test_label[key_cols].drop_duplicates()
 
-            #     train_parquet = train_parquet.merge(train_keys, on=key_cols, how="inner")
-            #     test_parquet  = test_parquet.merge(test_keys,  on=key_cols, how="inner")
+                train_parquet = train_parquet.merge(train_keys, on=key_cols, how="inner")
+                test_parquet  = test_parquet.merge(test_keys,  on=key_cols, how="inner")
 
                 # print(f"after  train_parquet: {len(train_parquet)}")
                 # print(f"after  test_parquet:  {len(test_parquet)}")
 
             tte_results = tte_evaluation(train_parquet, test_parquet)
 
-            # metrics = {}
-            # metrics['C-Index']  = (float(np.mean(tte_results['C-Index'])),  float(np.std(tte_results['C-Index'])))
-            # metrics['Int-Brier'] = (float(np.mean(tte_results['Int-Brier'])), float(np.std(tte_results['Int-Brier'])))
+            metrics = {}
+            metrics['C-Index']  = (float(np.mean(tte_results['C-Index'])),  float(np.std(tte_results['C-Index'])))
+            metrics['Int-Brier'] = (float(np.mean(tte_results['Int-Brier'])), float(np.std(tte_results['Int-Brier'])))
 
-            # save_dir = old_phenotype_dir / "results" / task / subdir.name
-            # os.makedirs(save_dir, exist_ok=True)
-            # save_file = save_dir / "tte_grid_search_5_years.json"
-            # with open(save_file, "w") as f:
-            #     json.dump(metrics, f)
-            # print(f"Saved metrics to {save_file}")
+            save_dir = old_phenotype_dir / "results" / task / subdir.name
+            os.makedirs(save_dir, exist_ok=True)
+            save_file = save_dir / "tte_grid_search_5_years.json"
+            with open(save_file, "w") as f:
+                json.dump(metrics, f)
+            print(f"Saved metrics to {save_file}")
 
 
 if __name__ == "__main__":

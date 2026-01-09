@@ -1412,6 +1412,7 @@ def compute_features(
         total_flops: TotalFlops = None,
         loss_type: str = None,
         use_ntp: bool = False,
+        cache_path: str = None,
 ) -> Dict[str, np.ndarray]:
     """ "Compute features for a set of labels given a dataset and a model.
 
@@ -1451,11 +1452,11 @@ def compute_features(
     )
 
     print(f"the report is {report}")
-    if use_ntp:
+    if use_ntp == "yes":
         tokenizer = femr.models.tokenizer.CLMBRTokenizer.from_pretrained(model_path, ontology=ontology)
     else:
         tokenizer = femr.models.tokenizer.HierarchicalTokenizer.from_pretrained(model_path, ontology=ontology)
-    processor = femr.models.processor.FEMRBatchProcessor(tokenizer, task=task)
+    processor = femr.models.processor.FEMRBatchProcessor(tokenizer, task=task,cache_path=cache_path)
 
     filtered_data = db.filter(list(task.label_map.keys()))
 

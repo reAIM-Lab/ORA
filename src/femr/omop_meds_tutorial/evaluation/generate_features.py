@@ -106,9 +106,14 @@ def create_arg_parser():
     args.add_argument(
         "--use_ntp",
         dest="use_ntp",
-        type=bool,
-        default=False,
+        default="no",
         help="The loss type",
+    )
+    args.add_argument(
+        "--cache_path",
+        dest="cache_path",
+        default=None,
+        help="hf cache path",
     )
     args.add_argument(
         "--task_type",
@@ -220,7 +225,8 @@ def main():
                 observation_window=args.observation_window,
                 min_subjects_per_batch=args.min_subjects_per_batch,
                 loss_type=args.loss_type,
-                use_ntp=args.use_ntp
+                use_ntp=args.use_ntp,
+                cache_path=args.cache_path
                 # total_flops=None
             )
 

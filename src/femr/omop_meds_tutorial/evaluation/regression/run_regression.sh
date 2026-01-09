@@ -39,16 +39,6 @@ MIN_SUBJECTS_PER_BATCH="1"
 FILTER_TASKS=()
 
 # Helper: push parsed names into FILTER_TASKS
-# _add_tasks() {
-#     local raw="$1"
-#     # strip parentheses, spaces
-#     raw="${raw//(/\ }"; raw="${raw//)/ }"
-#     # split on commas or spaces
-#     local IFS=', '
-#     for t in $raw; do
-#         [ -n "$t" ] && FILTER_TASKS+=("$t")
-#     done
-# }
 
 while [ $# -gt 0 ]; do
     case $1 in
@@ -64,6 +54,7 @@ while [ $# -gt 0 ]; do
         --observation_window) OBSERVATION_WINDOW="$2"; shift 2 ;;
         --min_subjects_per_batch) MIN_SUBJECTS_PER_BATCH="$2"; shift 2 ;;
         --ontology_path) ONTOLOGY_PATH="$2"; shift 2 ;;
+        --cache_path) CACHE_PATH="$2"; shift 2 ;;
         --main_split_path) MAIN_SPLIT_PATH="$2"; shift 2 ;;
         --use_ntp) USE_NTP="$2"; shift 2 ;;
         --cohort_dir) COHORT_BASE_DIR="$2"; shift 2 ;;
@@ -92,7 +83,7 @@ fi
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../../../.." && pwd)"
-RUN_ROOT="$(pwd)"
+# RUN_ROOT="$(pwd)"
 export PYTHONPATH="$REPO_ROOT:$PYTHONPATH"
 export PYTHONUNBUFFERED=1
 
@@ -111,7 +102,7 @@ echo "  TOKENS_PER_BATCH:         $TOKENS_PER_BATCH"
 echo "  OBSERVATION_WINDOW:       $([ -z "$OBSERVATION_WINDOW" ] && echo "Not specified" || echo "$OBSERVATION_WINDOW")"
 echo "  REGRESSION:               $REGRESSION"
 echo "  PYTHONPATH head:          $REPO_ROOT"
-echo "  RUN_ROOT (outputs):       $RUN_ROOT"
+# echo "  RUN_ROOT (outputs):       $RUN_ROOT"
 if [ ${#FILTER_TASKS[@]} -gt 0 ]; then
   echo "  TASK FILTER:              ${FILTER_TASKS[*]}"
 fi
@@ -175,7 +166,7 @@ for TASK_DIR in "$COHORT_BASE_DIR"*/; do
     echo "cohort_base_dir: $COHORT_BASE_DIR"
     echo "Task directory: $TASK_DIR"
 
-    GENERATE_CMD="python -u \"$GEN_FEATURES_PY\" \
+    GENERATE_CMD="python -u -m \"$GEN_FEATURES_PY\" \
         --model_path \"$MODEL_PATH\" \
         --model_name \"$MODEL_NAME\" \
         --meds_reader \"$OMOP_MEDS_READER\" \
@@ -187,6 +178,7 @@ for TASK_DIR in "$COHORT_BASE_DIR"*/; do
         --ontology_path \"$ONTOLOGY_PATH\" \
         --output_root \"$OUTPUT_DIR\" \
         --use_ntp \"$USE_NTP\" \
+        --cache_path \"$CACHE_PATH\" \
         --loss_type "labeled_subjects" \
         --task_type "regression" " 
     [ -n "$OBSERVATION_WINDOW" ] && GENERATE_CMD="$GENERATE_CMD --observation_window \"$OBSERVATION_WINDOW\""
@@ -194,7 +186,7 @@ for TASK_DIR in "$COHORT_BASE_DIR"*/; do
     echo "Executing: $GENERATE_CMD"
     eval $GENERATE_CMD || { echo "Error: feature generation failed for $TASK_NAME"; echo "----------------------------------------"; continue; }
 
-    FINETUNE_CMD="python -u \"$FINETUNE_PY\" \
+    FINETUNE_CMD="python -u -m \"$FINETUNE_PY\" \
         --cohort_label \"$TASK_NAME\" \
         --model_name \"$MODEL_NAME\" \
         --main_split_path \"$MAIN_SPLIT_PATH\" \
@@ -212,16 +204,14 @@ done
 
 echo "All selected tasks processed."
 
-#export CUDA_VISIBLE_DEVICES=1
+#export CUDA_VISIBLE_DEVICES=5
 # bilirubin,creatinine,pao2,platelets
 
 # bash run_regression.sh \
 #   --meds_reader        /shared/share_mala/zj2398/mimic/data/meds_v0.6_reader \
-#   --num_proc           16 \
-#   --model_path         /shared/share_mala/zj2398/models/mtpp_8k/mtpp_mean_all_shared/best_120744 \
-#   --model_path         /shared/share_mala/zj2398/models/mtpp_8k/mtpp_mean_all_shared_bin_5/best-130806 \
-
-#   --model_name         mtpp_shared \
+#   --num_proc           24 \
+#   --model_path         /shared/share_mala/zj2398/models/mtpp_8k/mtpp_all_shared_6100_bin_5/transformer/best_159744 \
+#   --model_name         transformer_mtpp \
 #   --tokens_per_batch   65536 \
 #   --device             cuda:0 \
 #   --min_subjects_per_batch 8 \
@@ -229,24 +219,45 @@ echo "All selected tasks processed."
 #   --main_split_path    /user/zj2398/cache/mtpp_8k/main_split.csv \
 #   --cohort_dir   /shared/share_mala/zj2398/mimic/task/regression/cohort/icu_stay_4h/ \
 #   --output_dir   /shared/share_mala/zj2398/mimic/task/regression/ \
-#   --tasks "creatinine" \
+#   --use_ntp no \
+#   --cache_path /shared/share_mala/zj2398/huggingface/datasets \
+#   --tasks "pao2,platelets,bilirubin,creatinine" \
 #   --regression 
 
 
-# export CUDA_VISIBLE_DEVICES=3
 # bash run_regression.sh \
 #   --meds_reader        /shared/share_mala/zj2398/mimic/data/meds_v0.6_reader \
-#   --num_proc           64 \
-#   --model_path         /user/zj2398/cache/motor_mimic_8k/output/best_100620 \
-#   --model_name         motor \
+#   --num_proc           24 \
+#   --model_path         /shared/share_mala/zj2398/models/mtpp_8k/mtpp_all_shared_6100_bin_5/mamba/best-69888 \
+#   --model_name         mamba_mtpp \
 #   --tokens_per_batch   65536 \
 #   --device             cuda:0 \
 #   --min_subjects_per_batch 8 \
-#   --ontology_path      /user/zj2398/cache/motor_mimic_8k/ontology.pkl \
-#   --main_split_path    /user/zj2398/cache/motor_mimic_8k/main_split.csv \
-#   --cohort_dir   /shared/share_mala/zj2398/mimic/regression/cohort/icu_stay_4h/ \
-#   --output_dir   /shared/share_mala/zj2398/mimic/regression/motor/ \
-#   --tasks "pao2,platelets" \
+#   --ontology_path      /user/zj2398/cache/mtpp_8k/ontology.pkl \
+#   --main_split_path    /user/zj2398/cache/mtpp_8k/main_split.csv \
+#   --cohort_dir   /shared/share_mala/zj2398/mimic/task/regression/cohort/icu_stay_4h/ \
+#   --output_dir   /shared/share_mala/zj2398/mimic/task/regression/ \
+#   --cache_path /shared/share_mala/zj2398/huggingface/datasets \
+#   --use_ntp no \
+#   --tasks "pao2,platelets,bilirubin,creatinine" \
+#   --regression 
+
+
+# bash run_regression.sh \
+#   --meds_reader        /shared/share_mala/zj2398/mimic/data/meds_v0.6_reader \
+#   --num_proc           24 \
+#   --model_path         /shared/share_mala/zj2398/models/tpp_8k/mamba/best_80574 \
+#   --model_name         mamba_tpp \
+#   --tokens_per_batch   65536 \
+#   --device             cuda:0 \
+#   --min_subjects_per_batch 8 \
+#   --ontology_path      /user/zj2398/cache/mtpp_8k/ontology.pkl \
+#   --main_split_path    /user/zj2398/cache/mtpp_8k/main_split.csv \
+#   --cohort_dir   /shared/share_mala/zj2398/mimic/task/regression/cohort/icu_stay_4h/ \
+#   --output_dir   /shared/share_mala/zj2398/mimic/task/regression/ \
+#   --cache_path /shared/share_mala/zj2398/huggingface/datasets \
+#   --use_ntp no \
+#   --tasks "pao2,platelets,bilirubin,creatinine" \
 #   --regression 
 
 
