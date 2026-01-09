@@ -3338,3 +3338,122 @@ pao2           0.121            0.258
 platelets      0.187            0.571
 /user/zj2398/femr_chao_meds_v3/src/femr/omop_meds_tutorial/evaluation/eval_utils.py:77: FutureWarning: DataFrame.applymap has been deprecated. Use DataFrame.map instead.
   df_tex = df.applymap(_format_latex_cell_from_csv)
+Completed processing of task: bilirubin
+----------------------------------------
+[2/4] Processing task: creatinine
+cohort_base_dir: /shared/share_mala/zj2398/mimic/task/regression/cohort/icu_stay_4h/
+Task directory: /shared/share_mala/zj2398/mimic/task/regression/cohort/icu_stay_4h/creatinine/
+Executing: python -u "/user/zj2398/femr_chao_meds_v3/src/femr/omop_meds_tutorial/evaluation/regression/finetune_regression.py"         --cohort_label "creatinine"         --model_name "mamba_mtpp"         --main_split_path "/user/zj2398/cache/mtpp_8k/main_split.csv"         --meds_reader "/shared/share_mala/zj2398/mimic/data/meds_v0.6_reader"         --model_path "/shared/share_mala/zj2398/models/mtpp_8k/mtpp_all_shared_6100_bin_5/mamba/best-69888"         --output_root "/shared/share_mala/zj2398/mimic/task/regression/"
+Executing: python -u "/user/zj2398/femr_chao_meds_v3/src/femr/omop_meds_tutorial/evaluation/regression/finetune_regression.py"         --cohort_label "platelets"         --model_name "mamba_mtpp"         --main_split_path "/user/zj2398/cache/mtpp_8k/main_split.csv"         --meds_reader "/shared/share_mala/zj2398/mimic/data/meds_v0.6_reader"         --model_path "/shared/share_mala/zj2398/models/mtpp_8k/mtpp_all_shared_6100_bin_5/mamba/best-69888"         --output_root "/shared/share_mala/zj2398/mimic/task/regression/"
+Using the user defined label at: /shared/share_mala/zj2398/mimic/task/regression/mamba_mtpp/labels/creatinine.parquet
+Using the user defined label at: /shared/share_mala/zj2398/mimic/task/regression/mamba_mtpp/labels/platelets.parquet
+Saving features and labels to parquet
+Saving features and labels to parquet
+Total labels: 464608
+Total train features labels: 419037
+Total test features labels: 45571
+Train shape: (419037, 768), Test shape: (45571, 768)
+Total labels: 521338
+Total train features labels: 470083
+Total test features labels: 51255
+Train shape: (470083, 768), Test shape: (51255, 768)
+Index(['bilirubin', 'creatinine', 'pao2', 'platelets'], dtype='object', name='Task') platelets
+           mamba_mtpp mamba_tpp transformer_mtpp
+Task                                            
+bilirubin       6.050     6.123            5.025
+creatinine        NaN     1.364            0.951
+pao2              NaN    60.974           56.017
+platelets         NaN   116.434           84.626
+/user/zj2398/femr_chao_meds_v3/src/femr/omop_meds_tutorial/evaluation/eval_utils.py:77: FutureWarning: DataFrame.applymap has been deprecated. Use DataFrame.map instead.
+  df_tex = df.applymap(_format_latex_cell_from_csv)
+Index(['bilirubin', 'creatinine', 'pao2', 'platelets'], dtype='object', name='Task') platelets
+           mamba_mtpp mamba_tpp transformer_mtpp
+Task                                            
+bilirubin       3.466     3.437            3.024
+creatinine        NaN     0.830            0.532
+pao2              NaN    41.236           37.006
+platelets         NaN    84.572           58.939
+/user/zj2398/femr_chao_meds_v3/src/femr/omop_meds_tutorial/evaluation/eval_utils.py:77: FutureWarning: DataFrame.applymap has been deprecated. Use DataFrame.map instead.
+  df_tex = df.applymap(_format_latex_cell_from_csv)
+Index(['bilirubin', 'creatinine', 'pao2', 'platelets'], dtype='object', name='Task') platelets
+           mamba_mtpp mamba_tpp transformer_mtpp
+Task                                            
+bilirubin       0.244     0.226            0.479
+creatinine        NaN     0.114            0.570
+pao2              NaN     0.121            0.258
+platelets         NaN     0.187            0.571
+/user/zj2398/femr_chao_meds_v3/src/femr/omop_meds_tutorial/evaluation/eval_utils.py:77: FutureWarning: DataFrame.applymap has been deprecated. Use DataFrame.map instead.
+  df_tex = df.applymap(_format_latex_cell_from_csv)
+Index(['bilirubin', 'creatinine', 'pao2', 'platelets'], dtype='object', name='Task') creatinine
+           mamba_mtpp mamba_tpp transformer_mtpp
+Task                                            
+bilirubin       6.050     6.123            5.025
+creatinine        NaN     1.364            0.951
+pao2              NaN    60.974           56.017
+platelets     113.554   116.434           84.626
+/user/zj2398/femr_chao_meds_v3/src/femr/omop_meds_tutorial/evaluation/eval_utils.py:77: FutureWarning: DataFrame.applymap has been deprecated. Use DataFrame.map instead.
+  df_tex = df.applymap(_format_latex_cell_from_csv)
+Index(['bilirubin', 'creatinine', 'pao2', 'platelets'], dtype='object', name='Task') creatinine
+           mamba_mtpp mamba_tpp transformer_mtpp
+Task                                            
+bilirubin       3.466     3.437            3.024
+creatinine        NaN     0.830            0.532
+pao2              NaN    41.236           37.006
+platelets      81.730    84.572           58.939
+/user/zj2398/femr_chao_meds_v3/src/femr/omop_meds_tutorial/evaluation/eval_utils.py:77: FutureWarning: DataFrame.applymap has been deprecated. Use DataFrame.map instead.
+  df_tex = df.applymap(_format_latex_cell_from_csv)
+Index(['bilirubin', 'creatinine', 'pao2', 'platelets'], dtype='object', name='Task') creatinine
+           mamba_mtpp mamba_tpp transformer_mtpp
+Task                                            
+bilirubin       0.244     0.226            0.479
+creatinine        NaN     0.114            0.570
+pao2              NaN     0.121            0.258
+platelets       0.227     0.187            0.571
+/user/zj2398/femr_chao_meds_v3/src/femr/omop_meds_tutorial/evaluation/eval_utils.py:77: FutureWarning: DataFrame.applymap has been deprecated. Use DataFrame.map instead.
+  df_tex = df.applymap(_format_latex_cell_from_csv)
+Completed processing of task: creatinine
+----------------------------------------
+[3/4] Processing task: pao2
+cohort_base_dir: /shared/share_mala/zj2398/mimic/task/regression/cohort/icu_stay_4h/
+Task directory: /shared/share_mala/zj2398/mimic/task/regression/cohort/icu_stay_4h/pao2/
+Executing: python -u "/user/zj2398/femr_chao_meds_v3/src/femr/omop_meds_tutorial/evaluation/regression/finetune_regression.py"         --cohort_label "pao2"         --model_name "mamba_mtpp"         --main_split_path "/user/zj2398/cache/mtpp_8k/main_split.csv"         --meds_reader "/shared/share_mala/zj2398/mimic/data/meds_v0.6_reader"         --model_path "/shared/share_mala/zj2398/models/mtpp_8k/mtpp_all_shared_6100_bin_5/mamba/best-69888"         --output_root "/shared/share_mala/zj2398/mimic/task/regression/"
+Completed processing of task: platelets
+----------------------------------------
+run_regression.sh: line 205: syntax error near unexpected token `done'
+Using the user defined label at: /shared/share_mala/zj2398/mimic/task/regression/mamba_mtpp/labels/pao2.parquet
+Saving features and labels to parquet
+Total labels: 439054
+Total train features labels: 396596
+Total test features labels: 42458
+Train shape: (396596, 768), Test shape: (42458, 768)
+Index(['bilirubin', 'creatinine', 'pao2', 'platelets'], dtype='object', name='Task') pao2
+           mamba_mtpp mamba_tpp transformer_mtpp
+Task                                            
+bilirubin       6.050     6.123            5.025
+creatinine      1.329     1.364            0.951
+pao2              NaN    60.974           56.017
+platelets     113.554   116.434           84.626
+/user/zj2398/femr_chao_meds_v3/src/femr/omop_meds_tutorial/evaluation/eval_utils.py:77: FutureWarning: DataFrame.applymap has been deprecated. Use DataFrame.map instead.
+  df_tex = df.applymap(_format_latex_cell_from_csv)
+Index(['bilirubin', 'creatinine', 'pao2', 'platelets'], dtype='object', name='Task') pao2
+           mamba_mtpp mamba_tpp transformer_mtpp
+Task                                            
+bilirubin       3.466     3.437            3.024
+creatinine      0.789     0.830            0.532
+pao2              NaN    41.236           37.006
+platelets      81.730    84.572           58.939
+/user/zj2398/femr_chao_meds_v3/src/femr/omop_meds_tutorial/evaluation/eval_utils.py:77: FutureWarning: DataFrame.applymap has been deprecated. Use DataFrame.map instead.
+  df_tex = df.applymap(_format_latex_cell_from_csv)
+Index(['bilirubin', 'creatinine', 'pao2', 'platelets'], dtype='object', name='Task') pao2
+           mamba_mtpp mamba_tpp transformer_mtpp
+Task                                            
+bilirubin       0.244     0.226            0.479
+creatinine      0.158     0.114            0.570
+pao2              NaN     0.121            0.258
+platelets       0.227     0.187            0.571
+/user/zj2398/femr_chao_meds_v3/src/femr/omop_meds_tutorial/evaluation/eval_utils.py:77: FutureWarning: DataFrame.applymap has been deprecated. Use DataFrame.map instead.
+  df_tex = df.applymap(_format_latex_cell_from_csv)
+Completed processing of task: pao2
+----------------------------------------
+[1 skipped] Skipping task: platelets (not in specified task list)
+All selected tasks processed.
