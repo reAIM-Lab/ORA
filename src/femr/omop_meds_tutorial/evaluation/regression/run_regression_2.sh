@@ -296,6 +296,10 @@ echo "All selected tasks processed."
 #   --regression 
 
 
+
+
+
+
 # bash run_regression.sh \
 #   --meds_reader         /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/post_transform_meds_reader \
 #   --num_proc           24 \
