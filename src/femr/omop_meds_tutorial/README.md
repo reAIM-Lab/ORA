@@ -239,6 +239,134 @@ output_dir/
 └── checkpoint-best/          # Best performing checkpoint
 ```
 
-Step 5. Generate Labels
+Step 5. Model Evaluation
+------------------------
 
-TBD
+After pretraining your model, you can evaluate it on downstream tasks using the evaluation scripts. The framework supports three types of evaluation:
+
+## 5.1. Outcome Classification
+
+Evaluates binary classification tasks (e.g., predicting patient outcomes).
+
+**Script:** `evaluation/run.sh`
+
+**Example Usage:**
+
+```bash
+bash run.sh \
+  --meds_reader        /xxx/meds_v0.6_reader  \
+  --num_proc           24 \
+  --model_path         /xxx/transformer/best_159744 \
+  --model_name         transformer_mtpp \
+  --tokens_per_batch   65536 \
+  --device             cuda:0 \
+  --use_ntp            no \
+  --cohort_type        outcome \
+  --min_subjects_per_batch 8 \
+  --ontology_path       /user/zj2398/cache/mtpp_8k/ontology.pkl \
+  --main_split_path     /user/zj2398/cache/mtpp_8k/main_split.csv \
+  --output_dir   /shared/share_mala/zj2398/mimic/task/patient_outcome_task/  \
+  --classification_cohort /shared/share_mala/zj2398/mimic/task/patient_outcome_task/cohort/
+```
+
+## 5.2. Phenotype Classification & Time-to-Event Prediction
+
+Evaluates phenotype classification and survival analysis (time-to-event) tasks.
+
+**Script:** `evaluation/run.sh`
+
+**Example Usage:**
+
+```bash
+bash run.sh \
+  --meds_reader        /xxx/meds_v0.6_reader  \
+  --num_proc           24 \
+  --model_path         /xxx/transformer/best_159744 \
+  --model_name         transformer_mtpp \
+  --tokens_per_batch   65536 \
+  --device             cuda:0 \
+  --use_ntp            no \
+  --cohort_type        phenotype \
+  --min_subjects_per_batch 8 \
+  --ontology_path       /user/zj2398/cache/mtpp_8k/ontology.pkl \
+  --main_split_path     /user/zj2398/cache/mtpp_8k/main_split.csv \
+  --output_dir   /shared/share_mala/zj2398/mimic/task/phenotype_task/  \
+  --classification_cohort /shared/share_mala/zj2398/mimic/task/phenotype_task/cohort/binary/ \
+  --tte_cohort /shared/share_mala/zj2398/mimic/task/phenotype_task/cohort/tte/
+```
+
+### Parameters for run.sh
+
+| Parameter | Required | Description |
+|-----------|----------|-------------|
+| `--meds_reader` | Yes | Path to MEDS reader database (same as pretraining) |
+| `--model_path` | Yes | Path to trained model checkpoint (e.g., `best_159744` or `checkpoint-1000`) |
+| `--model_name` | Yes | Model type: `transformer_mtpp`, `transformer_motor`, `transformer_ntp`, or `mamba_*` variants |
+| `--output_dir` | Yes | Directory where evaluation results will be saved |
+| `--ontology_path` | Yes | Path to ontology.pkl file (from prepare.py) |
+| `--main_split_path` | Yes | Path to main_split.csv file (from prepare.py) |
+| `--cohort_type` | Yes | Type of task: `outcome`, `phenotype`, or other cohort types |
+| `--classification_cohort` | Conditional | Path to classification task cohort directory (required for classification tasks) |
+| `--tte_cohort` | Conditional | Path to time-to-event cohort directory (required for TTE tasks) |
+| `--device` | Yes | GPU device to use (e.g., `cuda:0`, `cuda:1`) |
+| `--tokens_per_batch` | No | Maximum tokens per batch (default: 65536). Adjust based on GPU memory |
+| `--min_subjects_per_batch` | No | Minimum patients per batch (default: 8) |
+| `--num_proc` | No | Number of parallel processes for data loading (default: 24) |
+| `--use_ntp` | No | Whether to use NTP mode: `yes` or `no` (default: `no`) |
+
+## 5.3. Regression Tasks
+
+Evaluates continuous value prediction tasks (e.g., predicting lab values).
+
+**Script:** `evaluation/regression/run_regression.sh`
+
+**Example Usage:**
+
+```bash
+bash run_regression.sh \
+  --meds_reader        /xxx/meds_v0.6_reader \
+  --num_proc           24 \
+  --model_path         /xxx/transformer/best_159744 \
+  --model_name         transformer_mtpp \
+  --tokens_per_batch   65536 \
+  --device             cuda:0 \
+  --min_subjects_per_batch 8 \
+  --ontology_path      /user/zj2398/cache/mtpp_8k/ontology.pkl \
+  --main_split_path    /user/zj2398/cache/mtpp_8k/main_split.csv \
+  --cohort_dir   /shared/share_mala/zj2398/mimic/task/regression/cohort/icu_stay_4h/ \
+  --output_dir   /shared/share_mala/zj2398/mimic/task/regression/ \
+  --use_ntp no \
+  --cache_path /shared/share_mala/zj2398/huggingface/datasets \
+  --tasks "pao2,platelets,bilirubin,creatinine" \
+  --regression
+```
+
+### Parameters for run_regression.sh
+
+| Parameter | Required | Description |
+|-----------|----------|-------------|
+| `--meds_reader` | Yes | Path to MEDS reader database |
+| `--model_path` | Yes | Path to trained model checkpoint |
+| `--model_name` | Yes | Model type (e.g., `transformer_mtpp`) |
+| `--cohort_dir` | Yes | Directory containing regression task cohort data |
+| `--output_dir` | Yes | Directory where regression results will be saved |
+| `--ontology_path` | Yes | Path to ontology.pkl file |
+| `--main_split_path` | Yes | Path to main_split.csv file |
+| `--tasks` | Yes | Comma-separated list of regression targets (e.g., `"pao2,platelets,bilirubin,creatinine"`) |
+| `--regression` | Yes | Flag to enable regression mode (no value needed) |
+| `--device` | Yes | GPU device (e.g., `cuda:0`) |
+| `--cache_path` | No | HuggingFace datasets cache directory |
+| `--tokens_per_batch` | No | Maximum tokens per batch (default: 65536) |
+| `--min_subjects_per_batch` | No | Minimum patients per batch (default: 8) |
+| `--num_proc` | No | Number of parallel processes (default: 24) |
+| `--use_ntp` | No | Whether to use NTP mode: `yes` or `no` |
+
+## Evaluation Outputs
+
+All evaluation scripts generate results in their respective `--output_dir`:
+
+- **Classification tasks**: AUC-ROC, 
+- **Time-to-Event tasks**: C-index, Int-Brier Score
+- **Regression tasks**: RMSE, MAE, R² scores
+
+Results are saved as CSV files and can be further analyzed for model performance.

@@ -64,6 +64,20 @@ def create_arg_parser():
     )
 
     args.add_argument(
+        "--tte_cohort",
+        dest="tte_cohort", 
+        default=None, 
+        help="The path to tte cohort",
+    )
+
+    args.add_argument(
+        "--cohort_type",
+        dest="cohort_type", 
+        default=None, 
+        help="The type of the cohort, either classification or phenotype",
+    )
+
+    args.add_argument(
         "--model_name",
         dest="model_name",
         required=True,
@@ -114,7 +128,21 @@ def logistic_regression(train_set,test_data,label_output_dir):
     return roc_auc,pr_auc
 
 
-def tte_evaluation(train_set, test_set):
+def tte_evaluation(train_set_init, test_set_init,tte_cohort):
+
+    #need to filter train_set and test_set from tte_cohort
+    keys = tte_cohort[["subject_id", "prediction_time"]].drop_duplicates()
+
+    train_set = train_set_init.merge(
+        keys, on=["subject_id", "prediction_time"], how="inner"
+    )
+
+    test_set = test_set_init.merge(
+        keys, on=["subject_id", "prediction_time"], how="inner"
+    )
+    print(f"before and after the train_set is {len(train_set_init)} and {len(train_set)}")
+    print(f"before and after the test_set is {len(test_set_init)} and {len(test_set)}")
+
     # Extract validation set to stop loss
     val = train_set.sample(frac=0.2, replace=False, random_state=42)
     train_set = train_set.drop(val.index)
@@ -267,7 +295,7 @@ def main():
         label_path = output_root /args.model_name/ "labels" / (args.cohort_label + '.parquet')
         if label_path.exists():
             print(f"Using the user defined label at: {label_path}")
-            label_names = [args.cohort_label]
+            label_name = args.cohort_label
         else:
             raise RuntimeError(f"The user provided label does not exist at {label_path}")
 
@@ -276,144 +304,145 @@ def main():
     summary_dir = output_dir / "summary_tables"
     model_col = f"{args.model_name}"
     with meds_reader.SubjectDatabase(args.meds_reader, num_threads=32) as database:
-        for label_name in label_names:
-            if args.observation_window:
-                label_output_dir = output_dir / label_name/ f"{args.model_name}_{args.observation_window}"
-            else:
-                label_output_dir = output_dir / label_name/ f"{args.model_name}"
-            label_output_dir.mkdir(exist_ok=True, parents=True)
-            test_result_file = label_output_dir / 'metrics.json'
-            features_label_data = label_output_dir / 'features_with_label'
-            features_label_data.mkdir(exist_ok=True, parents=True)
-            # if test_result_file.exists():
-            #     print(f"The result already existed for {label_name} at {test_result_file}, it will be skipped!")
-            #     continue
-            labels = pd.read_parquet(output_root /args.model_name/ "labels" / (label_name + '.parquet'))
+        if args.observation_window:
+            label_output_dir = output_dir / label_name/ f"{args.model_name}_{args.observation_window}"
+        else:
+            label_output_dir = output_dir / label_name/ f"{args.model_name}"
+        label_output_dir.mkdir(exist_ok=True, parents=True)
+        test_result_file = label_output_dir / 'metrics.json'
+        features_label_data = label_output_dir / 'features_with_label'
+        features_label_data.mkdir(exist_ok=True, parents=True)
+        # if test_result_file.exists():
+        #     print(f"The result already existed for {label_name} at {test_result_file}, it will be skipped!")
+        #     continue
+        labels = pd.read_parquet(output_root /args.model_name/ "labels" / (label_name + '.parquet'))
 
-            motor_features_name = get_model_name(label_name, args.model_name, args.observation_window)
-            features_path = output_root / args.model_name /"features"
-            with open(features_path / f"{motor_features_name}.pkl", 'rb') as f:
-                features = pickle.load(f)
+        motor_features_name = get_model_name(label_name, args.model_name, args.observation_window)
+        features_path = output_root / args.model_name /"features"
+        with open(features_path / f"{motor_features_name}.pkl", 'rb') as f:
+            features = pickle.load(f)
 
-            # Find labels that have no features
-            labels_no_features = labels[~labels.subject_id.isin(features["subject_ids"])]
-            if len(labels_no_features) > 0:
-                print(f"{len(labels_no_features)} features are not included")
-                # labels_no_features.to_parquet(label_output_dir / "labels_no_features.parquet")
+        # Find labels that have no features
+        labels_no_features = labels[~labels.subject_id.isin(features["subject_ids"])]
+        if len(labels_no_features) > 0:
+            print(f"{len(labels_no_features)} features are not included")
+            # labels_no_features.to_parquet(label_output_dir / "labels_no_features.parquet")
 
-            # Remove the labels that do not have features generated
-            labels = labels[labels.subject_id.isin(features["subject_ids"])]
-            labels = labels.sort_values(["subject_id", "prediction_time"])
-            # labels = labels.sample(n=len(labels), random_state=42, replace=False)
-            labeled_features = femr.featurizers.join_labels(features, labels,label_name)
+        # Remove the labels that do not have features generated
+        labels = labels[labels.subject_id.isin(features["subject_ids"])]
+        labels = labels.sort_values(["subject_id", "prediction_time"])
+        # labels = labels.sample(n=len(labels), random_state=42, replace=False)
+        labeled_features = femr.featurizers.join_labels(features, labels,label_name)
 
-            main_split = femr.splits.SubjectSplit.load_from_csv(args.main_split_path)
+        main_split = femr.splits.SubjectSplit.load_from_csv(args.main_split_path)
 
-            # print(main_split)
-            train_mask = np.isin(labeled_features['subject_ids'], main_split.train_subject_ids)
-            test_mask = np.isin(labeled_features['subject_ids'], main_split.test_subject_ids)
+        # print(main_split)
+        train_mask = np.isin(labeled_features['subject_ids'], main_split.train_subject_ids)
+        test_mask = np.isin(labeled_features['subject_ids'], main_split.test_subject_ids)
 
-            # print()
+        # print()
 
-            def apply_mask(values, mask):
-                def apply(k, v):
-                    if len(v.shape) == 1:
-                        return v[mask]
-                    elif len(v.shape) == 2:
-                        return v[mask, :]
-                    else:
-                        assert False, f"Cannot handle {k} {v.shape}"
+        def apply_mask(values, mask):
+            def apply(k, v):
+                if len(v.shape) == 1:
+                    return v[mask]
+                elif len(v.shape) == 2:
+                    return v[mask, :]
+                else:
+                    assert False, f"Cannot handle {k} {v.shape}"
 
-                return {k: apply(k, v) for k, v in values.items()}
+            return {k: apply(k, v) for k, v in values.items()}
 
-            train_data = apply_mask(labeled_features, train_mask)
-            test_data = apply_mask(labeled_features, test_mask)
+        train_data = apply_mask(labeled_features, train_mask)
+        test_data = apply_mask(labeled_features, test_mask)
 
-            # print(f"train_data length is {len(train_data)}, {train_data}")
-            # print(f"test_data length is {len(test_data)},{test_data}")
+        # print(f"train_data length is {len(train_data)}, {train_data}")
+        # print(f"test_data length is {len(test_data)},{test_data}")
 
-            print("Saving features and labels to parquet")
-            train_features_list = [feature for feature in train_data["features"]]
-            test_features_list = [feature for feature in test_data["features"]]
+        print("Saving features and labels to parquet")
+        train_features_list = [feature for feature in train_data["features"]]
+        test_features_list = [feature for feature in test_data["features"]]
 
-            if label_name in ["AMI","MASLD","Ischemic_Stroke","Celiac"]:
-                train_set = pd.DataFrame({
-                    "subject_id" : train_data["subject_ids"],
-                    "prediction_time" : train_data["prediction_times"],
-                    "tte_label" : train_data["tte_label"],
-                    "time_to_event": train_data["time_to_event"],
-                    "boolean_value": train_data["boolean_values"],
-                    "features" : train_features_list
-                }).sample(
-                    frac=1.0,
-                    random_state=42
-                )
-                train_set.to_parquet(features_label_data / "train.parquet", index=False)
-                test_set = pd.DataFrame({
-                    "subject_id" : test_data["subject_ids"],
-                    "prediction_time" : test_data["prediction_times"],
-                    "tte_label" : test_data["tte_label"],
-                    "time_to_event": test_data["time_to_event"],
-                    "boolean_value": test_data["boolean_values"],
-                    "features" : test_features_list
-                })
-                test_set.to_parquet(features_label_data / "test.parquet", index=False)
+        if args.cohort_type == "phenotype":
+            print("phenotype prediction")
+            train_set = pd.DataFrame({
+                "subject_id" : train_data["subject_ids"],
+                "prediction_time" : train_data["prediction_times"],
+                "tte_label" : train_data["tte_label"],
+                "time_to_event": train_data["time_to_event"],
+                "boolean_value": train_data["boolean_values"],
+                "features" : train_features_list
+            }).sample(
+                frac=1.0,
+                random_state=42
+            )
+            train_set.to_parquet(features_label_data / "train.parquet", index=False)
+            test_set = pd.DataFrame({
+                "subject_id" : test_data["subject_ids"],
+                "prediction_time" : test_data["prediction_times"],
+                "tte_label" : test_data["tte_label"],
+                "time_to_event": test_data["time_to_event"],
+                "boolean_value": test_data["boolean_values"],
+                "features" : test_features_list
+            })
+            test_set.to_parquet(features_label_data / "test.parquet", index=False)
 
-            else:
-                train_set = pd.DataFrame({
-                    "subject_id" : train_data["subject_ids"],
-                    "prediction_time" : train_data["prediction_times"],
-                    "boolean_value": train_data["boolean_values"],
-                    "features" : train_features_list
-                }).sample(
-                    frac=1.0,
-                    random_state=42
-                )
-                train_set.to_parquet(features_label_data / "train.parquet", index=False)
+        else:
+            train_set = pd.DataFrame({
+                "subject_id" : train_data["subject_ids"],
+                "prediction_time" : train_data["prediction_times"],
+                "boolean_value": train_data["boolean_values"],
+                "features" : train_features_list
+            }).sample(
+                frac=1.0,
+                random_state=42
+            )
+            train_set.to_parquet(features_label_data / "train.parquet", index=False)
 
-                test_set = pd.DataFrame({
-                    "subject_id" : test_data["subject_ids"],
-                    "prediction_time" : test_data["prediction_times"],
-                    "boolean_value": test_data["boolean_values"],
-                    "features" : test_features_list
-                })
-                test_set.to_parquet(features_label_data / "test.parquet", index=False)
+            test_set = pd.DataFrame({
+                "subject_id" : test_data["subject_ids"],
+                "prediction_time" : test_data["prediction_times"],
+                "boolean_value": test_data["boolean_values"],
+                "features" : test_features_list
+            })
+            test_set.to_parquet(features_label_data / "test.parquet", index=False)
 
 
-            print(f"Total labels: {len(labels)}")
-            print(f"Total train features labels: {len(train_data['features'])}")
-            print(f"Total test features labels: {len(test_data['features'])}")
+        print(f"Total labels: {len(labels)}")
+        print(f"Total train features labels: {len(train_data['features'])}")
+        print(f"Total test features labels: {len(test_data['features'])}")
 
-            roc_auc,pr_auc = logistic_regression(train_set,test_data,label_output_dir)
-            print(label_name, roc_auc)
-            metrics = {
-                "auroc": roc_auc,
-                "aucpr": pr_auc
-            }
-            if label_name in ["AMI","MASLD","Ischemic_Stroke","Celiac"]:
-                tte_results = tte_evaluation(train_set,test_set)
-                metrics['C-Index'] = (np.mean(tte_results['C-Index']), np.std(tte_results['C-Index']))
-                metrics['Int-Brier'] = (np.mean(tte_results['Int-Brier']), np.std(tte_results['Int-Brier']))
-            # tte_result_file = label_output_dir / 'tte_metrics.json'
-            # with open(tte_result_file, "w") as f:
-            #     json.dump(metrics, f, indent=4)
-            with open(test_result_file, "w") as f:
-                json.dump(metrics, f, indent=4)
+        roc_auc,pr_auc = logistic_regression(train_set,test_data,label_output_dir)
+        print(label_name, roc_auc)
+        metrics = {
+            "auroc": roc_auc,
+            "aucpr": pr_auc
+        }
+        if args.cohort_type == "phenotype":
+            tte_cohort = pd.read_parquet(Path(args.tte_cohort)/label_name/f"{label_name}.parquet")
+            tte_results = tte_evaluation(train_set,test_set,tte_cohort)
+            metrics['C-Index'] = (np.mean(tte_results['C-Index']), np.std(tte_results['C-Index']))
+            metrics['Int-Brier'] = (np.mean(tte_results['Int-Brier']), np.std(tte_results['Int-Brier']))
+        # tte_result_file = label_output_dir / 'tte_metrics.json'
+        # with open(tte_result_file, "w") as f:
+        #     json.dump(metrics, f, indent=4)
+        with open(test_result_file, "w") as f:
+            json.dump(metrics, f, indent=4)
 
-            auroc_mean, auroc_std = _metric_mean_std(metrics, "auroc")
-            aucpr_mean, aucpr_std = _metric_mean_std(metrics, "aucpr")
-            cidx_mean, cidx_std   = _metric_mean_std(metrics, "C-Index")
-            ibr_mean,  ibr_std    = _metric_mean_std(metrics, "Int-Brier")
+        auroc_mean, auroc_std = _metric_mean_std(metrics, "auroc")
+        aucpr_mean, aucpr_std = _metric_mean_std(metrics, "aucpr")
+        cidx_mean, cidx_std   = _metric_mean_std(metrics, "C-Index")
+        ibr_mean,  ibr_std    = _metric_mean_std(metrics, "Int-Brier")
 
-            if auroc_mean is not None:
-                _update_metric_table(summary_dir, "auroc", label_name, model_col, auroc_mean, auroc_std)
-            if aucpr_mean is not None:
-                _update_metric_table(summary_dir, "auprc", label_name, model_col, aucpr_mean, aucpr_std)
+        if auroc_mean is not None:
+            _update_metric_table(summary_dir, "auroc", label_name, model_col, auroc_mean, auroc_std)
+        if aucpr_mean is not None:
+            _update_metric_table(summary_dir, "auprc", label_name, model_col, aucpr_mean, aucpr_std)
 
-            if cidx_mean is not None:
-                _update_metric_table(summary_dir, "cindex", label_name, model_col, cidx_mean, cidx_std)
-            if ibr_mean is not None:
-                _update_metric_table(summary_dir, "int_brier", label_name, model_col, ibr_mean, ibr_std)
+        if cidx_mean is not None:
+            _update_metric_table(summary_dir, "cindex", label_name, model_col, cidx_mean, cidx_std)
+        if ibr_mean is not None:
+            _update_metric_table(summary_dir, "int_brier", label_name, model_col, ibr_mean, ibr_std)
 
 
 

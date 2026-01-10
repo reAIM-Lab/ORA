@@ -15,12 +15,12 @@ USE_LINEAR_INTERPOLATION=false
 
 # Function to display help
 show_help() {
-    echo "Usage: $SCRIPT_NAME COHORT_BASE_DIR [OPTIONS]"
+    echo "Usage: $SCRIPT_NAME CLASS_COHORT [OPTIONS]"
     echo
     echo "Run MOTOR generation and fine-tuning for all cohorts in the specified directory."
     echo
     echo "Arguments:"
-    echo "  COHORT_BASE_DIR          Base directory containing prediction task subdirectories"
+    echo "  CLASS_COHORT          Base directory containing prediction task subdirectories"
     echo
     echo "Options:"
     echo "  -h, --help               Display this help message and exit"
@@ -42,7 +42,8 @@ show_help() {
 # Parse command line options
 # PRETRAINING_DATA_ARG=""
 OMOP_MEDS_READER_ARG=""
-COHORT_BASE_DIR=""
+CLASS_COHORT=""
+TTE_COHORT=""
 DEVICE="cuda"
 
 while [ $# -gt 0 ]; do
@@ -59,7 +60,6 @@ while [ $# -gt 0 ]; do
             OMOP_MEDS_READER_ARG="$2"
             shift 2
             ;;
-        --model_type) MODEL_TYPE="$2"; shift 2 ;;
         --model_path)
             MODEL_PATH="$2"
             shift 2
@@ -76,12 +76,19 @@ while [ $# -gt 0 ]; do
             TOKENS_PER_BATCH="$2"
             shift 2
             ;;
-        --observation_window)
-            OBSERVATION_WINDOW="$2"
+        --cohort_type)
+            COHORT_TYPE="$2"
+            case "$COHORT_TYPE" in
+                outcome|phenotype) ;;   # allowed values
+                *)
+                echo "Error: --device must be one of: outcome|phenotype" >&2
+                exit 1
+                ;;
+            esac
             shift 2
             ;;
-        --task)
-            TASK_LIST="$2"
+        --observation_window)
+            OBSERVATION_WINDOW="$2"
             shift 2
             ;;
         --min_subjects_per_batch)
@@ -104,6 +111,14 @@ while [ $# -gt 0 ]; do
             USE_NTP="$2"
             shift 2
             ;;
+        --classification_cohort)
+            CLASS_COHORT="$2"
+            shift 2
+            ;;
+        --tte_cohort)
+            TTE_COHORT="$2"
+            shift 2
+            ;;
         --output_dir) OUTPUT_DIR="$2"; shift 2 ;;
         -*)
             echo "Error: Unknown option: $1" >&2
@@ -111,25 +126,25 @@ while [ $# -gt 0 ]; do
             exit 1
             ;;
         *)
-            # First non-option argument is the cohort base directory
-            if [ -z "$COHORT_BASE_DIR" ]; then
-                COHORT_BASE_DIR="$1"
-            else
-                echo "Error: Unexpected argument: $1" >&2
-                echo "Try '$SCRIPT_NAME --help' for more information." >&2
-                exit 1
-            fi
-            shift
-            ;;
+            # # First non-option argument is the cohort base directory
+            # if [ -z "$TTE_COHORT" ]; then
+            #     TTE_COHORT="$1"
+            # else
+            #     echo "Error: Unexpected argument: $1" >&2
+            #     echo "Try '$SCRIPT_NAME --help' for more information." >&2
+            #     exit 1
+            # fi
+            # shift
+            # ;;
     esac
 done
 
 # Check if cohort base directory was provided
-if [ -z "$COHORT_BASE_DIR" ]; then
-    echo "Error: Missing required argument COHORT_BASE_DIR" >&2
-    echo "Try '$SCRIPT_NAME --help' for more information." >&2
-    exit 1
-fi
+# if [ -z "$COHORT_BASE_DIR" ]; then
+#     echo "Error: Missing required argument COHORT_BASE_DIR" >&2
+#     echo "Try '$SCRIPT_NAME --help' for more information." >&2
+#     exit 1
+# fi
 
 # Use command line arguments if provided, otherwise use environment variables
 
@@ -146,13 +161,13 @@ if [ -z "$OMOP_MEDS_READER" ]; then
 fi
 
 # Check if the cohort base directory exists
-if [ ! -d "$COHORT_BASE_DIR" ]; then
-    echo "Error: Cohort base directory does not exist: $COHORT_BASE_DIR" >&2
+if [ ! -d "$CLASS_COHORT" ]; then
+    echo "Error: Cohort base directory does not exist: $CLASS_COHORT" >&2
     exit 1
 fi
 
 echo "Using configuration:"
-echo "  COHORT_BASE_DIR: $COHORT_BASE_DIR"
+echo "  CLASS_COHORT: $CLASS_COHORT"
 echo "  OMOP_MEDS_READER: $OMOP_MEDS_READER"
 echo "  NUM_PROC: $NUM_PROC"
 echo "  TOKENS_PER_BATCH: $TOKENS_PER_BATCH"
@@ -164,7 +179,7 @@ echo
 echo "Discovering prediction tasks..."
 TASK_COUNT=0
 
-for TASK_DIR in "$COHORT_BASE_DIR"*/; do
+for TASK_DIR in "$CLASS_COHORT"*/; do
     # Skip if not a directory
     if [ ! -d "$TASK_DIR" ]; then
         continue
@@ -178,14 +193,14 @@ for TASK_DIR in "$COHORT_BASE_DIR"*/; do
 done
 
 if [ "$TASK_COUNT" -eq 0 ]; then
-    echo "No prediction tasks found in $COHORT_BASE_DIR"
+    echo "No prediction tasks found in $CLASS_COHORT"
     exit 0
 fi
 
 
 # Process tasks
 CURRENT=0
-for TASK_DIR in "$COHORT_BASE_DIR"*/; do
+for TASK_DIR in "$CLASS_COHORT"*/; do
     # Skip if not a directory
     if [ ! -d "$TASK_DIR" ]; then
         continue
@@ -195,19 +210,19 @@ for TASK_DIR in "$COHORT_BASE_DIR"*/; do
     TASK_NAME=$(basename "$TASK_DIR")
 
     # Check if task list is specified and if current task is in the list
-    if [ -n "$TASK_LIST" ]; then
-        # Convert comma-separated list to array and check if task is in it
-        if ! echo ",$TASK_LIST," | grep -q ",$TASK_NAME,"; then
-            SKIPPED=$((SKIPPED + 1))
-            echo "[$SKIPPED skipped] Skipping task: $TASK_NAME (not in specified task list)"
-            continue
-        fi
-    fi
+    # if [ -n "$TASK_LIST" ]; then
+    #     # Convert comma-separated list to array and check if task is in it
+    #     if ! echo ",$TASK_LIST," | grep -q ",$TASK_NAME,"; then
+    #         SKIPPED=$((SKIPPED + 1))
+    #         echo "[$SKIPPED skipped] Skipping task: $TASK_NAME (not in specified task list)"
+    #         continue
+    #     fi
+    # fi
 
     CURRENT=$((CURRENT + 1))
 
     echo "[$CURRENT/$TASK_COUNT] Processing task: $TASK_NAME"
-    echo "cohort_base_dir: $COHORT_BASE_DIR"
+    echo "classification_base_dir: $CLASS_COHORT"
     echo "Task directory: $TASK_DIR"
 
 
@@ -260,7 +275,9 @@ for TASK_DIR in "$COHORT_BASE_DIR"*/; do
       --cohort_label \"$TASK_NAME\" \
       --model_name \"$MODEL_NAME\" \
       --main_split_path \"$MAIN_SPLIT_PATH\" \
+      --tte_cohort \"$TTE_COHORT\" \
       --meds_reader \"$OMOP_MEDS_READER\" \
+      --cohort_type \"$COHORT_TYPE\" \
       --model_path \"$MODEL_PATH\" \
       --output_root \"$OUTPUT_DIR\""
 
@@ -314,53 +331,44 @@ echo "All tasks processed."
 
 
 # phenotype
-# export CUDA_VISIBLE_DEVICES=5
+# export CUDA_VISIBLE_DEVICES=1
+
+#phenotype
 # bash run.sh \
 #   --meds_reader        /shared/share_mala/zj2398/mimic/data/meds_v0.6_reader  \
-#   --num_proc           30 \
-#   --model_path         /shared/share_mala/zj2398/models/mtpp_8k/mtpp_mean_all_shared/best_120744 \
-#   --model_name         mtpp_shared_bin_10 \
-#   --tokens_per_batch   65536 \
-#   --device             cuda:0 \
-#   --min_subjects_per_batch 8 \
-#   --ontology_path       /user/zj2398/cache/mtpp_8k/ontology.pkl \
-#   --main_split_path     /user/zj2398/cache/mtpp_8k/main_split.csv \
-#   --loss_type  labeled_subjects \
-#   --output_dir   /shared/share_mala/zj2398/mimic/task/phenotype_task/ \
-#   /shared/share_mala/zj2398/mimic/task/phenotype_task/cohort/
-
-# export CUDA_VISIBLE_DEVICES=2
-# bash run.sh \
-#   --meds_reader        /shared/share_mala/zj2398/mimic/data/meds_v0.6_reader  \
-#   --num_proc           30 \
-#   --model_path         /shared/share_mala/zj2398/models/mtpp_8k/mtpp_mean_all_shared_bin_5/best-130806 \
-#   --model_name         mtpp_shared_bin_5 \
-#   --tokens_per_batch   65536 \
-#   --device             cuda:0 \
-#   --min_subjects_per_batch 8 \
-#   --ontology_path       /user/zj2398/cache/mtpp_8k/ontology.pkl \
-#   --main_split_path     /user/zj2398/cache/mtpp_8k/main_split.csv \
-#   --loss_type  labeled_subjects \
-#   --output_dir   /shared/share_mala/zj2398/mimic/task/phenotype_task/ \
-#   /shared/share_mala/zj2398/mimic/task/phenotype_task/cohort/
-
-# bash run.sh \
-#   --meds_reader        /shared/share_mala/zj2398/mimic/data/meds_v0.6_reader \
 #   --num_proc           24 \
-#   --model_path         /shared/share_mala/zj2398/models/mtpp_8k/mtpp_mean_all_shared_bin_5/best-130806 \
-#   --model_name         mtpp_shared_bin_5 \
+#   --model_path         /shared/share_mala/zj2398/models/mtpp_8k/mtpp_all_shared_6100_bin_5/transformer/best_159744 \
+#   --model_name         transformer_mtpp \
 #   --tokens_per_batch   65536 \
 #   --device             cuda:0 \
+#   --use_ntp            no \
+#   --cohort_type        phenotype \
 #   --min_subjects_per_batch 8 \
 #   --ontology_path       /user/zj2398/cache/mtpp_8k/ontology.pkl \
 #   --main_split_path     /user/zj2398/cache/mtpp_8k/main_split.csv \
-#   --loss_type  labeled_subjects \
-#   --output_dir   /shared/share_mala/zj2398/mimic/patient_outcome_task/ \
-#   /shared/share_mala/zj2398/mimic/task/patient_outcome_task/cohort/
+#   --output_dir   /shared/share_mala/zj2398/mimic/task/phenotype_task/  \
+#   --classification_cohort /shared/share_mala/zj2398/mimic/task/phenotype_task/cohort/binary/ \
+#   --tte_cohort /shared/share_mala/zj2398/mimic/task/phenotype_task/cohort/tte/
+
+# outcome
+# bash run.sh \
+#   --meds_reader        /shared/share_mala/zj2398/mimic/data/meds_v0.6_reader  \
+#   --num_proc           24 \
+#   --model_path         /shared/share_mala/zj2398/models/mtpp_8k/mtpp_all_shared_6100_bin_5/transformer/best_159744 \
+#   --model_name         transformer_mtpp \
+#   --tokens_per_batch   65536 \
+#   --device             cuda:0 \
+#   --use_ntp            no \
+#   --cohort_type        phenotype \
+#   --min_subjects_per_batch 8 \
+#   --ontology_path       /user/zj2398/cache/mtpp_8k/ontology.pkl \
+#   --main_split_path     /user/zj2398/cache/mtpp_8k/main_split.csv \
+#   --output_dir   /shared/share_mala/zj2398/mimic/task/patient_outcome_task/  \
+#   --classification_cohort /shared/share_mala/zj2398/mimic/task/patient_outcome_task/cohort/ 
+
+
 
 # kuvira
-
-
 # bash run.sh \
 #   --pretraining_data    /data/models/zj2398/femr/cumc_0.1/mtpp_shared \
 #   --meds_reader        /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/post_transform_meds_reader \

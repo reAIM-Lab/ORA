@@ -204,7 +204,7 @@ done
 
 echo "All selected tasks processed."
 
-#export CUDA_VISIBLE_DEVICES=0
+#export CUDA_VISIBLE_DEVICES=5
 # bilirubin,creatinine,pao2,platelets
 
 # bash run_regression.sh \
@@ -245,9 +245,9 @@ echo "All selected tasks processed."
 
 # bash run_regression.sh \
 #   --meds_reader        /shared/share_mala/zj2398/mimic/data/meds_v0.6_reader \
-#   --num_proc           24 \
-#   --model_path         /shared/share_mala/zj2398/models/tpp_8k/mamba/best_80574 \
-#   --model_name         mamba_tpp \
+#   --num_proc           32 \
+#   --model_path         /shared/share_mala/zj2398/models/ntp_8k/mamba/best_404760 \
+#   --model_name         mamba_ntp \
 #   --tokens_per_batch   65536 \
 #   --device             cuda:0 \
 #   --min_subjects_per_batch 8 \
@@ -257,7 +257,7 @@ echo "All selected tasks processed."
 #   --output_dir   /shared/share_mala/zj2398/mimic/task/regression/ \
 #   --cache_path /shared/share_mala/zj2398/huggingface/datasets \
 #   --use_ntp no \
-#   --tasks "pao2,platelets,bilirubin,creatinine" \
+#   --tasks "pao2,platelets" \
 #   --regression 
 
 
