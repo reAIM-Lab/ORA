@@ -12,6 +12,7 @@ import json
 import os
 import argparse
 from sksurv.metrics import concordance_index_ipcw, integrated_brier_score
+from femr.omop_meds_tutorial.evaluation.eval_utils import _metric_mean_std, _update_metric_table
 
 np.random.seed(42)
 torch.manual_seed(42)
@@ -74,8 +75,20 @@ torch.manual_seed(42)
 #         print('{}: {:.3f} ({:.3f})'.format(metric, np.mean(results[metric]), np.std(results[metric])))
 #     return results
 
-def tte_evaluation(train_set, test_set):
+def tte_evaluation(train_set, test_set,truncation=365,tte_cohort_path=None):
     # Extract validation set to stop loss
+    if tte_cohort_path is not None:
+        print(f"reading cohort from {tte_cohort_path}")
+        tte_cohort = pd.read_parquet(tte_cohort_path)
+        keys = tte_cohort[["subject_id", "prediction_time"]].drop_duplicates()
+        train_set = train_set.merge(
+            keys, on=["subject_id", "prediction_time"], how="inner"
+        )
+
+        test_set = test_set.merge(
+            keys, on=["subject_id", "prediction_time"], how="inner"
+        )
+    print(f"truncation is {truncation}")
     val = train_set.sample(frac=0.2, replace=False, random_state=42)
     train_set = train_set.drop(val.index)
 
@@ -113,16 +126,10 @@ def tte_evaluation(train_set, test_set):
     in_features = x_train.shape[1]
     out_features = labtrans.out_features
 
-    # grid = ParameterGrid({
-    #     'dropout': [0, 0.1],
-    #     'lr': [0.001, 0.0001],
-    #     'batch': [1024, 2048]
-    # })
-
     grid = ParameterGrid({
-        'dropout': [0],
-        'lr': [0.001],
-        'batch': [1024]
+        'dropout': [0, 0.1],
+        'lr': [0.001, 0.0001],
+        'batch': [1024, 2048]
     })
 
 
@@ -146,13 +153,12 @@ def tte_evaluation(train_set, test_set):
 
     # Evaluation best model
     surv = best_model.predict_surv_df(x_test)
-    truncation = 5 * 365
+    # truncation = 5 * 365
 
     # times represent all discretized intervals
     times = surv.index.to_numpy()
-    # print("")
 
-    # the index closest to 5 years
+    # the index closest to truncation days
     index_truncation = np.argmin(np.abs(times - truncation))
 
     # Create mask for time points within 5 years (for integrated Brier score)
@@ -160,8 +166,6 @@ def tte_evaluation(train_set, test_set):
     # times_5yr = times[mask_5yr]  # Time grid from 0 to ~5 years
     # print(f"times_5yr is {times_5yr}")
     results = {'C-Index': [], 'Int-Brier': []}
-
-
 
     # Create structured arrays with filtered data
     # Create format for sksurv
@@ -172,7 +176,16 @@ def tte_evaluation(train_set, test_set):
     
     # Now all patients have outcomes within 5 years
     # So we can use the full 5-year time grid for all bootstrap samples
+    min_time_sample = et_test['t'].min()
+    max_time_sample = et_test['t'].max()
     
+    # Filter time grid to be within BOTH:
+    # 1. The observed data range [min_time, max_time]
+    # 2. The 5-year truncation window [0, 1825]
+    eval_mask = (times >= min_time_sample) & \
+                (times <= max_time_sample) & \
+                (times <= truncation)
+    times_eval = times[eval_mask]
     
     for i in tqdm(range(100)):
         sample = np.random.choice(len(et_test), len(et_test))
@@ -196,16 +209,6 @@ def tte_evaluation(train_set, test_set):
         # =======================================================================
         
         # Get the observed time range for this bootstrap sample
-        min_time_sample = et_test[sample]['t'].min()
-        max_time_sample = et_test[sample]['t'].max()
-        
-        # Filter time grid to be within BOTH:
-        # 1. The observed data range [min_time, max_time]
-        # 2. The 5-year truncation window [0, 1825]
-        eval_mask = (times >= min_time_sample) & \
-                    (times <= max_time_sample) & \
-                    (times <= truncation)
-        times_eval = times[eval_mask]
         # print(f"times_eval is {times_eval}")
          
         
@@ -213,33 +216,25 @@ def tte_evaluation(train_set, test_set):
         if len(times_eval) < 2:
             print(f"Warning: Bootstrap iteration {i} has insufficient time points "
                   f"(min={min_time_sample:.1f}, max={max_time_sample:.1f}), using fallback...")
-            # Fallback: use the closest valid time range
-            # if max_time_sample < truncation:
-            #     # If sample doesn't reach 5 years, evaluate up to max_time_sample
-            #     eval_mask = (times >= min_time_sample) & (times <= max_time_sample)
-            # else:
-            #     # If sample exceeds 5 years, evaluate up to truncation
-            #     eval_mask = (times >= min_time_sample) & (times <= truncation)
-            # times_eval = times[eval_mask]
         
         # Extract survival curves for the valid time points
         surv_eval = surv.iloc[eval_mask, sample].values.T
         
         # Compute integrated Brier score
-        try:
-            ibs = integrated_brier_score(
-                et_train,
-                et_test[sample],
-                surv_eval,
-                times_eval
-            )
-            results['Int-Brier'].append(ibs)
-        except ValueError as e:
-            print(f"Error in bootstrap iteration {i}: {e}")
-            print(f"  Sample time range: [{min_time_sample:.2f}, {max_time_sample:.2f}]")
-            print(f"  Eval times range: [{times_eval.min():.2f}, {times_eval.max():.2f}]")
-            print(f"  Skipping this iteration...")
-            continue
+        # try:
+        ibs = integrated_brier_score(
+            et_train,
+            et_test[sample],
+            surv_eval,
+            times_eval
+        )
+        results['Int-Brier'].append(ibs)
+        # except ValueError as e:
+        #     print(f"Error in bootstrap iteration {i}: {e}")
+        #     print(f"  Sample time range: [{min_time_sample:.2f}, {max_time_sample:.2f}]")
+        #     print(f"  Eval times range: [{times_eval.min():.2f}, {times_eval.max():.2f}]")
+        #     print(f"  Skipping this iteration...")
+        #     continue
     
     # Display results
     print(f"\n{'='*70}")
@@ -256,21 +251,24 @@ def tte_evaluation(train_set, test_set):
     
     return results
 
-def run(tasks, old_phenotype_path_str):
+def run(tasks, old_phenotype_path_str,output_name,truncation,tte_cohort):
     old_phenotype_dir = Path(old_phenotype_path_str)
-    phenotype_label_dir = Path("/data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/task_labels/phenotype_tte")
-    key_cols = ["subject_id", "prediction_time", "tte_label", "time_to_event"]
+    # phenotype_label_dir = Path("/data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/task_labels/phenotype_tte")
+    # key_cols = ["subject_id", "prediction_time", "tte_label", "time_to_event"]
     for task in tasks:
+        if task == "masld":
+            continue
         old_phenotype_path = old_phenotype_dir / "results" / task
         if not old_phenotype_path.exists():
             print(f"Skip task {task}: {old_phenotype_path} not found.")
             continue
-        
+        if tte_cohort is not None:
+            tte_cohort = Path(tte_cohort)/task/f"{task}.parquet"
         # the subdir includes pregenerated embeddings for all models: motor, tpp, mtpp
         for subdir in old_phenotype_path.iterdir():
-            if subdir.name not in ["motor", "tpp_continue_pretrain", "mtpp"]:
-                print(f"not correct model {subdir.name}, continue")
-                continue
+            # if subdir.name not in ["motor", "tpp_continue_pretrain", "mtpp"]:
+            #     print(f"not correct model {subdir.name}, continue")
+            #     continue
             if not subdir.is_dir():
                 continue
             train_path = subdir / "features_with_label" / "train.parquet"
@@ -286,21 +284,20 @@ def run(tasks, old_phenotype_path_str):
                 # print(f"before train_parquet {len(train_parquet)}")
                 # print(f"before test_parquet {len(test_parquet)}")
                 
-                train_label = pd.read_parquet(phenotype_label_dir/task/"train.parquet")
-                tuning_label = pd.read_parquet(phenotype_label_dir/task/"tuning.parquet")
-                train_label  = pd.concat([train_label, tuning_label], ignore_index=True)
-                test_label = pd.read_parquet(phenotype_label_dir/task/"held_out.parquet")
+            # train_label = pd.read_parquet(phenotype_label_dir/task/"train.parquet")
+            # tuning_label = pd.read_parquet(phenotype_label_dir/task/"tuning.parquet")
+            # train_label  = pd.concat([train_label, tuning_label], ignore_index=True)
+            # test_label = pd.read_parquet(phenotype_label_dir/task/"held_out.parquet")
 
-                train_keys = train_label[key_cols].drop_duplicates()
-                test_keys  = test_label[key_cols].drop_duplicates()
+            # train_keys = train_label[key_cols].drop_duplicates()
+            # test_keys  = test_label[key_cols].drop_duplicates()
 
-                train_parquet = train_parquet.merge(train_keys, on=key_cols, how="inner")
-                test_parquet  = test_parquet.merge(test_keys,  on=key_cols, how="inner")
+            # train_parquet = train_parquet.merge(train_keys, on=key_cols, how="inner")
+            # test_parquet  = test_parquet.merge(test_keys,  on=key_cols, how="inner")
 
                 # print(f"after  train_parquet: {len(train_parquet)}")
                 # print(f"after  test_parquet:  {len(test_parquet)}")
-
-            tte_results = tte_evaluation(train_parquet, test_parquet)
+            tte_results = tte_evaluation(train_parquet, test_parquet,truncation,tte_cohort)
 
             metrics = {}
             metrics['C-Index']  = (float(np.mean(tte_results['C-Index'])),  float(np.std(tte_results['C-Index'])))
@@ -308,10 +305,21 @@ def run(tasks, old_phenotype_path_str):
 
             save_dir = old_phenotype_dir / "results" / task / subdir.name
             os.makedirs(save_dir, exist_ok=True)
-            save_file = save_dir / "tte_grid_search_5_years.json"
+            save_file = save_dir / f"tte_{args.output_name}_{truncation}_days.json"
             with open(save_file, "w") as f:
                 json.dump(metrics, f)
             print(f"Saved metrics to {save_file}")
+
+            summary_dir = old_phenotype_dir / "results" / f"summary_table_{args.output_name}"
+            os.makedirs(summary_dir,exist_ok=True)
+
+            cidx_mean, cidx_std   = _metric_mean_std(metrics, "C-Index")
+            ibr_mean,  ibr_std    = _metric_mean_std(metrics, "Int-Brier")
+
+            if cidx_mean is not None:
+                _update_metric_table(summary_dir, "cindex", task, str(subdir), cidx_mean, cidx_std)
+            if ibr_mean is not None:
+                _update_metric_table(summary_dir, "int_brier", task, str(subdir), ibr_mean, ibr_std)
 
 
 if __name__ == "__main__":
@@ -320,17 +328,34 @@ if __name__ == "__main__":
                         help="Comma-separated list of tasks, e.g., 'AMI,Celiac,MASLD,Ischemic_Stroke'")
     parser.add_argument("--old_phenotype_path", type=str, required=True,
                         help="Base directory path containing 'results/<task>/*/features_with_label/*.parquet'")
+    parser.add_argument("--truncation", type=float, required=False, default="365",
+                        help="truncation days")
+    parser.add_argument("--output_name", type=str, required=False, default="",
+                        help="output_name")
+    parser.add_argument("--tte_cohort", type=str, required=False, default=None,
+                        help="path to tte cohort")
     args = parser.parse_args()
 
     tasks_list = [t.strip() for t in args.tasks.split(",") if t.strip()]
-    run(tasks_list, args.old_phenotype_path)
+    print(tasks_list)
+    run(tasks_list, args.old_phenotype_path,args.output_name,args.truncation,args.tte_cohort)
 
 '''
 command:
 python tte_grid_search_filter.py \
-    --tasks AMI \
-    --old_phenotype_path /data/results/zj2398/femr/cumc_0.1/phenotype
+    --tasks ami,stroke \
+    --truncation 330 \
+    --output_name all_events \
+    --old_phenotype_path /shared/share_mala/zj2398/mimic/task/phenotype_task/
 
+python tte_grid_search_filter.py \
+    --tasks ami,stroke \
+    --truncation 330 \
+    --output_name first_event \
+    --old_phenotype_path /shared/share_mala/zj2398/mimic/task/phenotype_task/ \
+    --tte_cohort /shared/share_mala/zj2398/mimic/task/phenotype/tte_first
+
+    
 python tte_grid_search_filter.py \
     --tasks Celiac,Ischemic_Stroke \
     --old_phenotype_path /data/results/zj2398/femr/cumc_0.1/phenotype

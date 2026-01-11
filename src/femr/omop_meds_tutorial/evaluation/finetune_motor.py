@@ -71,6 +71,14 @@ def create_arg_parser():
     )
 
     args.add_argument(
+        "--truncation",
+        dest="truncation", 
+        type = float,
+        default=365, 
+        help="The path to tte cohort",
+    )
+
+    args.add_argument(
         "--cohort_type",
         dest="cohort_type", 
         default=None, 
@@ -128,11 +136,10 @@ def logistic_regression(train_set,test_data,label_output_dir):
     return roc_auc,pr_auc
 
 
-def tte_evaluation(train_set_init, test_set_init,tte_cohort):
+def tte_evaluation(train_set_init, test_set_init,truncation,tte_cohort):
 
     #need to filter train_set and test_set from tte_cohort
     keys = tte_cohort[["subject_id", "prediction_time"]].drop_duplicates()
-
     train_set = train_set_init.merge(
         keys, on=["subject_id", "prediction_time"], how="inner"
     )
@@ -207,13 +214,12 @@ def tte_evaluation(train_set_init, test_set_init,tte_cohort):
 
     # Evaluation best model
     surv = best_model.predict_surv_df(x_test)
-    # print(f"surv is {surv}")
-    truncation = 5 * 365
 
     # times represent all discretized intervals
     times = surv.index.to_numpy()
 
-    # the index closest to 5 yeats
+    # the index closest to truncation days
+    print(f"Truncate the cohort into {truncation} days")
     index_truncation = np.argmin(np.abs(times - truncation))
 
     # print(f"times_5yr is {times_5yr}")
@@ -228,7 +234,6 @@ def tte_evaluation(train_set_init, test_set_init,tte_cohort):
     
     # Now all patients have outcomes within 5 years
     # So we can use the full 5-year time grid for all bootstrap samples
-    
     min_time_sample = et_test['t'].min()
     max_time_sample = et_test['t'].max()
     
@@ -289,13 +294,12 @@ def tte_evaluation(train_set_init, test_set_init,tte_cohort):
 def main():
     args = create_arg_parser().parse_args()
     # pretraining_data = pathlib.Path(args.pretraining_data)
-    label_names = LABEL_NAMES
+    label_name = args.cohort_label
     output_root = Path(args.output_root)
     if args.cohort_label is not None:
         label_path = output_root /args.model_name/ "labels" / (args.cohort_label + '.parquet')
         if label_path.exists():
             print(f"Using the user defined label at: {label_path}")
-            label_name = args.cohort_label
         else:
             raise RuntimeError(f"The user provided label does not exist at {label_path}")
 
@@ -412,15 +416,16 @@ def main():
         print(f"Total train features labels: {len(train_data['features'])}")
         print(f"Total test features labels: {len(test_data['features'])}")
 
-        roc_auc,pr_auc = logistic_regression(train_set,test_data,label_output_dir)
-        print(label_name, roc_auc)
-        metrics = {
-            "auroc": roc_auc,
-            "aucpr": pr_auc
-        }
+        metrics = {}
+        # roc_auc,pr_auc = logistic_regression(train_set,test_data,label_output_dir)
+        # print(label_name, roc_auc)
+        # metrics = {
+        #     "auroc": roc_auc,
+        #     "aucpr": pr_auc
+        # }
         if args.cohort_type == "phenotype":
             tte_cohort = pd.read_parquet(Path(args.tte_cohort)/label_name/f"{label_name}.parquet")
-            tte_results = tte_evaluation(train_set,test_set,tte_cohort)
+            tte_results = tte_evaluation(train_set,test_set,args.truncation,tte_cohort)
             metrics['C-Index'] = (np.mean(tte_results['C-Index']), np.std(tte_results['C-Index']))
             metrics['Int-Brier'] = (np.mean(tte_results['Int-Brier']), np.std(tte_results['Int-Brier']))
         # tte_result_file = label_output_dir / 'tte_metrics.json'
