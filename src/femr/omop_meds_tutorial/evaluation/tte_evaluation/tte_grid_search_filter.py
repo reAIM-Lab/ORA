@@ -75,9 +75,10 @@ torch.manual_seed(42)
 #         print('{}: {:.3f} ({:.3f})'.format(metric, np.mean(results[metric]), np.std(results[metric])))
 #     return results
 
-def tte_evaluation(train_set, test_set,truncation=365,tte_cohort_path=None):
+def tte_evaluation(train_set, test_set,task,truncation=365,tte_cohort_path=None):
     # Extract validation set to stop loss
     if tte_cohort_path is not None:
+        tte_cohort_path = Path(tte_cohort_path)/task/f"{task}.parquet"
         print(f"reading cohort from {tte_cohort_path}")
         tte_cohort = pd.read_parquet(tte_cohort_path)
         keys = tte_cohort[["subject_id", "prediction_time"]].drop_duplicates()
@@ -256,14 +257,12 @@ def run(tasks, old_phenotype_path_str,output_name,truncation,tte_cohort):
     # phenotype_label_dir = Path("/data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/task_labels/phenotype_tte")
     # key_cols = ["subject_id", "prediction_time", "tte_label", "time_to_event"]
     for task in tasks:
-        if task == "masld":
-            continue
         old_phenotype_path = old_phenotype_dir / "results" / task
         if not old_phenotype_path.exists():
             print(f"Skip task {task}: {old_phenotype_path} not found.")
             continue
-        if tte_cohort is not None:
-            tte_cohort = Path(tte_cohort)/task/f"{task}.parquet"
+        # if tte_cohort is not None:
+        #     tte_cohort = Path(tte_cohort)/task/f"{task}.parquet"
         # the subdir includes pregenerated embeddings for all models: motor, tpp, mtpp
         for subdir in old_phenotype_path.iterdir():
             # if subdir.name not in ["motor", "tpp_continue_pretrain", "mtpp"]:
@@ -278,26 +277,8 @@ def run(tasks, old_phenotype_path_str,output_name,truncation,tte_cohort):
                 continue
             train_parquet = pd.read_parquet(train_path)
             test_parquet  = pd.read_parquet(test_path)
-            # only fetch updated cohort: the first event
-            # if task in ["AMI","Ischemic_Stroke"]:
-                # print(f"task is {task}")
-                # print(f"before train_parquet {len(train_parquet)}")
-                # print(f"before test_parquet {len(test_parquet)}")
-                
-            # train_label = pd.read_parquet(phenotype_label_dir/task/"train.parquet")
-            # tuning_label = pd.read_parquet(phenotype_label_dir/task/"tuning.parquet")
-            # train_label  = pd.concat([train_label, tuning_label], ignore_index=True)
-            # test_label = pd.read_parquet(phenotype_label_dir/task/"held_out.parquet")
 
-            # train_keys = train_label[key_cols].drop_duplicates()
-            # test_keys  = test_label[key_cols].drop_duplicates()
-
-            # train_parquet = train_parquet.merge(train_keys, on=key_cols, how="inner")
-            # test_parquet  = test_parquet.merge(test_keys,  on=key_cols, how="inner")
-
-                # print(f"after  train_parquet: {len(train_parquet)}")
-                # print(f"after  test_parquet:  {len(test_parquet)}")
-            tte_results = tte_evaluation(train_parquet, test_parquet,truncation,tte_cohort)
+            tte_results = tte_evaluation(train_parquet, test_parquet,task,truncation,tte_cohort)
 
             metrics = {}
             metrics['C-Index']  = (float(np.mean(tte_results['C-Index'])),  float(np.std(tte_results['C-Index'])))
@@ -343,13 +324,13 @@ if __name__ == "__main__":
 '''
 command:
 python tte_grid_search_filter.py \
-    --tasks ami,stroke \
+    --tasks masld \
     --truncation 330 \
-    --output_name all_events \
+    --output_name first_event \
     --old_phenotype_path /shared/share_mala/zj2398/mimic/task/phenotype_task/
 
 python tte_grid_search_filter.py \
-    --tasks ami,stroke \
+    --tasks stroke \
     --truncation 330 \
     --output_name first_event \
     --old_phenotype_path /shared/share_mala/zj2398/mimic/task/phenotype_task/ \
