@@ -130,10 +130,32 @@ def logistic_regression(train_set,test_data,label_output_dir):
     # Write to parquet
     logistic_predictions.write_parquet(logistic_test_predictions / "predictions.parquet")
 
-    roc_auc = sklearn.metrics.roc_auc_score(test_data['boolean_values'], y_pred)
-    precision, recall, _ = sklearn.metrics.precision_recall_curve(test_data['boolean_values'], y_pred)
-    pr_auc = sklearn.metrics.auc(recall, precision)
-    return roc_auc,pr_auc
+    # roc_auc = sklearn.metrics.roc_auc_score(test_data['boolean_values'], y_pred)
+    # precision, recall, _ = sklearn.metrics.precision_recall_curve(test_data['boolean_values'], y_pred)
+    # pr_auc = sklearn.metrics.auc(recall, precision)
+    rng = np.random.default_rng(0)
+    aurocs, auprcs = [], []
+
+    y_true = np.asarray(test_data["boolean_values"], dtype=np.int64)
+    n = len(y_true)
+    for bi in range(100):
+        idx = rng.integers(0, n, size=n)  # sample with replacement
+        yb = y_true[idx]
+        pb = y_pred[idx]
+
+        # AUROC needs both classes present; if degenerate, skip
+        if np.unique(yb).size < 2:
+            continue
+
+        aurocs.append(sklearn.metrics.roc_auc_score(yb, pb))
+        p, r, _ = sklearn.metrics.precision_recall_curve(yb, pb)
+        auprcs.append(sklearn.metrics.auc(r, p))
+
+    auroc_mean, auroc_std = float(np.mean(aurocs)), float(np.std(aurocs, ddof=1))
+    auprc_mean, auprc_std = float(np.mean(auprcs)), float(np.std(auprcs, ddof=1))
+
+    return (auroc_mean, auroc_std), (auprc_mean, auprc_std)
+
 
 
 def tte_evaluation(train_set_init, test_set_init,truncation,tte_cohort):
@@ -417,14 +439,22 @@ def main():
         print(f"Total test features labels: {len(test_data['features'])}")
 
         metrics = {}
-        # roc_auc,pr_auc = logistic_regression(train_set,test_data,label_output_dir)
+        roc_auc,pr_auc = logistic_regression(train_set,test_data,label_output_dir)
         # print(label_name, roc_auc)
-        # metrics = {
-        #     "auroc": roc_auc,
-        #     "aucpr": pr_auc
-        # }
+        metrics = {
+            "auroc": roc_auc,
+            "auprc": pr_auc
+        }
         if args.cohort_type == "phenotype":
-            tte_cohort = pd.read_parquet(Path(args.tte_cohort)/label_name/f"{label_name}.parquet")
+            tte_label_path = Path(args.tte_cohort)/label_name/f"{label_name}.parquet"
+            if tte_label_path.exists():
+                tte_cohort = pd.read_parquet(tte_label_path)
+            else:
+                tte_label_dir = Path(args.tte_cohort)/label_name
+                files = sorted(tte_label_dir.glob("*.parquet"))
+                dfs = [pd.read_parquet(f) for f in files]
+                tte_cohort = pd.concat(dfs, ignore_index=True)
+
             tte_results = tte_evaluation(train_set,test_set,args.truncation,tte_cohort)
             metrics['C-Index'] = (np.mean(tte_results['C-Index']), np.std(tte_results['C-Index']))
             metrics['Int-Brier'] = (np.mean(tte_results['Int-Brier']), np.std(tte_results['Int-Brier']))
@@ -435,14 +465,14 @@ def main():
             json.dump(metrics, f, indent=4)
 
         auroc_mean, auroc_std = _metric_mean_std(metrics, "auroc")
-        aucpr_mean, aucpr_std = _metric_mean_std(metrics, "aucpr")
+        auprc_mean, auprc_std = _metric_mean_std(metrics, "auprc")
         cidx_mean, cidx_std   = _metric_mean_std(metrics, "C-Index")
         ibr_mean,  ibr_std    = _metric_mean_std(metrics, "Int-Brier")
 
         if auroc_mean is not None:
             _update_metric_table(summary_dir, "auroc", label_name, model_col, auroc_mean, auroc_std)
-        if aucpr_mean is not None:
-            _update_metric_table(summary_dir, "auprc", label_name, model_col, aucpr_mean, aucpr_std)
+        if auprc_mean is not None:
+            _update_metric_table(summary_dir, "auprc", label_name, model_col, auprc_mean, auprc_std)
 
         if cidx_mean is not None:
             _update_metric_table(summary_dir, "cindex", label_name, model_col, cidx_mean, cidx_std)

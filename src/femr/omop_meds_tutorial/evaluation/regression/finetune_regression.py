@@ -199,6 +199,7 @@ def main():
             ("ridge", LinearRegression()),
         ])
         model.fit(X_train, y_train)
+        y_true = np.asarray(test_data["numerical_value"], dtype=np.float64)
         y_pred = model.predict(X_test)
         # model.fit(train_set['features'].to_list(), train_set["numerical_value"])
         # y_pred = model.predict(test_data['features'])
@@ -206,27 +207,44 @@ def main():
         pl.DataFrame({
             "subject_id": test_data["subject_ids"].tolist(),
             "prediction_time": test_data["prediction_times"].tolist(),
-            "y_true": test_data["numerical_value"].tolist(),
+            "y_true": y_true.tolist(),
             "y_pred": y_pred.tolist(),
             "residual": (test_data["numerical_value"] - y_pred).tolist(),
         }).write_parquet(label_output_dir / "test_predictions.parquet")
-        rmse = float(np.sqrt(mean_squared_error(test_data["numerical_value"], y_pred)))
-        mae = float(mean_absolute_error(test_data["numerical_value"], y_pred))
-        r2 = float(r2_score(test_data["numerical_value"], y_pred))
-        metrics = {
-            "rmse": rmse,
-            "mae": mae,
-            "r2": r2,
-        }
-        
-        with open(test_result_file, "w") as f:
-            json.dump(metrics, f, indent=4)
 
+        # rmse = float(np.sqrt(mean_squared_error(test_data["numerical_value"], y_pred)))
+        # mae = float(mean_absolute_error(test_data["numerical_value"], y_pred))
+        # r2 = float(r2_score(test_data["numerical_value"], y_pred))
+        # metrics = {
+        #     "rmse": rmse,
+        #     "mae": mae,
+        #     "r2": r2,
+        # }
+
+        rng = np.random.default_rng(0)
+        rmses, maes, r2s = [], [], []
+
+        n = len(y_true)
+        for bi in range(100):
+            idx = rng.integers(0, n, size=n)
+            yt = y_true[idx]
+            yp = y_pred[idx]
+
+            rmses.append(float(np.sqrt(mean_squared_error(yt, yp))))
+            maes.append(float(mean_absolute_error(yt, yp)))
+            r2s.append(float(r2_score(yt, yp)))
+
+        # with open(test_result_file, "w") as f:
+        #     json.dump(metrics, f, indent=4)
+
+        rmse_mean, rmse_std = float(np.mean(rmses)), float(np.std(rmses, ddof=1))
+        mae_mean, mae_std   = float(np.mean(maes)),  float(np.std(maes, ddof=1))
+        r2_mean, r2_std     = float(np.mean(r2s)),   float(np.std(r2s, ddof=1))
         model_col = f"{args.model_name}"
 
-        _update_metric_table(summary_dir, "rmse", label_name, model_col, rmse, None)
-        _update_metric_table(summary_dir, "mae", label_name, model_col, mae, None)
-        _update_metric_table(summary_dir, "r2", label_name, model_col, r2, None)
+        _update_metric_table(summary_dir, "rmse", label_name, model_col, rmse_mean, rmse_std)
+        _update_metric_table(summary_dir, "mae", label_name, model_col, mae_mean, mae_std)
+        _update_metric_table(summary_dir, "r2", label_name, model_col, r2_mean, r2_std)
 
 
         # y_train_mean = np.mean(y_train)

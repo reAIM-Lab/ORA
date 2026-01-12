@@ -1,0 +1,456 @@
+"""
+FEMR also supports generating tabular feature representations, an important baseline for EHR modeling
+"""
+import json
+import meds_reader
+from pathlib import Path
+import pandas as pd
+import polars as pl
+import femr.featurizers
+import pickle
+import pathlib
+import os
+import numpy as np
+import sklearn
+from sklearn.linear_model import LogisticRegressionCV
+import femr.splits
+import argparse
+from .generate_labels import LABEL_NAMES, create_omop_meds_tutorial_arg_parser
+from .generate_features import get_model_name
+
+from pycox.models import DeepHitSingle
+from pycox.evaluation import EvalSurv
+import torchtuples as tt
+from sklearn.model_selection import ParameterGrid
+from sksurv.metrics import concordance_index_ipcw, integrated_brier_score
+
+from tqdm import tqdm
+import pandas as pd
+import numpy as np
+import torch
+from sksurv.metrics import concordance_index_ipcw, brier_score
+
+np.random.seed(42)
+torch.manual_seed(42)
+
+
+def create_arg_parser():
+    # args = create_omop_meds_tutorial_arg_parser()
+    args = argparse.ArgumentParser(description="Arguments for linear probing")
+    args.add_argument(
+        "--meds_reader",
+        dest="meds_reader",
+        default=None,
+    )
+    args.add_argument(
+        "--cohort_label",
+        dest="cohort_label",
+        default=None,
+    )
+    args.add_argument(
+        "--observation_window",
+        dest="observation_window",
+        type=int,
+        default=None,
+        help="The observation window for extracting features",
+    )
+
+    args.add_argument(
+        "--main_split_path",
+        dest="main_split_path", 
+        default=None, 
+        help="The path to the main split file",
+    )
+
+    args.add_argument(
+        "--model_name",
+        dest="model_name",
+        required=True,
+        help="The model name",
+    )
+    args.add_argument(
+        "--model_path",
+        dest="model_path",
+        required=True,
+        help="The model path"
+    )
+    args.add_argument(
+        "--output_root",
+        default=None,
+        help="Directory where results/features_with_label will be written. Defaults to --pretraining_data.",
+    )
+
+    return args
+
+def logistic_regression(train_set,test_data,label_output_dir):
+    model = LogisticRegressionCV(scoring='roc_auc')
+    model.fit(train_set['features'].to_list(), train_set['boolean_value'])
+
+    y_pred = model.predict_proba(test_data['features'])[:, 1]
+
+    # Convert predictions to a Polars DataFrame
+    logistic_predictions = pl.DataFrame({
+        "subject_id": test_data["subject_ids"].tolist(),
+        "prediction_time": test_data["prediction_times"].tolist(),
+        "predicted_boolean_probability": y_pred.tolist(),
+        "predicted_boolean_value": None,
+        "boolean_value": test_data["boolean_values"].astype(bool).tolist()
+    })
+
+    logistic_predictions = logistic_predictions.with_columns(
+        pl.col("predicted_boolean_value").cast(pl.Boolean())
+    )
+
+    # Create output directory
+    logistic_test_predictions = label_output_dir / "test_predictions"
+    logistic_test_predictions.mkdir(exist_ok=True, parents=True)
+    # Write to parquet
+    logistic_predictions.write_parquet(logistic_test_predictions / "predictions.parquet")
+
+    roc_auc = sklearn.metrics.roc_auc_score(test_data['boolean_values'], y_pred)
+    precision, recall, _ = sklearn.metrics.precision_recall_curve(test_data['boolean_values'], y_pred)
+    pr_auc = sklearn.metrics.auc(recall, precision)
+    return roc_auc,pr_auc
+
+
+def tte_evaluation(train_set, test_set):
+    # Extract validation set to stop loss
+    val = train_set.sample(frac=0.2, replace=False, random_state=42)
+    train_set = train_set.drop(val.index)
+
+    # Create hyper parameter selection set
+    hyper = val.sample(frac=0.5, replace=False, random_state=42)
+    val = val.drop(hyper.index)
+
+    # Transform labels
+    num_durations = 100
+    # map continuous time to discrete bins
+    labtrans = DeepHitSingle.label_transform(num_durations)
+
+    # extract (time, event) tuples from dataframe
+    get_target = lambda df: (df['time_to_event'].values, df['tte_label'].values)
+
+    # x_train: (n_samples, n_features)
+    x_train = np.stack(train_set.features.values)
+
+    # y_train: (discrete_time_indices, event_indicators)
+    y_train = labtrans.fit_transform(*get_target(train_set))
+
+    durations_train, events_train = get_target(train_set)
+
+    x_val = np.stack(val.features.values)
+    y_val = labtrans.transform(*get_target(val))
+    val = (x_val, y_val)
+
+    x_hyper = np.stack(hyper.features.values)
+    y_hyper = labtrans.transform(*get_target(hyper))
+
+    x_test = np.stack(test_set.features.values)
+    durations_test, events_test = get_target(test_set)
+
+    # Define one layer NN for Deephit
+    in_features = x_train.shape[1]
+    out_features = labtrans.out_features
+
+    grid = ParameterGrid({
+        'dropout': [0, 0.1],
+        'lr': [0.001, 0.0001],
+        'batch': [1024, 2048]
+    })
+
+    # grid = ParameterGrid({
+    #     'dropout': [0],
+    #     'lr': [0.001],
+    #     'batch': [1024]
+    # })
+
+
+    # Hyperparameter selection
+    best_nll = np.inf
+    for param in grid:
+        net = tt.practical.MLPVanilla(in_features, [], out_features, True, param['dropout'])
+
+        # Train Deephit
+        model = DeepHitSingle(net, tt.optim.Adam, duration_index=labtrans.cuts)
+        model.optimizer.set_lr(param['lr'])
+        epochs = 1000
+        _ = model.fit(x_train, y_train, param['batch'], epochs, [tt.callbacks.EarlyStopping()],
+                    val_data=val)
+        
+        nll = model.score_in_batches(x_hyper, y_hyper)['loss']
+        if nll < best_nll:
+            best_model = model
+            best_nll = nll
+    
+
+    # Evaluation best model
+    surv = best_model.predict_surv_df(x_test)
+    # print(f"surv is {surv}")
+    truncation = 5 * 365
+
+    # times represent all discretized intervals
+    times = surv.index.to_numpy()
+    # print("")
+
+    # the index closest to 5 yeats
+    index_truncation = np.argmin(np.abs(times - truncation))
+
+    # Create mask for time points within 5 years (for integrated Brier score)
+    # mask_5yr = times <= truncation
+    # times_5yr = times[mask_5yr]  # Time grid from 0 to ~5 years
+    # print(f"times_5yr is {times_5yr}")
+    results = {'C-Index': [], 'Int-Brier': []}
+
+
+
+    # Create structured arrays with filtered data
+    # Create format for sksurv
+    et_train = np.array([(events_train[i], durations_train[i]) for i in range(len(events_train))],
+                    dtype=[('e', bool), ('t', float)])
+    et_test = np.array([(events_test[i], durations_test[i]) for i in range(len(events_test))],
+                    dtype=[('e', bool), ('t', float)])
+    
+    # Now all patients have outcomes within 5 years
+    # So we can use the full 5-year time grid for all bootstrap samples
+    
+    min_time_sample = et_test['t'].min()
+    max_time_sample = et_test['t'].max()
+    
+    # Filter time grid to be within BOTH:
+    # 1. The observed data range [min_time, max_time]
+    # 2. The 5-year truncation window [0, 1825]
+    eval_mask = (times >= min_time_sample) & \
+                (times <= max_time_sample) & \
+                (times <= truncation)
+    times_eval = times[eval_mask]
+    
+    for i in tqdm(range(100)):
+        sample = np.random.choice(len(et_test), len(et_test))
+        
+        # =======================================================================
+        # C-INDEX: Use risk scores at 5 years
+        # =======================================================================
+        surv_at_5yr = surv.iloc[index_truncation, sample]
+        risk_at_5yr = 1 - surv_at_5yr
+        
+        c_index = concordance_index_ipcw(
+            et_train,
+            et_test[sample],
+            risk_at_5yr,
+            tau=truncation
+        )
+        results['C-Index'].append(c_index[0])
+        
+        # =======================================================================
+        # INTEGRATED BRIER SCORE: Filter time points to valid range
+        # =======================================================================
+        
+        # Get the observed time range for this bootstrap sample
+        # min_time_sample = et_test[sample]['t'].min()
+        # max_time_sample = et_test[sample]['t'].max()
+        
+        # # Filter time grid to be within BOTH:
+        # # 1. The observed data range [min_time, max_time]
+        # # 2. The 5-year truncation window [0, 1825]
+        # eval_mask = (times >= min_time_sample) & \
+        #             (times <= max_time_sample) & \
+        #             (times <= truncation)
+        # times_eval = times[eval_mask]
+        # print(f"times_eval is {times_eval}")
+         
+        
+        # Safety check: need at least 2 time points for integration
+        if len(times_eval) < 2:
+            print(f"Warning: Bootstrap iteration {i} has insufficient time points "
+                  f"(min={min_time_sample:.1f}, max={max_time_sample:.1f}), using fallback...")
+            # Fallback: use the closest valid time range
+            # if max_time_sample < truncation:
+            #     # If sample doesn't reach 5 years, evaluate up to max_time_sample
+            #     eval_mask = (times >= min_time_sample) & (times <= max_time_sample)
+            # else:
+            #     # If sample exceeds 5 years, evaluate up to truncation
+            #     eval_mask = (times >= min_time_sample) & (times <= truncation)
+            # times_eval = times[eval_mask]
+        
+        # Extract survival curves for the valid time points
+        surv_eval = surv.iloc[eval_mask, sample].values.T
+        
+        # Compute integrated Brier score
+        try:
+            ibs = integrated_brier_score(
+                et_train,
+                et_test[sample],
+                surv_eval,
+                times_eval
+            )
+            results['Int-Brier'].append(ibs)
+        except ValueError as e:
+            print(f"Error in bootstrap iteration {i}: {e}")
+            print(f"  Sample time range: [{min_time_sample:.2f}, {max_time_sample:.2f}]")
+            print(f"  Eval times range: [{times_eval.min():.2f}, {times_eval.max():.2f}]")
+            print(f"  Skipping this iteration...")
+            continue
+    
+    # Display results
+    print(f"\n{'='*70}")
+    print(f"Bootstrap Results ({len(results['C-Index'])} iterations for C-Index, "
+          f"{len(results['Int-Brier'])} for Int-Brier):")
+    for metric in results:
+        if len(results[metric]) > 0:
+            mean_val = np.mean(results[metric])
+            std_val = np.std(results[metric])
+            print(f'{metric}: {mean_val:.4f} (±{std_val:.4f})')
+        else:
+            print(f'{metric}: No valid results')
+    print(f"{'='*70}\n")
+    
+    return results
+
+
+    
+def main():
+    args = create_arg_parser().parse_args()
+    # pretraining_data = pathlib.Path(args.pretraining_data)
+    label_names = LABEL_NAMES
+    output_root = Path(args.output_root)
+    if args.cohort_label is not None:
+        label_path = output_root /args.model_name/ "labels" / (args.cohort_label + '.parquet')
+        if label_path.exists():
+            print(f"Using the user defined label at: {label_path}")
+            label_names = [args.cohort_label]
+        else:
+            raise RuntimeError(f"The user provided label does not exist at {label_path}")
+
+    # labels = ["in_hospital_mortality","readmission","long_los"]
+    output_dir = Path(output_root) / "results"
+    with meds_reader.SubjectDatabase(args.meds_reader, num_threads=32) as database:
+    for label_name in label_names:
+        if args.observation_window:
+            label_output_dir = output_dir / label_name/ f"{args.model_name}_{args.observation_window}"
+        else:
+            label_output_dir = output_dir / label_name/ f"{args.model_name}"
+        label_output_dir.mkdir(exist_ok=True, parents=True)
+        test_result_file = label_output_dir / 'metrics.json'
+        features_label_data = label_output_dir / 'features_with_label'
+        features_label_data.mkdir(exist_ok=True, parents=True)
+        # if test_result_file.exists():
+        #     print(f"The result already existed for {label_name} at {test_result_file}, it will be skipped!")
+        #     continue
+        labels = pd.read_parquet(output_root /args.model_name/ "labels" / (label_name + '.parquet'))
+
+        motor_features_name = get_model_name(label_name, args.model_name, args.observation_window)
+        features_path = output_root / args.model_name /"features"
+        with open(features_path / f"{motor_features_name}.pkl", 'rb') as f:
+            features = pickle.load(f)
+
+        # Find labels that have no features
+        labels_no_features = labels[~labels.subject_id.isin(features["subject_ids"])]
+        if len(labels_no_features) > 0:
+            print(f"{len(labels_no_features)} features are not included")
+            # labels_no_features.to_parquet(label_output_dir / "labels_no_features.parquet")
+
+        # Remove the labels that do not have features generated
+        labels = labels[labels.subject_id.isin(features["subject_ids"])]
+        labels = labels.sort_values(["subject_id", "prediction_time"])
+        # labels = labels.sample(n=len(labels), random_state=42, replace=False)
+        labeled_features = femr.featurizers.join_labels(features, labels,label_name)
+
+        main_split = femr.splits.SubjectSplit.load_from_csv(args.main_split_path)
+
+        # print(main_split)
+        train_mask = np.isin(labeled_features['subject_ids'], main_split.train_subject_ids)
+        test_mask = np.isin(labeled_features['subject_ids'], main_split.test_subject_ids)
+
+        # print()
+
+        def apply_mask(values, mask):
+            def apply(k, v):
+                if len(v.shape) == 1:
+                    return v[mask]
+                elif len(v.shape) == 2:
+                    return v[mask, :]
+                else:
+                    assert False, f"Cannot handle {k} {v.shape}"
+
+            return {k: apply(k, v) for k, v in values.items()}
+
+        train_data = apply_mask(labeled_features, train_mask)
+        test_data = apply_mask(labeled_features, test_mask)
+
+        # print(f"train_data length is {len(train_data)}, {train_data}")
+        # print(f"test_data length is {len(test_data)},{test_data}")
+
+        print("Saving features and labels to parquet")
+        train_features_list = [feature for feature in train_data["features"]]
+        test_features_list = [feature for feature in test_data["features"]]
+
+        if label_name in ["AMI","MASLD","Ischemic_Stroke","Celiac"]:
+            train_set = pd.DataFrame({
+                "subject_id" : train_data["subject_ids"],
+                "prediction_time" : train_data["prediction_times"],
+                "tte_label" : train_data["tte_label"],
+                "time_to_event": train_data["time_to_event"],
+                "boolean_value": train_data["boolean_values"],
+                "features" : train_features_list
+            }).sample(
+                frac=1.0,
+                random_state=42
+            )
+            train_set.to_parquet(features_label_data / "train.parquet", index=False)
+            test_set = pd.DataFrame({
+                "subject_id" : test_data["subject_ids"],
+                "prediction_time" : test_data["prediction_times"],
+                "tte_label" : test_data["tte_label"],
+                "time_to_event": test_data["time_to_event"],
+                "boolean_value": test_data["boolean_values"],
+                "features" : test_features_list
+            })
+            test_set.to_parquet(features_label_data / "test.parquet", index=False)
+
+        else:
+            train_set = pd.DataFrame({
+                "subject_id" : train_data["subject_ids"],
+                "prediction_time" : train_data["prediction_times"],
+                "boolean_value": train_data["boolean_values"],
+                "features" : train_features_list
+            }).sample(
+                frac=1.0,
+                random_state=42
+            )
+            train_set.to_parquet(features_label_data / "train.parquet", index=False)
+
+            test_set = pd.DataFrame({
+                "subject_id" : test_data["subject_ids"],
+                "prediction_time" : test_data["prediction_times"],
+                "boolean_value": test_data["boolean_values"],
+                "features" : test_features_list
+            })
+            test_set.to_parquet(features_label_data / "test.parquet", index=False)
+
+
+        print(f"Total labels: {len(labels)}")
+        print(f"Total train features labels: {len(train_data['features'])}")
+        print(f"Total test features labels: {len(test_data['features'])}")
+
+        roc_auc,pr_auc = logistic_regression(train_set,test_data,label_output_dir)
+        print(label_name, roc_auc)
+        metrics = {
+            "auroc": roc_auc,
+            "aucpr": pr_auc
+        }
+        # if label_name in ["AMI","MASLD","Ischemic_Stroke","Celiac"]:
+        #     tte_results = tte_evaluation(train_set,test_set)
+        #     metrics['C-Index'] = (np.mean(tte_results['C-Index']), np.std(tte_results['C-Index']))
+        #     metrics['Int-Brier'] = (np.mean(tte_results['Int-Brier']), np.std(tte_results['Int-Brier']))
+        # tte_result_file = label_output_dir / 'tte_metrics.json'
+        # with open(tte_result_file, "w") as f:
+        #     json.dump(metrics, f, indent=4)
+        with open(test_result_file, "w") as f:
+            json.dump(metrics, f, indent=4)
+
+
+
+
+if __name__ == "__main__":
+    main()
+
