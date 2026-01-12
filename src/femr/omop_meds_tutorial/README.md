@@ -256,17 +256,18 @@ Evaluates binary classification tasks (e.g., predicting patient outcomes).
 bash run.sh \
   --meds_reader        /xxx/meds_v0.6_reader  \
   --num_proc           24 \
-  --model_path         /xxx/transformer/best_159744 \
-  --model_name         transformer_mtpp \
+  --model_path         /xxx/ \
+  --model_name         transformer_ntp \
   --tokens_per_batch   65536 \
   --device             cuda:0 \
-  --use_ntp            no \
+  --use_ntp            yes \
   --cohort_type        outcome \
   --min_subjects_per_batch 8 \
-  --ontology_path       /user/zj2398/cache/mtpp_8k/ontology.pkl \
-  --main_split_path     /user/zj2398/cache/mtpp_8k/main_split.csv \
-  --output_dir   /shared/share_mala/zj2398/mimic/task/patient_outcome_task/  \
-  --classification_cohort /shared/share_mala/zj2398/mimic/task/patient_outcome_task/cohort/
+  --ontology_path       /data2/processed_datasets/zj2398/femr/cumc/motor/ontology.pkl \
+  --main_split_path     /data2/processed_datasets/zj2398/femr/mimic/main_split.csv \
+  --output_dir   /data/results/zj2398/femr/mimic/outcome/  \
+  --classification_cohort /data2/processed_datasets/mimic/phenotype_task/binary/
+
 ```
 
 ## 5.2. Phenotype Classification & Time-to-Event Prediction
@@ -275,24 +276,24 @@ Evaluates phenotype classification and survival analysis (time-to-event) tasks.
 
 **Script:** `evaluation/run.sh`
 
-**Example Usage:**
+**Example Usage MIMIC:**
 
 ```bash
 bash run.sh \
-  --meds_reader        /xxx/meds_v0.6_reader  \
+  --meds_reader        /data/raw_data/mimic/files/mimiciv/meds_v0.6/3.1/MEDS_cohort-reader \
   --num_proc           24 \
   --model_path         /xxx/transformer/best_159744 \
-  --model_name         transformer_mtpp \
+  --model_name         transformer_ntp \
   --tokens_per_batch   65536 \
   --device             cuda:0 \
-  --use_ntp            no \
+  --use_ntp            yes \
   --cohort_type        phenotype \
   --min_subjects_per_batch 8 \
-  --ontology_path       /user/zj2398/cache/mtpp_8k/ontology.pkl \
-  --main_split_path     /user/zj2398/cache/mtpp_8k/main_split.csv \
-  --output_dir   /shared/share_mala/zj2398/mimic/task/phenotype_task/  \
-  --classification_cohort /shared/share_mala/zj2398/mimic/task/phenotype_task/cohort/binary/ \
-  --tte_cohort /shared/share_mala/zj2398/mimic/task/phenotype_task/cohort/tte/
+  --ontology_path       /data2/processed_datasets/zj2398/femr/cumc/motor/ontology.pkl \
+  --main_split_path     /data2/processed_datasets/zj2398/femr/mimic/main_split.path \
+  --output_dir   /data/results/zj2398/femr/mimic/phenotype  \
+  --classification_cohort  /data2/processed_datasets/mimic/phenotype_task/binary/ \
+  --tte_cohort /data2/processed_datasets/mimic/phenotype_task/tte/
 ```
 
 ### Parameters for run.sh
@@ -324,20 +325,20 @@ Evaluates continuous value prediction tasks (e.g., predicting lab values).
 
 ```bash
 bash run_regression.sh \
-  --meds_reader        /xxx/meds_v0.6_reader \
+  --meds_reader        /data/raw_data/mimic/files/mimiciv/meds_v0.6/3.1/MEDS_cohort-reader \
   --num_proc           24 \
   --model_path         /xxx/transformer/best_159744 \
-  --model_name         transformer_mtpp \
+  --model_name         transformer_ntp \
   --tokens_per_batch   65536 \
   --device             cuda:0 \
   --min_subjects_per_batch 8 \
-  --ontology_path      /user/zj2398/cache/mtpp_8k/ontology.pkl \
-  --main_split_path    /user/zj2398/cache/mtpp_8k/main_split.csv \
-  --cohort_dir   /shared/share_mala/zj2398/mimic/task/regression/cohort/icu_stay_4h/ \
-  --output_dir   /shared/share_mala/zj2398/mimic/task/regression/ \
-  --use_ntp no \
-  --cache_path /shared/share_mala/zj2398/huggingface/datasets \
-  --tasks "pao2,platelets,bilirubin,creatinine" \
+  --ontology_path      /data2/processed_datasets/zj2398/femr/cumc/motor/ontology.pkl \
+  --main_split_path    /data2/processed_datasets/zj2398/femr/mimic/main_split.csv \
+  --cohort_dir   /data2/processed_datasets/mimic/regression/icu_stay_4h/ \
+  --output_dir   /data/results/zj2398/femr/mimic/regression/ \
+  --use_ntp yes \
+  --cache_path xxx \
+  --tasks "xxx" \
   --regression
 ```
 
@@ -352,10 +353,10 @@ bash run_regression.sh \
 | `--output_dir` | Yes | Directory where regression results will be saved |
 | `--ontology_path` | Yes | Path to ontology.pkl file |
 | `--main_split_path` | Yes | Path to main_split.csv file |
-| `--tasks` | Yes | Comma-separated list of regression targets (e.g., `"pao2,platelets,bilirubin,creatinine"`) |
+| `--tasks` | Yes | Comma-separated list of regression targets (MIMIC: `"pao2,platelets,bilirubin,creatinine"` CUMC: `"spo2,platelets,bilirubin,creatinine"`) |
 | `--regression` | Yes | Flag to enable regression mode (no value needed) |
 | `--device` | Yes | GPU device (e.g., `cuda:0`) |
-| `--cache_path` | No | HuggingFace datasets cache directory |
+| `--cache_path` | Yes | HuggingFace datasets cache directory |
 | `--tokens_per_batch` | No | Maximum tokens per batch (default: 65536) |
 | `--min_subjects_per_batch` | No | Minimum patients per batch (default: 8) |
 | `--num_proc` | No | Number of parallel processes (default: 24) |
