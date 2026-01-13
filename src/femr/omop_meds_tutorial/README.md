@@ -298,7 +298,7 @@ Evaluates phenotype classification and survival analysis (time-to-event) tasks.
 **Example Usage**
 
 ```bash
-# export CUDA_VISIBLE_DEVICES=3
+# export CUDA_VISIBLE_DEVICES=5
 # mimic
 bash run.sh \
   --meds_reader        /data/raw_data/mimic/files/mimiciv/meds_v0.6/3.1/MEDS_cohort-reader \
@@ -368,24 +368,24 @@ Evaluates continuous value prediction tasks (e.g., predicting lab values).
 **Script:** `evaluation/regression/run_regression.sh`
 
 **Example Usage:**
-
+<!-- export CUDA_VISIBLE_DEVICES=6 -->
 ```bash
 bash run_regression.sh \
-  --meds_reader        /data/raw_data/mimic/files/mimiciv/meds_v0.6/3.1/MEDS_cohort-reader \
+  --meds_reader        /shared/share_mala/zj2398/mimic/data/meds_v0.6_reader \
   --num_proc           24 \
-  --model_path         /xxx/transformer/best_159744 \
-  --model_name         transformer_ntp \
+  --model_path         /shared/share_mala/zj2398/models/ntp_8k/transformer/best-269840 \
+  --model_name         transformer_ntp_new \
   --tokens_per_batch   65536 \
   --device             cuda:0 \
   --min_subjects_per_batch 8 \
-  --ontology_path      /data2/processed_datasets/zj2398/femr/cumc/motor/ontology.pkl \
-  --main_split_path    /data2/processed_datasets/zj2398/femr/mimic/main_split.csv \
-  --cohort_dir   /data2/processed_datasets/mimic/regression/icu_stay_4h/ \
-  --output_dir   /data/results/zj2398/femr/mimic/regression/ \
-  --use_ntp yes \
-  --cache_path xxx \
-  --tasks "xxx" \
-  --regression
+  --ontology_path      /user/zj2398/cache/mtpp_8k/ontology.pkl \
+  --main_split_path    /user/zj2398/cache/mtpp_8k/main_split.csv \
+  --cohort_dir   /shared/share_mala/zj2398/mimic/task/regression/cohort/icu_stay_4h/ \
+  --output_dir   /shared/share_mala/zj2398/mimic/task/regression/ \
+  --use_ntp no \
+  --cache_path /shared/share_mala/zj2398/huggingface/datasets \
+  --tasks "bilirubin,creatinine,pao2,platelets" \
+  --regression 
 ```
 
 ### Parameters for run_regression.sh
@@ -403,10 +403,10 @@ bash run_regression.sh \
 | `--regression` | Yes | Flag to enable regression mode (no value needed) |
 | `--device` | Yes | GPU device (e.g., `cuda:0`) |
 | `--cache_path` | Yes | HuggingFace datasets cache directory |
-| `--tokens_per_batch` | No | Maximum tokens per batch (default: 65536) |
-| `--min_subjects_per_batch` | No | Minimum patients per batch (default: 8) |
+| `--tokens_per_batch` | Yes | Maximum tokens per batch (default: 65536) |
+| `--min_subjects_per_batch` | Yes | Minimum patients per batch = tokens_per_batch/8192 (default: 8) |
 | `--num_proc` | No | Number of parallel processes (default: 24) |
-| `--use_ntp` | No | Whether to use NTP mode: `yes` or `no` |
+| `--use_ntp` | Yes | Whether to use NTP mode: `yes` or `no` |
 
 ## Evaluation Outputs
 

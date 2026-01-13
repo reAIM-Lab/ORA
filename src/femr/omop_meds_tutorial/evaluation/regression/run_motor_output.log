@@ -2473,3 +2473,58 @@ platelets       0.227       NaN     0.187            0.571
 Completed processing of task: platelets
 ----------------------------------------
 All selected tasks processed.
+Using configuration:
+  COHORT_BASE_DIR:          /shared/share_mala/zj2398/mimic/task/regression/cohort/icu_stay_4h/
+  OMOP_MEDS_READER:         /shared/share_mala/zj2398/mimic/data/meds_v0.6_reader
+  NUM_PROC:                 24
+  TOKENS_PER_BATCH:         65536
+  OBSERVATION_WINDOW:       Not specified
+  REGRESSION:               true
+  PYTHONPATH head:          /user/zj2398/femr_chao_meds_v3/src
+
+[1] Found task: bilirubin
+[2] Found task: creatinine
+[3] Found task: pao2
+[4] Found task: platelets
+[1/4] Processing task: bilirubin
+cohort_base_dir: /shared/share_mala/zj2398/mimic/task/regression/cohort/icu_stay_4h/
+Task directory: /shared/share_mala/zj2398/mimic/task/regression/cohort/icu_stay_4h/bilirubin/
+Executing: python -u "/user/zj2398/femr_chao_meds_v3/src/femr/omop_meds_tutorial/evaluation/generate_features.py"         --model_path "/shared/share_mala/zj2398/models/ntp_8k/transformer/best-269840"         --model_name "transformer_ntp_new"         --meds_reader "/shared/share_mala/zj2398/mimic/data/meds_v0.6_reader"         --num_proc "24"         --tokens_per_batch "65536"         --device "cuda:0"         --min_subjects_per_batch "8"         --cohort_dir "/shared/share_mala/zj2398/mimic/task/regression/cohort/icu_stay_4h/bilirubin/"         --ontology_path "/user/zj2398/cache/mtpp_8k/ontology.pkl"         --output_root "/shared/share_mala/zj2398/mimic/task/regression/"         --use_ntp "no"         --cache_path "/shared/share_mala/zj2398/huggingface/datasets"         --loss_type labeled_subjects         --task_type regression 
+Using configuration:
+  COHORT_BASE_DIR:          /shared/share_mala/zj2398/mimic/task/regression/cohort/icu_stay_4h/
+  OMOP_MEDS_READER:         /shared/share_mala/zj2398/mimic/data/meds_v0.6_reader
+  NUM_PROC:                 24
+  TOKENS_PER_BATCH:         65536
+  OBSERVATION_WINDOW:       Not specified
+  REGRESSION:               true
+  PYTHONPATH head:          /user/zj2398/femr_chao_meds_v3/src
+
+[1] Found task: bilirubin
+[2] Found task: creatinine
+[3] Found task: pao2
+[4] Found task: platelets
+[1 skipped] Skipping task: bilirubin (not in specified task list)
+[2 skipped] Skipping task: creatinine (not in specified task list)
+[1/4] Processing task: pao2
+cohort_base_dir: /shared/share_mala/zj2398/mimic/task/regression/cohort/icu_stay_4h/
+Task directory: /shared/share_mala/zj2398/mimic/task/regression/cohort/icu_stay_4h/pao2/
+Executing: python -u "/user/zj2398/femr_chao_meds_v3/src/femr/omop_meds_tutorial/evaluation/generate_features.py"         --model_path "/shared/share_mala/zj2398/models/ntp_8k/transformer/best-269840"         --model_name "transformer_ntp_new"         --meds_reader "/shared/share_mala/zj2398/mimic/data/meds_v0.6_reader"         --num_proc "24"         --tokens_per_batch "65536"         --device "cuda:0"         --min_subjects_per_batch "8"         --cohort_dir "/shared/share_mala/zj2398/mimic/task/regression/cohort/icu_stay_4h/pao2/"         --ontology_path "/user/zj2398/cache/mtpp_8k/ontology.pkl"         --output_root "/shared/share_mala/zj2398/mimic/task/regression/"         --use_ntp "no"         --cache_path "/shared/share_mala/zj2398/huggingface/datasets"         --loss_type labeled_subjects         --task_type regression 
+label_name of cohort_dir: bilirubin
+/shared/share_mala/zj2398/mimic/task/regression/cohort/icu_stay_4h/bilirubin/bilirubin.parquet
+Loading labels from  /shared/share_mala/zj2398/mimic/task/regression/transformer_ntp_new/labels/bilirubin.parquet
+labels head:    subject_id     prediction_time               code  numerical_value
+0    10308187 2137-06-12 06:30:00  LAB//50885//mg/dL              0.3
+1    10308187 2137-06-12 21:39:00  LAB//50885//mg/dL              0.4
+2    10308187 2137-06-23 22:15:00  LAB//50885//mg/dL              0.2
+3    10308247 2186-10-30 15:55:00  LAB//50885//mg/dL              5.0
+4    10308247 2186-10-31 00:00:00  LAB//50885//mg/dL              6.9
+task type is regression
+typed_labels length: 138379
+Loading model from /shared/share_mala/zj2398/models/ntp_8k/transformer/best-269840
+loss type is labeled_subjects
+starting loading model
+the hidden size is 768
+create loss type is labeled_subjects
+the report is LoadReport(renamed_keys=[], dropped_keys=['task_model.final_layer.bias', 'task_model.final_layer.weight'], missing_keys=[], unexpected_keys=[])
+The maximum context length is 8192.0,  8 subjects and 65536 tokens per batch
+max_length: 8192
