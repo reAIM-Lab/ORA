@@ -161,7 +161,7 @@ def logistic_regression(train_set,test_data,label_output_dir):
 def tte_evaluation(train_set_init, test_set_init,truncation,tte_cohort):
 
     #need to filter train_set and test_set from tte_cohort
-    keys = tte_cohort[["subject_id", "prediction_time"]].drop_duplicates()
+    keys = tte_cohort[["subject_id", "prediction_time","time_to_event", "tte_label"]].drop_duplicates()
     train_set = train_set_init.merge(
         keys, on=["subject_id", "prediction_time"], how="inner"
     )
@@ -359,6 +359,7 @@ def main():
         labels = labels.sort_values(["subject_id", "prediction_time"])
         # labels = labels.sample(n=len(labels), random_state=42, replace=False)
         labeled_features = femr.featurizers.join_labels(features, labels,label_name)
+        print(f"label features length {len(labeled_features['times'])}")
 
         main_split = femr.splits.SubjectSplit.load_from_csv(args.main_split_path)
 
@@ -389,49 +390,49 @@ def main():
         train_features_list = [feature for feature in train_data["features"]]
         test_features_list = [feature for feature in test_data["features"]]
 
-        if args.cohort_type == "phenotype":
-            print("phenotype prediction")
-            train_set = pd.DataFrame({
-                "subject_id" : train_data["subject_ids"],
-                "prediction_time" : train_data["prediction_times"],
-                "tte_label" : train_data["tte_label"],
-                "time_to_event": train_data["time_to_event"],
-                "boolean_value": train_data["boolean_values"],
-                "features" : train_features_list
-            }).sample(
-                frac=1.0,
-                random_state=42
-            )
-            train_set.to_parquet(features_label_data / "train.parquet", index=False)
-            test_set = pd.DataFrame({
-                "subject_id" : test_data["subject_ids"],
-                "prediction_time" : test_data["prediction_times"],
-                "tte_label" : test_data["tte_label"],
-                "time_to_event": test_data["time_to_event"],
-                "boolean_value": test_data["boolean_values"],
-                "features" : test_features_list
-            })
-            test_set.to_parquet(features_label_data / "test.parquet", index=False)
+        # if args.cohort_type == "phenotype":
+        #     print("phenotype prediction")
+        #     train_set = pd.DataFrame({
+        #         "subject_id" : train_data["subject_ids"],
+        #         "prediction_time" : train_data["prediction_times"],
+        #         "tte_label" : train_data["tte_label"],
+        #         "time_to_event": train_data["time_to_event"],
+        #         "boolean_value": train_data["boolean_values"],
+        #         "features" : train_features_list
+        #     }).sample(
+        #         frac=1.0,
+        #         random_state=42
+        #     )
+        #     train_set.to_parquet(features_label_data / "train.parquet", index=False)
+        #     test_set = pd.DataFrame({
+        #         "subject_id" : test_data["subject_ids"],
+        #         "prediction_time" : test_data["prediction_times"],
+        #         "tte_label" : test_data["tte_label"],
+        #         "time_to_event": test_data["time_to_event"],
+        #         "boolean_value": test_data["boolean_values"],
+        #         "features" : test_features_list
+        #     })
+        #     test_set.to_parquet(features_label_data / "test.parquet", index=False)
 
-        else:
-            train_set = pd.DataFrame({
-                "subject_id" : train_data["subject_ids"],
-                "prediction_time" : train_data["prediction_times"],
-                "boolean_value": train_data["boolean_values"],
-                "features" : train_features_list
-            }).sample(
-                frac=1.0,
-                random_state=42
-            )
-            train_set.to_parquet(features_label_data / "train.parquet", index=False)
+        # else:
+        train_set = pd.DataFrame({
+            "subject_id" : train_data["subject_ids"],
+            "prediction_time" : train_data["prediction_times"],
+            "boolean_value": train_data["boolean_values"],
+            "features" : train_features_list
+        }).sample(
+            frac=1.0,
+            random_state=42
+        )
+        train_set.to_parquet(features_label_data / "train.parquet", index=False)
 
-            test_set = pd.DataFrame({
-                "subject_id" : test_data["subject_ids"],
-                "prediction_time" : test_data["prediction_times"],
-                "boolean_value": test_data["boolean_values"],
-                "features" : test_features_list
-            })
-            test_set.to_parquet(features_label_data / "test.parquet", index=False)
+        test_set = pd.DataFrame({
+            "subject_id" : test_data["subject_ids"],
+            "prediction_time" : test_data["prediction_times"],
+            "boolean_value": test_data["boolean_values"],
+            "features" : test_features_list
+        })
+        test_set.to_parquet(features_label_data / "test.parquet", index=False)
 
 
         print(f"Total labels: {len(labels)}")

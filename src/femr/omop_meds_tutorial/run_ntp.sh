@@ -44,7 +44,7 @@ echo "[$(date)] starting both jobs..."
 
 
 # multi-gpu pretraining
-# export CUDA_VISIBLE_DEVICES=1,2,3
+# export CUDA_VISIBLE_DEVICES=1
 accelerate launch \
   --num_processes 3 \
   pretrain.py \

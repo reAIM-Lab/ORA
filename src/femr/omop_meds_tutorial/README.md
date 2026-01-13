@@ -253,6 +253,7 @@ Evaluates binary classification tasks (e.g., predicting patient outcomes).
 **Example Usage:**
 
 ```bash
+# Mimic
 bash run.sh \
   --meds_reader        /xxx/meds_v0.6_reader  \
   --num_proc           24 \
@@ -262,11 +263,29 @@ bash run.sh \
   --device             cuda:0 \
   --use_ntp            yes \
   --cohort_type        outcome \
+  --cache_path           xxx \
   --min_subjects_per_batch 8 \
   --ontology_path       /data2/processed_datasets/zj2398/femr/cumc/motor/ontology.pkl \
   --main_split_path     /data2/processed_datasets/zj2398/femr/mimic/main_split.csv \
   --output_dir   /data/results/zj2398/femr/mimic/outcome/  \
   --classification_cohort /data2/processed_datasets/mimic/phenotype_task/binary/
+
+# cumc
+bash run.sh \
+  --meds_reader        /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/post_transform_meds_reader \
+  --num_proc           20 \
+  --model_path         /data2/processed_datasets/zj2398/femr/cumc/tpp/transformer/best_756945 \
+  --model_name         transformer_tpp \
+  --tokens_per_batch   65536 \
+  --device             cuda:0 \
+  --use_ntp            no \
+  --cohort_type        outcome \
+  --cache_path        /data2/huggingface/zj2398/ \
+  --min_subjects_per_batch 8 \
+  --ontology_path       /data2/processed_datasets/zj2398/femr/cumc/motor/ontology.pkl \
+  --main_split_path     /data2/processed_datasets/zj2398/femr/cumc/main_split.csv \
+  --output_dir   /data/results/zj2398/femr/cumc/outcome/  \
+  --classification_cohort /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/task_labels/patient_outcomes_clean/
 
 ```
 
@@ -276,9 +295,11 @@ Evaluates phenotype classification and survival analysis (time-to-event) tasks.
 
 **Script:** `evaluation/run.sh`
 
-**Example Usage MIMIC:**
+**Example Usage**
 
 ```bash
+# export CUDA_VISIBLE_DEVICES=3
+# mimic
 bash run.sh \
   --meds_reader        /data/raw_data/mimic/files/mimiciv/meds_v0.6/3.1/MEDS_cohort-reader \
   --num_proc           24 \
@@ -288,14 +309,37 @@ bash run.sh \
   --device             cuda:0 \
   --use_ntp            yes \
   --cohort_type        phenotype \
+  --cache_path        /data2/huggingface/zj2398/ \
   --min_subjects_per_batch 8 \
+  --truncation  330 \
   --ontology_path       /data2/processed_datasets/zj2398/femr/cumc/motor/ontology.pkl \
   --main_split_path     /data2/processed_datasets/zj2398/femr/mimic/main_split.path \
   --output_dir   /data/results/zj2398/femr/mimic/phenotype  \
   --classification_cohort  /data2/processed_datasets/mimic/phenotype_task/binary/ \
   --tte_cohort /data2/processed_datasets/mimic/phenotype_task/tte/
-```
 
+# cumc
+bash run.sh \
+  --meds_reader        /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/post_transform_meds_reader \
+  --num_proc           20 \
+  --model_path         /data2/processed_datasets/zj2398/femr/cumc/mtpp/transformer/best_1730112 \
+  --model_name         transformer_mtpp \
+  --tokens_per_batch   65536 \
+  --device             cuda:0 \
+  --use_ntp            no \
+  --cohort_type        phenotype \
+  --min_subjects_per_batch 8 \
+  --truncation  1825 \
+  --cache_path        /data2/huggingface/zj2398/ \
+  --ontology_path       /data2/processed_datasets/zj2398/femr/cumc/motor/ontology.pkl \
+  --main_split_path     /data2/processed_datasets/zj2398/femr/cumc/main_split.csv \
+  --output_dir   /data/results/zj2398/femr/cumc/phenotype/  \
+  --classification_cohort /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/task_labels/phenotype_tte/binary/ \
+  --tte_cohort  /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/task_labels/phenotype_tte/tte/
+
+  # /data2/processed_datasets/zj2398/femr/cumc/tpp/transformer/best_756945
+  # /data2/processed_datasets/zj2398/femr/cumc/mtpp/transformer/best_1730112
+```
 ### Parameters for run.sh
 
 | Parameter | Required | Description |
@@ -307,8 +351,8 @@ bash run.sh \
 | `--ontology_path` | Yes | Path to ontology.pkl file (from prepare.py) |
 | `--main_split_path` | Yes | Path to main_split.csv file (from prepare.py) |
 | `--cohort_type` | Yes | Type of task: `outcome`, `phenotype`, or other cohort types |
-| `--classification_cohort` | Conditional | Path to classification task cohort directory (required for classification tasks) |
-| `--tte_cohort` | Conditional | Path to time-to-event cohort directory (required for TTE tasks) |
+| `--classification_cohort` | Yes | Path to classification task cohort directory (required for classification tasks) |
+| `--tte_cohort` | Yes | Path to time-to-event cohort directory (required for TTE tasks) |
 | `--device` | Yes | GPU device to use (e.g., `cuda:0`, `cuda:1`) |
 | `--tokens_per_batch` | No | Maximum tokens per batch (default: 65536). Adjust based on GPU memory |
 | `--min_subjects_per_batch` | No | Minimum patients per batch (default: 8) |
@@ -366,7 +410,7 @@ bash run_regression.sh \
 
 All evaluation scripts generate results in their respective `--output_dir`:
 
-- **Classification tasks**: AUC-ROC, 
+- **Classification tasks**: AUROC, AUPRC
 - **Time-to-Event tasks**: C-index, Int-Brier Score
 - **Regression tasks**: RMSE, MAE, R² scores
 
