@@ -353,6 +353,8 @@ bash run.sh \
 | `--cohort_type` | Yes | Type of task: `outcome`, `phenotype`, or other cohort types |
 | `--classification_cohort` | Yes | Path to classification task cohort directory (required for classification tasks) |
 | `--tte_cohort` | Yes | Path to time-to-event cohort directory (required for TTE tasks) |
+| `--truncation` | Yes | 330 for mimic and 1825 for cumc |
+| `--cache_path` | Yes | Path to store hugginface datasets. You can set a dir like /data2/user/huggingface |
 | `--device` | Yes | GPU device to use (e.g., `cuda:0`, `cuda:1`) |
 | `--tokens_per_batch` | No | Maximum tokens per batch (default: 65536). Adjust based on GPU memory |
 | `--min_subjects_per_batch` | No | Minimum patients per batch (default: 8) |
