@@ -155,13 +155,17 @@ pretraining_data/
 ├── ontology.pkl                # Medical ontology
 ├── tokenizer/                  # Trained tokenizer files
 ├── {loss_type}_task.pkl        # Pretraining task definition
-├── train_batches/              # Training data batches
-└── val_batches/                # Validation data batches
+├── train_batches/              # Training data batches (transformer/local attention)
+├── val_batches/                # Validation data batches (transformer/local attention)
+├── train_batches_mamba/        # Training batches optimized for Mamba (≤8192 per sample, ≤16384 per batch)
+└── val_batches_mamba/          # Validation batches optimized for Mamba
 ```
 
 ### 4.2. Running pretrain.py
 
 The `pretrain.py` script trains a foundation model (Transformer or Mamba) using the prepared data. It supports multi-GPU training via Hugging Face Accelerate.
+
+Note: When running prepare.py, pass `--model transformer` to build transformer-style batches or `--model mamba` to build Mamba-optimized batches only. Pretrain automatically loads the correct directory based on `--model`.
 
 **Example Usage (Multi-GPU):**
 
@@ -312,6 +316,7 @@ bash run.sh \
   --cache_path        /data2/huggingface/zj2398/ \
   --min_subjects_per_batch 8 \
   --truncation  330 \
+  --observation_window 730 \
   --ontology_path       /data2/processed_datasets/zj2398/femr/cumc/motor/ontology.pkl \
   --main_split_path     /data2/processed_datasets/zj2398/femr/mimic/main_split.path \
   --output_dir   /data/results/zj2398/femr/mimic/phenotype  \

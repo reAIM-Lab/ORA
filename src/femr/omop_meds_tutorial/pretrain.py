@@ -175,10 +175,15 @@ def main():
     # print(f"{args.loss_type} task length: {len(task.pretraining_task_codes)}")
     processor = femr.models.processor.FEMRBatchProcessor(tokenizer, task)
 
-    train_batches_path = pretraining_data / 'train_batches'
-    train_batches = datasets.Dataset.load_from_disk(str(train_batches_path))
+    # Choose dataset packaging based on model
+    if args.model == "mamba":
+        train_batches_path = pretraining_data / 'train_batches_mamba'
+        val_batches_path = pretraining_data / 'val_batches_mamba'
+    else:
+        train_batches_path = pretraining_data / 'train_batches'
+        val_batches_path = pretraining_data / 'val_batches'
 
-    val_batches_path = pretraining_data / 'val_batches'
+    train_batches = datasets.Dataset.load_from_disk(str(train_batches_path))
     val_batches = datasets.Dataset.load_from_disk(str(val_batches_path))
 
     # Use Hydra to load model hyperparameters and keep tokenizer-derived fields runtime-bound

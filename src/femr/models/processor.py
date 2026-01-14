@@ -434,9 +434,9 @@ def _add_dimension(data: Any) -> Any:
 
 
 class FEMRBatchProcessor:
-    """The FEMR Batch processor creates batches for processing by a transformer."""
+    """The FEMR Batch processor creates batches for processing by a transformer or mamba."""
 
-    def __init__(self, tokenizer, task=None,cache_path = None):
+    def __init__(self, tokenizer, task=None, cache_path=None):
         self.creator = BatchCreator(tokenizer, task)
         self.cache_path = cache_path
 
@@ -586,5 +586,103 @@ class FEMRBatchProcessor:
         #     num_proc=num_proc // 4,
         #     writer_batch_size=8,
         # )
+
+        return batch_dataset
+
+    def convert_dataset_mamba(
+        self,
+        db: meds_reader.SubjectDatabase,
+        *,
+        tokens_per_batch: int = 16384,
+        per_sample_max_tokens: int = 8192,
+        num_proc: int = 1,
+    ):
+        """
+        Convert an entire dataset to batches optimized for Mamba training.
+
+        Strategy:
+        - Generate subsequences per subject with max length per_sample_max_tokens (truncate via windowing).
+        - Sort subsequences by length (descending) to reduce padding waste.
+        - Greedily pack into batches so that (num_sequences * max_seq_len) <= tokens_per_batch.
+
+        Returns a huggingface dataset of prebuilt batches compatible with the existing collate.
+        """
+        # Step 1: compute candidate windows (subject_id, start_index, length, subsample_fraction)
+        length_chunks = tuple(
+            db.map(
+                functools.partial(map_preliminary_batch_stats, processor=self, max_length=per_sample_max_tokens),
+            )
+        )
+
+        if len(length_chunks) == 0:
+            raise RuntimeError("No subjects found when preparing Mamba batches")
+
+        lengths = np.concatenate(length_chunks) if len(length_chunks) > 1 else length_chunks[0]
+
+        if lengths.shape[0] == 0:
+            raise RuntimeError("map_preliminary_batch_stats produced 0 windows for Mamba batching")
+
+        # Ensure no window exceeds per_sample_max_tokens (defensive; generation should already cap this)
+        lengths[:, 2] = np.minimum(lengths[:, 2], per_sample_max_tokens)
+
+        # Step 2: sort by descending length to pack similarly sized sequences together
+        order = np.argsort(-lengths[:, 2])
+        lengths = lengths[order, :]
+
+        # Step 3: Greedy packing by S * L_max <= tokens_per_batch
+        batch_bounds: List[Tuple[int, int]] = []
+        start_idx = 0
+        cur_max = 0
+        cur_count = 0
+        for i in range(lengths.shape[0]):
+            l_i = int(lengths[i, 2])
+            new_max = max(cur_max, l_i)
+            # If adding this sequence would exceed the token budget, close current batch
+            if cur_count > 0 and (cur_count + 1) * new_max > tokens_per_batch:
+                batch_bounds.append((start_idx, i))
+                start_idx = i
+                cur_max = l_i
+                cur_count = 1
+            else:
+                cur_max = new_max
+                cur_count += 1
+
+        # Close final batch
+        if start_idx < lengths.shape[0]:
+            batch_bounds.append((start_idx, lengths.shape[0]))
+
+        # Step 4: split batches across processes similarly to convert_dataset
+        print("Got mamba-optimized batches", len(batch_bounds))
+        split_batches = np.array_split(batch_bounds, max(1, num_proc))
+
+        final_batch_data = []
+        for part in split_batches:
+            if len(part) == 0:
+                continue
+            start = part[0][0]
+            end = part[-1][-1]
+            lengths_part = lengths[start:end, :]
+            # offsets are local to lengths_part
+            offsets = [0] + [b - start for _, b in part]
+            final_batch_data.append(
+                (
+                    lengths_part,
+                    np.array(offsets, dtype=np.int32),
+                )
+            )
+
+        batch_func = functools.partial(
+            _batch_generator,
+            creator=self.creator,
+            path_to_database=db.path_to_database,
+        )
+
+        batch_dataset = datasets.Dataset.from_generator(
+            batch_func,
+            gen_kwargs={"batch_data": final_batch_data},
+            num_proc=max(1, num_proc // 4),
+            writer_batch_size=8,
+            cache_dir=self.cache_path,
+        )
 
         return batch_dataset

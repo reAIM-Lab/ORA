@@ -341,23 +341,25 @@ echo "All tasks processed."
 
 
 # phenotype
-# export CUDA_VISIBLE_DEVICES=1
+# export CUDA_VISIBLE_DEVICES=7
 
 #phenotype
 # bash run.sh \
 #   --meds_reader        /shared/share_mala/zj2398/mimic/data/meds_v0.6_reader  \
 #   --num_proc           24 \
-#   --model_path         /shared/share_mala/zj2398/models/mtpp_8k/mtpp_all_shared_6100_bin_5/transformer/best_159744 \
-#   --model_name         transformer_mtpp \
+#   --model_path         /shared/share_mala/zj2398/models/ntp_8k/transformer/best-269840 \
+#   --model_name         transformer_ntp \
 #   --tokens_per_batch   65536 \
 #   --device             cuda:0 \
-#   --use_ntp            no \
+#   --use_ntp            yes \
 #   --cohort_type        phenotype \
+#   --cache_path         /shared/share_mala/zj2398/huggingface/datasets \
 #   --min_subjects_per_batch 8 \
 #   --ontology_path       /user/zj2398/cache/mtpp_8k/ontology.pkl \
 #   --main_split_path     /user/zj2398/cache/mtpp_8k/main_split.csv \
 #   --output_dir   /shared/share_mala/zj2398/mimic/task/phenotype_task/  \
-#   --truncation   330
+#   --truncation   330 \
+#   --observation_window 730 \
 #   --classification_cohort /shared/share_mala/zj2398/mimic/task/phenotype_task/cohort/binary/ \
 #   --tte_cohort /shared/share_mala/zj2398/mimic/task/phenotype_task/cohort/tte/
 
@@ -365,12 +367,13 @@ echo "All tasks processed."
 # bash run.sh \
 #   --meds_reader        /shared/share_mala/zj2398/mimic/data/meds_v0.6_reader  \
 #   --num_proc           24 \
-#   --model_path         /shared/share_mala/zj2398/models/mtpp_8k/mtpp_all_shared_6100_bin_5/transformer/best_159744 \
-#   --model_name         transformer_mtpp \
+#   --model_path         /shared/share_mala/zj2398/models/tpp_8k/transformer/best_221573 \
+#   --model_name         transformer_tpp \
 #   --tokens_per_batch   65536 \
 #   --device             cuda:0 \
 #   --use_ntp            no \
-#   --cohort_type        phenotype \
+#   --cohort_type        outcome \
+#   --cache_path         /shared/share_mala/zj2398/huggingface/datasets \
 #   --min_subjects_per_batch 8 \
 #   --ontology_path       /user/zj2398/cache/mtpp_8k/ontology.pkl \
 #   --main_split_path     /user/zj2398/cache/mtpp_8k/main_split.csv \

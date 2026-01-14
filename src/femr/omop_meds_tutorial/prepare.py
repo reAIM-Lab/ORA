@@ -151,26 +151,53 @@ def main(args):
         # for key in example_batch['batch'].keys():
         #     print(f"example_batch[{key}], shape: {example_batch['batch'][key].shape}, values: {example_batch['batch'][key]}")
 
-        train_batches_path = pretraining_data_path / 'train_batches'
+        # Generate only one style of batches based on model type
+        if args.model in ("transformer", None):
+            train_batches_path = pretraining_data_path / 'train_batches'
+            if not train_batches_path.exists():
+                print(f"Convert batches (transformer-style), saving to {train_batches_path}")
+                train_batches = processor.convert_dataset(
+                    train_database, tokens_per_batch=args.tokens_per_batch, num_proc=num_threads
+                )
+                print("Convert batches to pytorch")
+                train_batches.set_format("pt")
+                train_batches.save_to_disk(train_batches_path)
 
+            val_batches_path = pretraining_data_path / 'val_batches'
+            if not val_batches_path.exists():
+                print(f"Convert val batches (transformer-style), saving to {val_batches_path}")
+                val_batches = processor.convert_dataset(
+                    val_database, tokens_per_batch=args.tokens_per_batch, num_proc=num_threads
+                )
+                val_batches.set_format("pt")
+                val_batches.save_to_disk(val_batches_path)
+        elif args.model == "mamba":
+            # Mamba-optimized packing: ≤mamba_per_sample_max_tokens per sample, ≤tokens_per_batch per batch
+            train_batches_mamba_path = pretraining_data_path / 'train_batches_mamba'
+            if not train_batches_mamba_path.exists():
+                print(f"Convert batches (mamba-optimized), saving to {train_batches_mamba_path}")
+                train_batches_mamba = processor.convert_dataset_mamba(
+                    train_database,
+                    tokens_per_batch=args.tokens_per_batch,
+                    per_sample_max_tokens=getattr(args, 'mamba_per_sample_max_tokens', 8192),
+                    num_proc=num_threads,
+                )
+                train_batches_mamba.set_format("pt")
+                train_batches_mamba.save_to_disk(train_batches_mamba_path)
 
-        if not train_batches_path.exists():
-            print(f"Convert batches, saving to {train_batches_path}")
-            # But generally we want to convert entire datasets
-            train_batches = processor.convert_dataset(train_database, tokens_per_batch=args.tokens_per_batch, num_proc=num_threads)
-
-            print("Convert batches to pytorch")
-            # Convert our batches to pytorch tensors
-            train_batches.set_format("pt")
-            train_batches.save_to_disk(train_batches_path)
-
-        val_batches_path = pretraining_data_path / 'val_batches'
-        if not val_batches_path.exists():
-            print(f"Convert val batches, saving to {val_batches_path}")
-            val_batches = processor.convert_dataset(val_database, tokens_per_batch=args.tokens_per_batch, num_proc=num_threads)
-            # Convert our batches to pytorch tensors
-            val_batches.set_format("pt")
-            val_batches.save_to_disk(val_batches_path)
+            val_batches_mamba_path = pretraining_data_path / 'val_batches_mamba'
+            if not val_batches_mamba_path.exists():
+                print(f"Convert val batches (mamba-optimized), saving to {val_batches_mamba_path}")
+                val_batches_mamba = processor.convert_dataset_mamba(
+                    val_database,
+                    tokens_per_batch=args.tokens_per_batch,
+                    per_sample_max_tokens=getattr(args, 'mamba_per_sample_max_tokens', 8192),
+                    num_proc=num_threads,
+                )
+                val_batches_mamba.set_format("pt")
+                val_batches_mamba.save_to_disk(val_batches_mamba_path)
+        else:
+            raise ValueError(f"Unknown model type: {args.model}")
 
 
 def create_omop_meds_tutorial_argparser():
@@ -223,6 +250,15 @@ def create_omop_meds_tutorial_argparser():
         type=int,
         # this is decided based on the 99% percentile of the number of tokens
         default=8192,
+    )
+    parser.add_argument(
+        "--mamba_per_sample_max_tokens",
+        dest="mamba_per_sample_max_tokens",
+        action="store",
+        required=False,
+        type=int,
+        default=8192,
+        help="Max tokens per sample/window for Mamba batching (truncate if longer)",
     )
     parser.add_argument(
         "--time_bins",
@@ -285,6 +321,18 @@ def create_omop_meds_tutorial_argparser():
         type=str,
         default=8,
     )
+
+    # Choose how to build pretraining batches (affects efficiency for different backbones)
+    # Support both --model for convenience
+    parser.add_argument(
+        "--model",
+        dest="model",
+        action="store",
+        required=False,
+        choices=["transformer", "mamba"],
+        default="transformer",
+        help="Batching target: transformer (original) or mamba (length-packed)",
+    )
     
 
     return parser
@@ -296,13 +344,17 @@ if __name__ == "__main__":
 '''
 mimic
 gsb
-python prepare_motor.py \
-  --pretraining_data /shared/share_mala/zj2398/fomoh/motor \
-  --athena_path " " \
+python prepare.py \
+  --pretraining_data /user/zj2398/cache/mtpp_all_shared_6100_bin_5 \
+  --ontology_path /user/zj2398/cache/mtpp_8k_num_bin5/ontology.pkl \
   --time_bins 8 \
-  --loss_type motor \
-  --num_threads 100 \
-  --meds_reader /shared/share_mala/zj2398/mimic/meds_v0.6_reader
+  --num_threads 20 \
+  --value_bins 5 \
+  --num_final_tasks 6100 \
+  --model mamba \
+  --loss_type mtpp \
+  --hf_cache_path /shared/share_mala/zj2398/huggingface/datasets \
+  --meds_reader /shared/share_mala/zj2398/mimic/data/meds_v0.6_reader
 
 
 kuvira

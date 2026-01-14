@@ -291,32 +291,10 @@ class FEMRMamba(nn.Module):
         #         self.layer_norm_f = getattr(self.backbone, attr)
         #         break
 
-        # Save attribute names only (strings), do NOT register modules twice
-        self._mamba_layers_attr = None
-        self._final_norm_attr = None
-
-        for attr in ["layers", "mixer_layers", "blocks"]:
-            if hasattr(self.backbone, attr):
-                self._mamba_layers_attr = attr
-                break
-
-        for attr in ["norm_f", "final_layernorm", "ln_f", "norm"]:
-            if hasattr(self.backbone, attr):
-                self._final_norm_attr = attr
-                break
-            
-        assert self._mamba_layers_attr is not None, "Could not find mamba layer list attr"
+        # No per-layer time injection; rely on backbone forward only.
 
 
-    def _inject_time_features(self, hidden_states: torch.Tensor, time_pad: torch.Tensor, C: int, D: int):
-        """Inject time features into hidden states (same as transformer per-layer injection)."""
-        if C <= D:
-            hidden_states[:, :, -C:] = time_pad.to(dtype=hidden_states.dtype)
-        else:
-            # Fallback: project if time dims exceed model dims
-            proj = torch.eye(C, D, device=hidden_states.device, dtype=hidden_states.dtype)
-            hidden_states = hidden_states + torch.matmul(time_pad.to(hidden_states.dtype), proj)
-        return hidden_states
+    # Removed per-layer time injection for stability and simplicity
 
     def forward(self, batch: Mapping[str, torch.Tensor], s):
         # Embedding path identical to transformer
@@ -327,79 +305,28 @@ class FEMRMamba(nn.Module):
 
         x = self.in_norm(x)
 
-        # Vectorized pad of packed sequences using subject_lengths
+        # Efficient pad via split + pad_sequence and attention mask; no time injection
         lengths_raw = batch["subject_lengths"]
-        if isinstance(lengths_raw, torch.Tensor):
-            lengths = lengths_raw.to(device=x.device, dtype=torch.long)
-        else:
-            lengths = torch.as_tensor(lengths_raw, device=x.device, dtype=torch.long)  # (S,)
+        lengths = lengths_raw if isinstance(lengths_raw, torch.Tensor) else torch.as_tensor(lengths_raw, device=x.device)
+        lengths = lengths.to(dtype=torch.long)
         if lengths.numel() == 0:
             return self.out_norm(x)
-        L_max = int(torch.max(lengths).item())
-        B = lengths.shape[0]
-        D = x.shape[-1]
 
-        # build attention mask?
-        ar = torch.arange(L_max, device=x.device).unsqueeze(0)  # (1, Lmax)
-        mask = ar < lengths.unsqueeze(1)  # (B, Lmax)
+        seqs: List[torch.Tensor] = torch.split(x, lengths.tolist())
+        padded = nn.utils.rnn.pad_sequence(seqs, batch_first=True)
+        attn_mask = torch.arange(padded.size(1), device=padded.device)[None, :].expand(len(seqs), -1) < lengths[:, None]
 
-        padded = x.new_zeros((B, L_max, D))
-        padded.view(-1, D)[mask.view(-1)] = x
+        try:
+            out = self.backbone(inputs_embeds=padded, attention_mask=attn_mask)
+        except TypeError:
+            out = self.backbone(inputs_embeds=padded)
+        except Exception:
+            out = self.backbone(padded)
 
-        # Prepare time features for per-layer injection (like transformer)
-        time_pad = None
-        C = 0
-        if self.config.use_normed_ages and ("time_data" in batch):
-            td_raw = batch["time_data"]
-            if isinstance(td_raw, torch.Tensor):
-                td = td_raw.to(device=x.device)
-            else:
-                td = torch.as_tensor(td_raw, device=x.device)
-            # Concatenate time and time^2
-            all_time = torch.concatenate((td, td ** 2), axis=-1)
-            C = all_time.shape[-1]
-            time_pad = padded.new_zeros((B, L_max, C))
-            time_pad.view(-1, C)[mask.view(-1)] = all_time
+        last_hidden = out.last_hidden_state if hasattr(out, "last_hidden_state") else (out[0] if isinstance(out, tuple) else out)
 
-        # Per-layer forward with time injection (like transformer)
-        # if self.mamba_layers is not None and time_pad is not None:
-        #     # Manual layer iteration with time injection at each layer
-        #     hidden_states = padded
-        #     for layer in self.mamba_layers:
-        #         # Inject time features BEFORE each layer (same as transformer)
-        #         hidden_states = self._inject_time_features(hidden_states, time_pad, C, D)
-        #         # Forward through Mamba layer
-        #         layer_output = layer(hidden_states)
-        #         # Handle different return types from Mamba layers
-        #         if isinstance(layer_output, tuple):
-        #             hidden_states = layer_output[0]
-        #         else:
-        #             hidden_states = layer_output
-        #     # Apply final norm if present
-        #     if self.layer_norm_f is not None:
-        #         hidden_states = self.layer_norm_f(hidden_states)
-        #     last_hidden = hidden_states
-        layers = getattr(self.backbone, self._mamba_layers_attr) if self._mamba_layers_attr else None
-        final_norm = getattr(self.backbone, self._final_norm_attr) if self._final_norm_attr else None
-
-        if layers is not None and time_pad is not None:
-            hidden_states = padded
-            for layer in layers:
-                hidden_states = self._inject_time_features(hidden_states, time_pad, C, D)
-                layer_output = layer(hidden_states)
-                hidden_states = layer_output[0] if isinstance(layer_output, tuple) else layer_output
-            if final_norm is not None:
-                hidden_states = final_norm(hidden_states)
-            last_hidden = hidden_states
-        else:
-            # Fallback: single time injection at input, use backbone directly
-            if time_pad is not None:
-                padded = self._inject_time_features(padded, time_pad, C, D)
-            out = self.backbone(inputs_embeds=padded, attention_mask=mask)
-            last_hidden = out.last_hidden_state if hasattr(out, "last_hidden_state") else (out[0] if isinstance(out, tuple) else out)
-
-        # Unpad back to flattened order
-        final = last_hidden.view(-1, D)[mask.view(-1)]  # (T, D)
+        chunks: List[torch.Tensor] = [last_hidden[i, : lengths[i], :] for i in range(len(seqs))]
+        final = torch.cat(chunks, dim=0)
         final = self.out_norm(final)
         return final
 
