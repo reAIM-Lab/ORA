@@ -270,7 +270,7 @@ bash run.sh \
   --cache_path           xxx \
   --min_subjects_per_batch 8 \
   --ontology_path       /data2/processed_datasets/zj2398/femr/cumc/motor/ontology.pkl \
-  --main_split_path     /data2/processed_datasets/zj2398/femr/mimic/main_split.csv \
+  --main_split_path     /data2/processed_datasets/zj2398/femr/cumc/main_split.csv \
   --output_dir   /data/results/zj2398/femr/mimic/outcome/  \
   --classification_cohort /data2/processed_datasets/mimic/phenotype_task/binary/
 
@@ -278,7 +278,7 @@ bash run.sh \
 bash run.sh \
   --meds_reader        /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/post_transform_meds_reader \
   --num_proc           20 \
-  --model_path         /data2/processed_datasets/zj2398/femr/cumc/tpp/transformer/best_756945 \
+  --model_path          /data2/processed_datasets/zj2398/femr/cumc/mtpp/transformer/best_1730112 \
   --model_name         transformer_tpp \
   --tokens_per_batch   65536 \
   --device             cuda:0 \
@@ -290,6 +290,8 @@ bash run.sh \
   --main_split_path     /data2/processed_datasets/zj2398/femr/cumc/main_split.csv \
   --output_dir   /data/results/zj2398/femr/cumc/outcome/  \
   --classification_cohort /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/task_labels/patient_outcomes_clean/
+
+  # /data2/processed_datasets/zj2398/femr/cumc/mtpp/transformer/best_1730112
 
 ```
 
@@ -327,8 +329,8 @@ bash run.sh \
 bash run.sh \
   --meds_reader        /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/post_transform_meds_reader \
   --num_proc           20 \
-  --model_path         /data2/processed_datasets/zj2398/femr/cumc/mtpp/transformer/best_1730112 \
-  --model_name         transformer_mtpp \
+  --model_path         /data2/processed_datasets/zj2398/femr/cumc/tpp/transformer/best_756945 \
+  --model_name         transformer_tpp \
   --tokens_per_batch   65536 \
   --device             cuda:0 \
   --use_ntp            no \
@@ -339,7 +341,7 @@ bash run.sh \
   --cache_path        /data2/huggingface/zj2398/ \
   --ontology_path       /data2/processed_datasets/zj2398/femr/cumc/motor/ontology.pkl \
   --main_split_path     /data2/processed_datasets/zj2398/femr/cumc/main_split.csv \
-  --output_dir   /data/results/zj2398/femr/cumc/phenotype/  \
+  --output_dir   /data/results/zj2398/femr/cumc/phenotype  \
   --classification_cohort /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/task_labels/phenotype_tte/binary/ \
   --tte_cohort  /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/task_labels/phenotype_tte/tte/
 

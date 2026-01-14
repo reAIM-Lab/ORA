@@ -262,7 +262,7 @@ def main():
         num_train_epochs=args.n_epochs,
         ddp_find_unused_parameters=False,
 
-        warmup_steps=500,
+        warmup_steps=1000,
 
         logging_strategy='epoch',
         # logging_strategy='steps',
@@ -309,7 +309,35 @@ if __name__ == "__main__":
 
 '''
 
-export CUDA_VISIBLE_DEVICES=4,5,6,7
+export CUDA_VISIBLE_DEVICES=1,2,3
+
+kuvira
+
+export CUDA_VISIBLE_DEVICES=2
+accelerate launch \
+  --num_processes 3 \
+  pretrain.py \
+    --pretraining_data  /data2/processed_datasets/zj2398/femr/mimic/mtpp  \
+    --meds_reader /data/raw_data/mimic/files/mimiciv/meds_v0.6/3.1/MEDS_cohort-reader \
+    --per_device_train_batch_size 1 \
+    --learning_rate 5e-6 \
+    --output_dir /data2/processed_datasets/zj2398/femr/mimic/mtpp/mamba  \
+    --hf_run_name mimic_mamba_revised_mtpp_6100 \
+    --model mamba \
+    --n_layers 28 \
+    --loss_type mtpp_shared
+
+
+  python pretrain.py \
+    --pretraining_data  /data2/processed_datasets/zj2398/femr/mimic/mtpp  \
+    --meds_reader /data/raw_data/mimic/files/mimiciv/meds_v0.6/3.1/MEDS_cohort-reader \
+    --per_device_train_batch_size 1 \
+    --learning_rate 5e-6 \
+    --output_dir /data2/processed_datasets/zj2398/femr/cumc/mtpp/mamba  \
+    --hf_run_name mimic_mamba_revised_mtpp_6100 \
+    --model mamba \
+    --loss_type mtpp_shared
+
 
 mimic 
 gsb
@@ -325,6 +353,7 @@ CUDA_VISIBLE_DEVICES=4,5,6,7 accelerate launch \
     --hf_run_name mimic_mtpp_shared \
     --loss_type mtpp_shared
 
+    
 python pretrain_motor.py \
   --pretraining_data /user/zj2398/cache/mtpp_8k \
   --meds_reader /user/zj2398/cache/hf_ehr/mimic/meds_v0.6_reader \
@@ -336,7 +365,7 @@ python pretrain_motor.py \
   --learning_rate 5e-6 \
   --n_layers 12
 
-CUDA_VISIBLE_DEVICES=4,5,6,7 accelerate launch \
+CUDA_VISIBLE_DEVICES=2,3 accelerate launch \
   --num_processes 4 \
   --gpu_ids "4,5,6,7" \
   pretrain.py \
@@ -348,35 +377,8 @@ CUDA_VISIBLE_DEVICES=4,5,6,7 accelerate launch \
   --loss_type motor
 
 
-kuvira
-
-export CUDA_VISIBLE_DEVICES=2
-python pretrain.py \
-    --pretraining_data /data2/processed_datasets/zj2398/femr/cumc_0.1/mtpp \
-    --meds_reader /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/post_transform_0.1_reader \
-    --output_dir /data2/processed_datasets/zj2398/femr/cumc_0.1/mtpp_shared \
-    --model transformer \
-    --hf_run_name mtpp_shared \
-    --loss_type mtpp_shared
 
 
-python pretrain.py \
-    --pretraining_data /data2/processed_datasets/zj2398/femr/cumc_0.1/motor \
-    --meds_reader /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/post_transform_0.1_reader \
-    --checkpoint_dir /data2/processed_datasets/zj2398/femr/cumc_0.1/motor/transformer/best_17925 \
-    --output_dir /data2/processed_datasets/zj2398/femr/cumc_0.1/motor/transformer_continue \
-    --model transformer \
-    --hf_run_name motor_cumc_0.1_continue \
-    --loss_type motor
-
-
-python pretrain.py \
-    --pretraining_data /data2/processed_datasets/zj2398/femr/cumc_0.1/mtpp \
-    --meds_reader /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/post_transform_0.1_reader \
-    --output_dir /data2/processed_datasets/zj2398/femr/cumc_0.1/mtpp/transformer \
-    --model transformer \
-    --hf_run_name mtpp_cumc_0.1 \
-    --loss_type mtpp
 
 
 

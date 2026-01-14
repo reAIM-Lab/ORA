@@ -10,7 +10,7 @@ TOKENS_PER_BATCH=8192
 OBSERVATION_WINDOW=""
 # Default to false for linear interpolation
 USE_LINEAR_INTERPOLATION=false
-
+TRUNCATION=365
 
 
 # Function to display help
@@ -45,6 +45,7 @@ OMOP_MEDS_READER_ARG=""
 CLASS_COHORT=""
 TTE_COHORT=""
 DEVICE="cuda"
+
 
 while [ $# -gt 0 ]; do
     case $1 in
@@ -237,44 +238,44 @@ for TASK_DIR in "$CLASS_COHORT"*/; do
     # Run the first command: generate MOTOR features
     echo "Running $MODEL_NAME feature generation for $TASK_NAME..."
 
-    # Build the command with conditional observation_window parameter
-    GENERATE_CMD="python -u -m femr.omop_meds_tutorial.evaluation.generate_features \
-      --model_path \"$MODEL_PATH\" \
-      --model_name \"$MODEL_NAME\" \
-      --meds_reader \"$OMOP_MEDS_READER\" \
-      --num_proc \"$NUM_PROC\" \
-      --tokens_per_batch \"$TOKENS_PER_BATCH\" \
-      --device \"$DEVICE\" \
-      --cache_path \"$CACHE_PATH \" \
-      --min_subjects_per_batch \"$MIN_SUBJECTS_PER_BATCH\" \
-      --cohort_dir \"$TASK_DIR\" \
-      --ontology_path \"$ONTOLOGY_PATH\" \
-      --output_root \"$OUTPUT_DIR\" \
-      --use_ntp \"$USE_NTP\" \
-      --task_type "binary" \
-      --loss_type "labeled_subjects" "
+    # # Build the command with conditional observation_window parameter
+    # GENERATE_CMD="python -u -m femr.omop_meds_tutorial.evaluation.generate_features \
+    #   --model_path \"$MODEL_PATH\" \
+    #   --model_name \"$MODEL_NAME\" \
+    #   --meds_reader \"$OMOP_MEDS_READER\" \
+    #   --num_proc \"$NUM_PROC\" \
+    #   --tokens_per_batch \"$TOKENS_PER_BATCH\" \
+    #   --device \"$DEVICE\" \
+    #   --cache_path \"$CACHE_PATH \" \
+    #   --min_subjects_per_batch \"$MIN_SUBJECTS_PER_BATCH\" \
+    #   --cohort_dir \"$TASK_DIR\" \
+    #   --ontology_path \"$ONTOLOGY_PATH\" \
+    #   --output_root \"$OUTPUT_DIR\" \
+    #   --use_ntp \"$USE_NTP\" \
+    #   --task_type "binary" \
+    #   --loss_type "labeled_subjects" "
 
-    # Add linear_interpolation parameter if specified
-    if [ "$USE_LINEAR_INTERPOLATION" = true ]; then
-        GENERATE_CMD="$GENERATE_CMD --linear_interpolation"
-    fi
+    # # Add linear_interpolation parameter if specified
+    # if [ "$USE_LINEAR_INTERPOLATION" = true ]; then
+    #     GENERATE_CMD="$GENERATE_CMD --linear_interpolation"
+    # fi
 
-    # Add observation_window parameter if specified
-    if [ -n "$OBSERVATION_WINDOW" ]; then
-        GENERATE_CMD="$GENERATE_CMD --observation_window \"$OBSERVATION_WINDOW\""
-    fi
+    # # Add observation_window parameter if specified
+    # if [ -n "$OBSERVATION_WINDOW" ]; then
+    #     GENERATE_CMD="$GENERATE_CMD --observation_window \"$OBSERVATION_WINDOW\""
+    # fi
 
-    # Print the command
-    echo "Executing command: $GENERATE_CMD"
+    # # Print the command
+    # echo "Executing command: $GENERATE_CMD"
 
-    # # Execute the command
-    eval $GENERATE_CMD
+    # # # Execute the command
+    # eval $GENERATE_CMD
 
-    # Check if the first command succeeded
-    if [ $? -ne 0 ]; then
-        echo "Error: $MODEL_NAME feature generation failed for task $TASK_NAME"
-        continue
-    fi
+    # # Check if the first command succeeded
+    # if [ $? -ne 0 ]; then
+    #     echo "Error: $MODEL_NAME feature generation failed for task $TASK_NAME"
+    #     continue
+    # fi
 
     # Run the second command: fine-tune MOTOR
     echo "Running $MODEL_NAME fine-tuning for $TASK_NAME..."

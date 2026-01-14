@@ -26,11 +26,11 @@ python prepare.py \
 
 # ---- job 2: training (background) ----
 # multi-gpu pretraining
-# export CUDA_VISIBLE_DEVICES=3 
+# export CUDA_VISIBLE_DEVICES=1,2,3 
 
-# accelerate launch --gpu_ids 2,3 \
-#   --num_processes 2 \
-python pretrain.py \
+accelerate launch --gpu_ids 1,2,3 \
+  --num_processes 3 \
+  pretrain.py \
   --pretraining_data /data2/processed_datasets/zj2398/femr/cumc/mtpp  \
   --meds_reader /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/post_transform_meds_reader \
   --per_device_train_batch_size 1 \

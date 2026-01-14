@@ -210,16 +210,16 @@ def tte_evaluation(train_set_init, test_set_init,truncation,tte_cohort):
     in_features = x_train.shape[1]
     out_features = labtrans.out_features
 
-    # grid = ParameterGrid({
-    #     'dropout': [0, 0.1],
-    #     'lr': [0.001, 0.0001],
-    #     'batch': [1024, 2048]
-    # })
     grid = ParameterGrid({
-        'dropout': [0.1],
-        'lr': [0.001],
-        'batch': [1024]
+        'dropout': [0, 0.1],
+        'lr': [0.001, 0.0001],
+        'batch': [1024, 2048]
     })
+    # grid = ParameterGrid({
+    #     'dropout': [0.1],
+    #     'lr': [0.001],
+    #     'batch': [1024]
+    # })
 
     # Hyperparameter selection
     best_nll = np.inf
@@ -489,4 +489,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
