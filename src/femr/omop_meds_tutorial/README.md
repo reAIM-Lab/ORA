@@ -354,6 +354,7 @@ bash run.sh \
 | `--cohort_type` | Yes | Type of task: `outcome`, `phenotype`, or other cohort types |
 | `--classification_cohort` | Yes | Path to classification task cohort directory (required for classification tasks) |
 | `--tte_cohort` | Yes | Path to time-to-event cohort directory (required for TTE tasks) |
+| `--observational window` | No| Observational Window before the prediction time. Use 730 for phenotype prediction |
 | `--truncation` | Yes | 330 for mimic and 1825 for cumc |
 | `--cache_path` | Yes | Path to store hugginface datasets. You can set a dir like /data2/user/huggingface |
 | `--device` | Yes | GPU device to use (e.g., `cuda:0`, `cuda:1`) |
