@@ -330,6 +330,7 @@ bash run.sh \
   --cohort_type        phenotype \
   --min_subjects_per_batch 8 \
   --truncation  1825 \
+  --observation_window 730 \
   --cache_path        /data2/huggingface/zj2398/ \
   --ontology_path       /data2/processed_datasets/zj2398/femr/cumc/motor/ontology.pkl \
   --main_split_path     /data2/processed_datasets/zj2398/femr/cumc/main_split.csv \

@@ -342,36 +342,43 @@ def join_labels(features: Mapping[str, np.ndarray], labels: pd.DataFrame,label_n
         boolean_label.append(label.boolean_value)
         prediction_times.append(label.prediction_time)
 
-        if label_name in ["ami","masld","stroke","celiac","AMI","MASLD","Ischemic_Stroke","Celiac"]:
-            tte_label.append(label.tte_label)
-            if hasattr(label, "time_to_event"):
-                time_to_event.append(label.time_to_event)
-            elif hasattr(label, "time_to_event_days"):
-                time_to_event.append(label.time_to_event_days)
-            else:
-                raise AttributeError("label has neither 'time_to_event' nor 'time_to_event_days'")
+        # if label_name in ["ami","masld","stroke","celiac","AMI","MASLD","Ischemic_Stroke","Celiac"]:
+        #     tte_label.append(label.tte_label)
+        #     if hasattr(label, "time_to_event"):
+        #         time_to_event.append(label.time_to_event)
+        #     elif hasattr(label, "time_to_event_days"):
+        #         time_to_event.append(label.time_to_event_days)
+        #     else:
+        #         raise AttributeError("label has neither 'time_to_event' nor 'time_to_event_days'")
 
-    if label_name in ["ami","masld","stroke","celiac","AMI","MASLD","Ischemic_Stroke","Celiac"]:
-        # print(np.array(tte_label).shape)
-        # print(np.array(time_to_event).shape)
-        # print(np.array(boolean_label).shape)
-        return {
-            "boolean_values": np.array(boolean_label),
-            "tte_label": np.array(tte_label),
-            "time_to_event":np.array(time_to_event),
-            "subject_ids": features["subject_ids"][indices],
-            "times": features["feature_times"][indices],
-            "features": features["features"][indices, :],
-            "prediction_times" : np.asarray(prediction_times)
-        }
-    else:
-        return {
-            "boolean_values": np.array(boolean_label),
-            "subject_ids": features["subject_ids"][indices],
-            "times": features["feature_times"][indices],
-            "features": features["features"][indices, :],
-            "prediction_times" : np.asarray(prediction_times)
-        }
+    # if label_name in ["ami","masld","stroke","celiac","AMI","MASLD","Ischemic_Stroke","Celiac"]:
+    #     # print(np.array(tte_label).shape)
+    #     # print(np.array(time_to_event).shape)
+    #     # print(np.array(boolean_label).shape)
+    #     return {
+    #         "boolean_values": np.array(boolean_label),
+    #         "tte_label": np.array(tte_label),
+    #         "time_to_event":np.array(time_to_event),
+    #         "subject_ids": features["subject_ids"][indices],
+    #         "times": features["feature_times"][indices],
+    #         "features": features["features"][indices, :],
+    #         "prediction_times" : np.asarray(prediction_times)
+    #     }
+    # else:
+    #     return {
+    #         "boolean_values": np.array(boolean_label),
+    #         "subject_ids": features["subject_ids"][indices],
+    #         "times": features["feature_times"][indices],
+    #         "features": features["features"][indices, :],
+    #         "prediction_times" : np.asarray(prediction_times)
+    #     }
+    return {
+        "boolean_values": np.array(boolean_label),
+        "subject_ids": features["subject_ids"][indices],
+        "times": features["feature_times"][indices],
+        "features": features["features"][indices, :],
+        "prediction_times" : np.asarray(prediction_times)
+    }
 
 def join_labels_numerical(features: Mapping[str, np.ndarray], labels: pd.DataFrame) -> Mapping[str, np.ndarray]:
     indices = []
