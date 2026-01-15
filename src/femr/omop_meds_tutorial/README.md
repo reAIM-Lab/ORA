@@ -406,7 +406,7 @@ bash run_regression.sh \
   --min_subjects_per_batch 8 \
   --ontology_path      /data2/processed_datasets/zj2398/femr/mimic/mtpp/ontology.pkl \
   --main_split_path    /data2/processed_datasets/zj2398/femr/mimic/main_split.csv \
-  --cohort_dir    /data2/processed_datasets/mimic/regression/icu_stay_4h/ \
+  --cohort_dir    /data2/processed_datasets/mimic/regression/icu_stay_4h_100k \
   --output_dir   /data/results/zj2398/femr/mimic/regression \
   --use_ntp no \
   --cache_path /data2/huggingface/zj2398/ \
@@ -423,7 +423,7 @@ bash run_regression.sh \
   --min_subjects_per_batch 8 \
   --ontology_path      /data2/processed_datasets/zj2398/femr/mimic/mtpp/ontology.pkl \
   --main_split_path    /data2/processed_datasets/zj2398/femr/mimic/main_split.csv \
-  --cohort_dir    /data2/processed_datasets/mimic/regression/icu_stay_4h/ \
+  --cohort_dir    /data2/processed_datasets/mimic/regression/icu_stay_4h_100k \
   --output_dir   /data/results/zj2398/femr/mimic/regression \
   --use_ntp no \
   --cache_path /data2/huggingface/zj2398/ \

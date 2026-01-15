@@ -21,8 +21,7 @@ python prepare.py \
   --num_threads 64 \
   --model mamba \
   --hf_cache_path /data/huggingface/zj2398 \
-  --meds_reader /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/post_transform_meds_reader
-
+  --meds_reader /data/raw_data/mimic/files/mimiciv/meds_v0.6/3.1/MEDS_cohort-reader
 
 # python pretrain.py \
 #   --pretraining_data /data2/processed_datasets/zj2398/femr/cumc/ntp \
@@ -50,12 +49,12 @@ accelerate launch \
   --num_processes 2 \
   pretrain.py \
   --pretraining_data /data2/processed_datasets/zj2398/femr/mimic/ntp \
-  --meds_reader /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/post_transform_meds_reader \
+  --meds_reader /data/raw_data/mimic/files/mimiciv/meds_v0.6/3.1/MEDS_cohort-reader \
   --per_device_train_batch_size 1 \
   --output_dir /data2/processed_datasets/zj2398/femr/mimic/ntp/mamba \
   --model mamba \
   --n_layers 28 \
-  --hf_run_name mimic_mamba_ntp \
+  --hf_run_name mimic_mamba_ntp_new \
   --loss_type ntp
 
 # accelerate launch \

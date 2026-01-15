@@ -277,22 +277,6 @@ class FEMRMamba(nn.Module):
             del self.backbone.embed_tokens
             self.backbone.embed_tokens = None
 
-        # Extract layers for per-layer time injection (like transformer)
-        # Common attribute names for Mamba layers
-        # self.mamba_layers = None
-        # self.layer_norm_f = None
-        # for attr in ["layers", "mixer_layers", "blocks"]:
-        #     if hasattr(self.backbone, attr):
-        #         self.mamba_layers = getattr(self.backbone, attr)
-        #         break
-        # # Get final norm if present
-        # for attr in ["norm_f", "final_layernorm", "ln_f", "norm"]:
-        #     if hasattr(self.backbone, attr):
-        #         self.layer_norm_f = getattr(self.backbone, attr)
-        #         break
-
-        # No per-layer time injection; rely on backbone forward only.
-
 
     # Removed per-layer time injection for stability and simplicity
 
