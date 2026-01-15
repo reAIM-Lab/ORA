@@ -377,7 +377,7 @@ Evaluates continuous value prediction tasks (e.g., predicting lab values).
 **Script:** `evaluation/regression/run_regression.sh`
 
 **Example Usage:**
-<!-- export CUDA_VISIBLE_DEVICES=6 -->
+<!-- export CUDA_VISIBLE_DEVICES=0 -->
 ```bash
 bash run_regression.sh \
   --meds_reader        /shared/share_mala/zj2398/mimic/data/meds_v0.6_reader \
@@ -395,8 +395,41 @@ bash run_regression.sh \
   --cache_path /shared/share_mala/zj2398/huggingface/datasets \
   --tasks "bilirubin,creatinine,pao2,platelets" \
   --regression 
-```
 
+bash run_regression.sh \
+  --meds_reader        /data/raw_data/mimic/files/mimiciv/meds_v0.6/3.1/MEDS_cohort-reader \
+  --num_proc           30 \
+  --model_path        /data2/processed_datasets/zj2398/femr/mimic/mtpp/mamba/best_63382 \
+  --model_name         mamba_mtpp_new \
+  --tokens_per_batch   65536 \
+  --device             cuda:0 \
+  --min_subjects_per_batch 8 \
+  --ontology_path      /data2/processed_datasets/zj2398/femr/mimic/mtpp/ontology.pkl \
+  --main_split_path    /data2/processed_datasets/zj2398/femr/mimic/main_split.csv \
+  --cohort_dir    /data2/processed_datasets/mimic/regression/icu_stay_4h/ \
+  --output_dir   /data/results/zj2398/femr/mimic/regression \
+  --use_ntp no \
+  --cache_path /data2/huggingface/zj2398/ \
+  --tasks "bilirubin,creatinine" \
+  --regression 
+
+bash run_regression.sh \
+  --meds_reader        /data/raw_data/mimic/files/mimiciv/meds_v0.6/3.1/MEDS_cohort-reader \
+  --num_proc           30 \
+  --model_path        /data2/processed_datasets/zj2398/femr/mimic/mtpp/mamba/best_63382 \
+  --model_name         mamba_mtpp_new \
+  --tokens_per_batch   65536 \
+  --device             cuda:0 \
+  --min_subjects_per_batch 8 \
+  --ontology_path      /data2/processed_datasets/zj2398/femr/mimic/mtpp/ontology.pkl \
+  --main_split_path    /data2/processed_datasets/zj2398/femr/mimic/main_split.csv \
+  --cohort_dir    /data2/processed_datasets/mimic/regression/icu_stay_4h/ \
+  --output_dir   /data/results/zj2398/femr/mimic/regression \
+  --use_ntp no \
+  --cache_path /data2/huggingface/zj2398/ \
+  --tasks "pao2,platelets" \
+  --regression 
+```
 ### Parameters for run_regression.sh
 
 | Parameter | Required | Description |

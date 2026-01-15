@@ -322,6 +322,7 @@ accelerate launch \
     --per_device_train_batch_size 1 \
     --learning_rate 5e-6 \
     --output_dir /data2/processed_datasets/zj2398/femr/mimic/mtpp/mamba  \
+    --checkpoint_dir /data2/processed_datasets/zj2398/femr/mimic/mtpp/mamba/checkpoint-57620 \
     --hf_run_name mimic_mamba_revised_mtpp_6100 \
     --model mamba \
     --n_layers 28 \
