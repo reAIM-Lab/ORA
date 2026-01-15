@@ -309,13 +309,14 @@ if __name__ == "__main__":
 
 '''
 
-export CUDA_VISIBLE_DEVICES=1,2,3
+export CUDA_VISIBLE_DEVICES=2,3,4,5,6,7
 
 kuvira
 
 export CUDA_VISIBLE_DEVICES=2
+
 accelerate launch \
-  --num_processes 3 \
+  --num_processes 6 \
   pretrain.py \
     --pretraining_data  /data2/processed_datasets/zj2398/femr/mimic/mtpp  \
     --meds_reader /data/raw_data/mimic/files/mimiciv/meds_v0.6/3.1/MEDS_cohort-reader \
@@ -323,6 +324,17 @@ accelerate launch \
     --learning_rate 5e-6 \
     --output_dir /data2/processed_datasets/zj2398/femr/mimic/mtpp/mamba  \
     --checkpoint_dir /data2/processed_datasets/zj2398/femr/mimic/mtpp/mamba/checkpoint-57620 \
+    --hf_run_name mimic_mamba_revised_mtpp_6100 \
+    --model mamba \
+    --n_layers 28 \
+    --loss_type mtpp_shared
+
+    python  pretrain.py \
+    --pretraining_data  /data2/processed_datasets/zj2398/femr/mimic/mtpp  \
+    --meds_reader /data/raw_data/mimic/files/mimiciv/meds_v0.6/3.1/MEDS_cohort-reader \
+    --per_device_train_batch_size 1 \
+    --learning_rate 5e-6 \
+    --output_dir /data2/processed_datasets/zj2398/femr/mimic/mtpp/mamba  \
     --hf_run_name mimic_mamba_revised_mtpp_6100 \
     --model mamba \
     --n_layers 28 \

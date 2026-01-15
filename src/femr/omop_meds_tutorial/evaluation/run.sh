@@ -238,44 +238,53 @@ for TASK_DIR in "$CLASS_COHORT"*/; do
     # Run the first command: generate MOTOR features
     echo "Running $MODEL_NAME feature generation for $TASK_NAME..."
 
-    # # Build the command with conditional observation_window parameter
-    # GENERATE_CMD="python -u -m femr.omop_meds_tutorial.evaluation.generate_features \
-    #   --model_path \"$MODEL_PATH\" \
-    #   --model_name \"$MODEL_NAME\" \
-    #   --meds_reader \"$OMOP_MEDS_READER\" \
-    #   --num_proc \"$NUM_PROC\" \
-    #   --tokens_per_batch \"$TOKENS_PER_BATCH\" \
-    #   --device \"$DEVICE\" \
-    #   --cache_path \"$CACHE_PATH \" \
-    #   --min_subjects_per_batch \"$MIN_SUBJECTS_PER_BATCH\" \
-    #   --cohort_dir \"$TASK_DIR\" \
-    #   --ontology_path \"$ONTOLOGY_PATH\" \
-    #   --output_root \"$OUTPUT_DIR\" \
-    #   --use_ntp \"$USE_NTP\" \
-    #   --task_type "binary" \
-    #   --loss_type "labeled_subjects" "
+    # Build the command with conditional observation_window parameter
+    if [[ -n "$OBSERVATION_WINDOW" ]]; then
+        motor_features_name="${TASK_NAME}_${MODEL_NAME}_${OBSERVATION_WINDOW}"
+    else
+        motor_features_name="${TASK_NAME}_${MODEL_NAME}"
+    fi
+    
+    FEATURES_DIR="${OUTPUT_DIR}/${MODEL_NAME}/features"
+    FEATURE_FILE="${FEATURES_DIR}/${motor_features_name}.pkl"
 
-    # # Add linear_interpolation parameter if specified
-    # if [ "$USE_LINEAR_INTERPOLATION" = true ]; then
-    #     GENERATE_CMD="$GENERATE_CMD --linear_interpolation"
-    # fi
+    if [[ -f "$FEATURE_FILE" ]]; then
+        echo "Found existing features, reusing: $FEATURE_FILE"
+    else
+        echo "Features not found, generating: $FEATURE_FILE"
+        GENERATE_CMD="python -u -m femr.omop_meds_tutorial.evaluation.generate_features \
+            --model_path \"$MODEL_PATH\" \
+            --model_name \"$MODEL_NAME\" \
+            --meds_reader \"$OMOP_MEDS_READER\" \
+            --num_proc \"$NUM_PROC\" \
+            --tokens_per_batch \"$TOKENS_PER_BATCH\" \
+            --device \"$DEVICE\" \
+            --cache_path \"$CACHE_PATH\" \
+            --min_subjects_per_batch \"$MIN_SUBJECTS_PER_BATCH\" \
+            --cohort_dir \"$TASK_DIR\" \
+            --ontology_path \"$ONTOLOGY_PATH\" \
+            --output_root \"$OUTPUT_DIR\" \
+            --use_ntp \"$USE_NTP\" \
+            --task_type \"binary\" \
+            --loss_type \"labeled_subjects\""
 
-    # # Add observation_window parameter if specified
-    # if [ -n "$OBSERVATION_WINDOW" ]; then
-    #     GENERATE_CMD="$GENERATE_CMD --observation_window \"$OBSERVATION_WINDOW\""
-    # fi
+            # Add observation_window parameter if specified
+            if [ -n "$OBSERVATION_WINDOW" ]; then
+                GENERATE_CMD="$GENERATE_CMD --observation_window \"$OBSERVATION_WINDOW\""
+            fi
 
-    # # Print the command
-    # echo "Executing command: $GENERATE_CMD"
+            # Print the command
+            echo "Executing command: $GENERATE_CMD"
 
-    # # # Execute the command
-    # eval $GENERATE_CMD
+            # # Execute the command
+            eval $GENERATE_CMD
+    fi
 
-    # # Check if the first command succeeded
-    # if [ $? -ne 0 ]; then
-    #     echo "Error: $MODEL_NAME feature generation failed for task $TASK_NAME"
-    #     continue
-    # fi
+    # Check if the first command succeeded
+    if [ $? -ne 0 ]; then
+        echo "Error: $MODEL_NAME feature generation failed for task $TASK_NAME"
+        continue
+    fi
 
     # Run the second command: fine-tune MOTOR
     echo "Running $MODEL_NAME fine-tuning for $TASK_NAME..."
@@ -368,8 +377,8 @@ echo "All tasks processed."
 # bash run.sh \
 #   --meds_reader        /shared/share_mala/zj2398/mimic/data/meds_v0.6_reader  \
 #   --num_proc           24 \
-#   --model_path         /shared/share_mala/zj2398/models/tpp_8k/transformer/best_221573 \
-#   --model_name         transformer_tpp \
+#   --model_path         /shared/share_mala/zj2398/models/mtpp_8k/mtpp_all_shared_6100_bin_5/transformer/best_159744 \
+#   --model_name         transformer_mtpp \
 #   --tokens_per_batch   65536 \
 #   --device             cuda:0 \
 #   --use_ntp            no \
@@ -378,7 +387,7 @@ echo "All tasks processed."
 #   --min_subjects_per_batch 8 \
 #   --ontology_path       /user/zj2398/cache/mtpp_8k/ontology.pkl \
 #   --main_split_path     /user/zj2398/cache/mtpp_8k/main_split.csv \
-#   --output_dir   /shared/share_mala/zj2398/mimic/task/patient_outcome_task/  \
+#   --output_dir   /shared/share_mala/zj2398/mimic/task/patient_outcome_task  \
 #   --classification_cohort /shared/share_mala/zj2398/mimic/task/patient_outcome_task/cohort/ 
 
 

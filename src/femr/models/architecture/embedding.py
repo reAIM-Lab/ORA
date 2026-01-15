@@ -663,7 +663,7 @@ class MTPPTaskHead(nn.Module):
         3. Probability sum over time_bins × value_bins = 1 for numerical codes
         4. New loss = mean loss for non-numerical + mean loss for numerical codes
         """
-        eps = 1e-9
+        eps = 1e-6
         total_loss = torch.tensor(0.0, device=features.device)
         total_count = 0
         result = {}
@@ -969,7 +969,7 @@ class MTPPSharedTaskHead(nn.Module):
         3. Probability sum over time_bins × value_bins = 1 for numerical codes
         4. New loss = mean loss for non-numerical + mean loss for numerical codes
         """
-        eps = 1e-9
+        eps = 1e-6
         total_loss = torch.tensor(0.0, device=features.device)
         total_count = 0
         result = {}

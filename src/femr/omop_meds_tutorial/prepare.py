@@ -348,7 +348,7 @@ python prepare.py \
   --pretraining_data /user/zj2398/cache/mtpp_all_shared_6100_bin_5 \
   --ontology_path /user/zj2398/cache/mtpp_8k_num_bin5/ontology.pkl \
   --time_bins 8 \
-  --num_threads 20 \
+  --num_threads 64 \
   --value_bins 5 \
   --num_final_tasks 6100 \
   --tokens_per_batch 16384 \
