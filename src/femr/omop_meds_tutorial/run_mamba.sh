@@ -30,7 +30,7 @@ python prepare.py \
 
 # ---- job 2: training (background) ----
 # multi-gpu pretraining
-# export CUDA_VISIBLE_DEVICES=0,1,2,3
+# export CUDA_VISIBLE_DEVICES=0,1,2,3,4,6,7
 
 # accelerate launch \
 #   --num_processes 4 \
@@ -59,15 +59,15 @@ python prepare.py \
   #   --loss_type mtpp_shared
 
   accelerate launch \
-    --num_processes 4 \
+    --num_processes 7 \
     pretrain.py \
     --pretraining_data  /user/zj2398/cache/mtpp_all_shared_6100_bin_5 \
     --meds_reader /data/raw_data/mimic/files/mimiciv/meds_v0.6/3.1/MEDS_cohort-reader \
     --per_device_train_batch_size 1 \
-    --learning_rate 1e-5 \
-    --max_grad_norm 1.0 \
-    --output_dir /shared/share_mala/zj2398/models/mtpp_8k/mtpp_all_shared_6100_bin_5/mamba_1e-5_cosine  \
-    --hf_run_name mimic_mamba_revised_mtpp_6100_1e-5 \
+    --learning_rate 8e-6 \
+    --max_grad_norm 5.0 \
+    --output_dir /shared/share_mala/zj2398/models/mtpp_8k/mtpp_all_shared_6100_bin_5/mamba_8e-6_5.0_cosine  \
+    --hf_run_name mimic_mamba_revised_mtpp_6100_8e-6_5.0_cosine \
     --model mamba \
     --n_layers 28 \
     --loss_type mtpp_shared
