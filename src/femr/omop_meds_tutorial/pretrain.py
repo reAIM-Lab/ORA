@@ -59,6 +59,13 @@ def create_arg_parser():
     )
 
     arg_parser.add_argument(
+        "--max_grad_norm",
+        dest="max_grad_norm",
+        type=float,
+        default=1.0
+    )
+
+    arg_parser.add_argument(
         "--hf_run_name",
         dest="hf_run_name",
         type=str,
@@ -252,11 +259,13 @@ def main():
         output_dir=output_dir,
         remove_unused_columns=False,
         bf16=True,
+        lr_scheduler_type="cosine",
 
-        weight_decay=0.1,
+        weight_decay=0.05,
         adam_beta2=0.95,
         # report_to="none",
         report_to=["wandb"],
+        max_grad_norm=args.max_grad_norm,
         run_name=args.hf_run_name,
         # run_name="motor_pretrain_mimic",
         num_train_epochs=args.n_epochs,
@@ -313,33 +322,35 @@ export CUDA_VISIBLE_DEVICES=2,3,4,5,6,7
 
 kuvira
 
-export CUDA_VISIBLE_DEVICES=2
+export CUDA_VISIBLE_DEVICES=4,5,6,7
 
 accelerate launch \
-  --num_processes 2 \
+  --num_processes 4 \
   pretrain.py \
     --pretraining_data  /data2/processed_datasets/zj2398/femr/mimic/mtpp  \
     --meds_reader /data/raw_data/mimic/files/mimiciv/meds_v0.6/3.1/MEDS_cohort-reader \
     --per_device_train_batch_size 1 \
-    --learning_rate 1e-65\
+    --learning_rate 1e-5 \
     --output_dir /data2/processed_datasets/zj2398/femr/mimic/mtpp/mamba  \
-    --checkpoint_dir /data2/processed_datasets/zj2398/femr/mimic/mtpp/mamba/checkpoint-57620 \
     --hf_run_name mimic_mamba_revised_mtpp_6100 \
+    --max_grad_norm 1.0 \
     --model mamba \
     --n_layers 28 \
     --loss_type mtpp_shared
 
-    python  pretrain.py \
-    --pretraining_data  /data2/processed_datasets/zj2398/femr/mimic/mtpp  \
-    --meds_reader /data/raw_data/mimic/files/mimiciv/meds_v0.6/3.1/MEDS_cohort-reader \
-    --per_device_train_batch_size 1 \
-    --learning_rate 5e-6 \
-    --output_dir /data2/processed_datasets/zj2398/femr/mimic/mtpp/mamba  \
-    --hf_run_name mimic_mamba_revised_mtpp_6100 \
-    --model mamba \
-    --n_layers 28 \
+accelerate launch \
+  --num_processes 4 \
+  pretrain.py  \
+    --pretraining_data /user/zj2398/cache/mtpp_all_shared_6100_bin_5   \
+    --meds_reader /shared/share_mala/zj2398/mimic/data/meds_v0.6_reader  \
+    --per_device_train_batch_size 1   \
+    --learning_rate 8e-6 \
+    --max_grad_norm 4.0 \
+    --output_dir /user/zj2398/cache/mtpp_all_shared_6100_bin_5/mamba_8e-6_4.0_cosine \
+    --model mamba  \
+    --n_layers 28  \
+    --hf_run_name mimic_mamba_mtpp_shared_6100_8e-6_4.0_cosine  \
     --loss_type mtpp_shared
-
 
   python pretrain.py \
     --pretraining_data  /data2/processed_datasets/zj2398/femr/mimic/mtpp  \
@@ -375,7 +386,7 @@ python pretrain_motor.py \
   --output_dir /user/zj2398/cache/mtpp_8k/output_mamba \
   --model mamba \
   --loss_type mtpp \
-  --learning_rate 5e-6 \
+  --learning_rate e-6 \
   --n_layers 12
 
 CUDA_VISIBLE_DEVICES=2,3 accelerate launch \
