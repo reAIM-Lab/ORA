@@ -259,7 +259,7 @@ def main():
         output_dir=output_dir,
         remove_unused_columns=False,
         bf16=True,
-        lr_scheduler_type="cosine",
+        # lr_scheduler_type="cosine",
 
         weight_decay=0.05,
         adam_beta2=0.95,

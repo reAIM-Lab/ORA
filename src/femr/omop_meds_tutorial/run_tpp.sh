@@ -15,27 +15,31 @@ echo "[$(date)] starting both jobs..."
 
 python prepare.py \
   --pretraining_data /user/zj2398/cache/deephit_tpp \
-  --ontology_path  /user/zj2398/cache/mtpp_8k_num_bin5/ontology.pkl \
-  --time_bins 8 \
+  --ontology_path  /user/zj2398/cache/deephit_tpp/ontology.pkl \
   --loss_type tpp \
-  --num_threads 32 \
+  --tokens_per_batch 8192 \
+  --model mamba \
+  --num_threads 40 \
   --hf_cache_path /shared/share_mala/zj2398/huggingface/datasets \
   --meds_reader /shared/share_mala/zj2398/mimic/data/meds_v0.6_reader
+  
   # >"$PREP_LOG" 2>&1 &
 
 # ---- job 2: training (background) ----
 # multi-gpu pretraining
-# export CUDA_VISIBLE_DEVICES=0,3,5
+# export CUDA_VISIBLE_DEVICES=0,1,2,3
 
 
 accelerate launch \
-  --num_processes 3 \
+  --num_processes 4 \
   pretrain.py \
   --pretraining_data /user/zj2398/cache/deephit_tpp \
   --meds_reader /shared/share_mala/zj2398/mimic/data/meds_v0.6_reader \
   --per_device_train_batch_size 1 \
-  --output_dir /shared/share_mala/zj2398/models/tpp_8k/mamba \
+  --output_dir /shared/share_mala/zj2398/models/tpp_8k/mamba_2e-4_5.0 \
+  --learning_rate 2e-4 \
+  --max_grad_norm 5.0 \
   --model mamba \
   --n_layers 28 \
-  --hf_run_name mimic_mamba_tpp \
+  --hf_run_name mimic_mamba_tpp_2e-4_5.0 \
   --loss_type tpp

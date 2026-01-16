@@ -161,6 +161,7 @@ def logistic_regression(train_set,test_data,label_output_dir):
 def tte_evaluation(train_set_init, test_set_init,truncation,tte_cohort):
 
     #need to filter train_set and test_set from tte_cohort
+    tte_cohort =  tte_cohort.rename(columns={"time_to_event_days": "time_to_event"}, errors="ignore")
     keys = tte_cohort[["subject_id", "prediction_time","time_to_event", "tte_label"]].drop_duplicates()
     train_set = train_set_init.merge(
         keys, on=["subject_id", "prediction_time"], how="inner"
