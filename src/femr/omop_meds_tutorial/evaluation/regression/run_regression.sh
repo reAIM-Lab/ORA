@@ -1,7 +1,7 @@
 set -e
 
-LOGFILE="$(dirname "$0")/run_motor_output.log"
-exec > >(tee -a "$LOGFILE") 2>&1
+# LOGFILE="$(dirname "$0")/run_motor_output.log"
+# exec > >(tee -a "$LOGFILE") 2>&1
 
 SCRIPT_NAME=$(basename "$0")
 NUM_PROC=10

@@ -185,29 +185,6 @@ for task in ["pao2","platelets","creatinine","bilirubin"]:
 
     print(f"Valid predictions: {n_valid} ({100*n_valid/len(test_df):.2f}%)")
     print(f"Invalid predictions: {n_invalid} ({100*n_invalid/len(test_df):.2f}%)")
-
-    # if n_valid > 0:
-    #     rmse = float(np.sqrt(mean_squared_error(
-    #         test_df.loc[valid_mask, "numerical_value"], 
-    #         test_df.loc[valid_mask, 'prediction']
-    #     )))
-    #     mae = float(mean_absolute_error(
-    #         test_df.loc[valid_mask, "numerical_value"], 
-    #         test_df.loc[valid_mask, 'prediction']
-    #     ))
-
-    #     r2 = float(r2_score(
-    #         test_df.loc[valid_mask, "numerical_value"], 
-    #         test_df.loc[valid_mask, 'prediction']
-    #     ))
-        
-    #     print(f"\n{'='*50}")
-    #     print(f"Naive Baseline Results:")
-    #     print(f"{'='*50}")
-    #     print(f"RMSE: {rmse:.4f}")
-    #     print(f"MAE:  {mae:.4f}")
-    #     print(f"r2: {r2:.4f}")
-    #     print(f"{'='*50}")
         
     if n_valid > 0:
         y_true = test_df.loc[valid_mask, "numerical_value"].to_numpy()

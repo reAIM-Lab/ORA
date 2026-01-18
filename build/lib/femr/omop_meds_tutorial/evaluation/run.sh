@@ -1,6 +1,6 @@
 #!/bin/sh
-LOGFILE="$(dirname "$0")/run_motor_output_cbs.log"
-exec > >(tee -a "$LOGFILE") 2>&1
+# LOGFILE="$(dirname "$0")/run_motor_output_cbs.log"
+# exec > >(tee -a "$LOGFILE") 2>&1
 
 # Default values
 SCRIPT_NAME=$(basename "$0")
