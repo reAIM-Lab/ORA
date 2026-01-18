@@ -259,21 +259,21 @@ Evaluates binary classification tasks (e.g., predicting patient outcomes).
 ```bash
 # Mimic
 bash run.sh \
-  --meds_reader        /xxx/meds_v0.6_reader  \
-  --num_proc           24 \
-  --model_path         /xxx/ \
-  --model_name         transformer_ntp \
+  --meds_reader        /shared/share_mala/zj2398/mimic/data/meds_v0.6_reader  \
+  --num_proc           32 \
+  --model_path         /shared/share_mala/zj2398/models/mtpp_8k/mtpp_all_shared_6100_bin_5/mamba_2e-4_5.0_cosine/best_56076 \
+  --model_name         mamba_mtpp \
   --tokens_per_batch   65536 \
   --device             cuda:0 \
-  --use_ntp            yes \
+  --use_ntp            no \
   --cohort_type        outcome \
-  --cache_path           xxx \
+  --cache_path           /shared/share_mala/zj2398/huggingface/datasets \
   --min_subjects_per_batch 8 \
-  --ontology_path       /data2/processed_datasets/zj2398/femr/cumc/motor/ontology.pkl \
-  --main_split_path     /data2/processed_datasets/zj2398/femr/cumc/main_split.csv \
-  --output_dir   /data/results/zj2398/femr/mimic/outcome/  \
-  --classification_cohort /data2/processed_datasets/mimic/phenotype_task/binary/
-
+  --ontology_path       /user/zj2398/cache/mtpp_8k/ontology.pkl \
+  --main_split_path     /user/zj2398/cache/mtpp_8k/main_split.csv \
+  --output_dir   /shared/share_mala/zj2398/mimic/task/patient_outcome_task  \
+  --classification_cohort /shared/share_mala/zj2398/mimic/task/patient_outcome_task/cohort/
+# /shared/share_mala/zj2398/models/tpp_8k/mamba_2e-4_5.0/best_75368
 # cumc
 bash run.sh \
   --meds_reader        /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/post_transform_meds_reader \
@@ -304,7 +304,7 @@ Evaluates phenotype classification and survival analysis (time-to-event) tasks.
 **Example Usage**
 
 ```bash
-# export CUDA_VISIBLE_DEVICES=5
+# export CUDA_VISIBLE_DEVICES=2
 # mimic
 bash run.sh \
   --meds_reader        /data/raw_data/mimic/files/mimiciv/meds_v0.6/3.1/MEDS_cohort-reader \
@@ -377,24 +377,26 @@ Evaluates continuous value prediction tasks (e.g., predicting lab values).
 **Script:** `evaluation/regression/run_regression.sh`
 
 **Example Usage:**
-<!-- export CUDA_VISIBLE_DEVICES=2 -->
+<!-- export CUDA_VISIBLE_DEVICES=4 -->
 ```bash
 bash run_regression.sh \
   --meds_reader        /shared/share_mala/zj2398/mimic/data/meds_v0.6_reader \
   --num_proc           24 \
-  --model_path         /shared/share_mala/zj2398/models/ntp_8k/transformer/best-269840 \
-  --model_name         transformer_ntp_new \
+  --model_path         /shared/share_mala/zj2398/models/tpp_8k/transformer/best_221573 \
+  --model_name         transformer-unmark \
   --tokens_per_batch   65536 \
   --device             cuda:0 \
   --min_subjects_per_batch 8 \
   --ontology_path      /user/zj2398/cache/mtpp_8k/ontology.pkl \
   --main_split_path    /user/zj2398/cache/mtpp_8k/main_split.csv \
-  --cohort_dir   /shared/share_mala/zj2398/mimic/task/regression/cohort/icu_stay_4h/ \
+  --cohort_dir   /shared/share_mala/zj2398/mimic/task/regression/cohort/icu_stay_4h_100k/ \
   --output_dir   /shared/share_mala/zj2398/mimic/task/regression/ \
   --use_ntp no \
   --cache_path /shared/share_mala/zj2398/huggingface/datasets \
-  --tasks "bilirubin,creatinine,pao2,platelets" \
+  --tasks "bilirubin,creatinine" \
   --regression 
+
+  # pao2,platelets
 
 bash run_regression.sh \
   --meds_reader        /data/raw_data/mimic/files/mimiciv/meds_v0.6/3.1/MEDS_cohort-reader \

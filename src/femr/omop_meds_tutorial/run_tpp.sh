@@ -27,7 +27,7 @@ python prepare.py \
 
 # ---- job 2: training (background) ----
 # multi-gpu pretraining
-# export CUDA_VISIBLE_DEVICES=0,1,2,3
+# export CUDA_VISIBLE_DEVICES=0 ,1,2,3
 
 
 accelerate launch \
@@ -38,6 +38,7 @@ accelerate launch \
   --per_device_train_batch_size 1 \
   --output_dir /shared/share_mala/zj2398/models/tpp_8k/mamba_2e-4_5.0 \
   --learning_rate 2e-4 \
+  --checkpoint_dir /shared/share_mala/zj2398/models/tpp_8k/mamba_2e-4_5.0/checkpoint-37684 \
   --max_grad_norm 5.0 \
   --model mamba \
   --n_layers 28 \

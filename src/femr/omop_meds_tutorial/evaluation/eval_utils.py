@@ -56,8 +56,8 @@ def _update_metric_table(summary_dir: Path, metric_name: str, task: str, model_c
         df = pd.DataFrame(dtype=str)
 
     # Ensure index/col exist
-    print(df.index,task)
-    print(df)
+    # print(df.index,task)
+    # print(df)
     if task not in df.index:
         df.loc[task, :] = ""
     if model_col not in df.columns:

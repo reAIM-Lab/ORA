@@ -319,29 +319,29 @@ for TASK_DIR in "$CLASS_COHORT"*/; do
     fi
 
     # Determine the MOTOR prediction folder path based on observation window
-    if [ -n "$OBSERVATION_WINDOW" ]; then
-        MOTOR_PREDICTION_FOLDER="$OUTPUT_DIR/"results"/$TASK_NAME/$MODEL_NAME_$OBSERVATION_WINDOW/test_predictions"
-        MOTOR_OUTPUT_DIR="$OUTPUT_DIR/"results"/$TASK_NAME/$MODEL_NAME_$OBSERVATION_WINDOW/"
-    else
-        MOTOR_PREDICTION_FOLDER="$OUTPUT_DIR/"results"/$TASK_NAME/$MODEL_NAME/test_predictions"
-        MOTOR_OUTPUT_DIR="$OUTPUT_DIR/"results"/$TASK_NAME/$MODEL_NAME/"
-    fi
+    # if [ -n "$OBSERVATION_WINDOW" ]; then
+    #     MOTOR_PREDICTION_FOLDER="$OUTPUT_DIR/"results"/$TASK_NAME/$MODEL_NAME_$OBSERVATION_WINDOW/test_predictions"
+    #     MOTOR_OUTPUT_DIR="$OUTPUT_DIR/"results"/$TASK_NAME/$MODEL_NAME_$OBSERVATION_WINDOW/"
+    # else
+    #     MOTOR_PREDICTION_FOLDER="$OUTPUT_DIR/"results"/$TASK_NAME/$MODEL_NAME/test_predictions"
+    #     MOTOR_OUTPUT_DIR="$OUTPUT_DIR/"results"/$TASK_NAME/$MODEL_NAME/"
+    # fi
 
-    # Build the evaluation command
-    EVAL_CMD="meds-evaluation-cli predictions_path=\"$MOTOR_PREDICTION_FOLDER\" \
-      output_dir=\"$MOTOR_OUTPUT_DIR\""
+    # # Build the evaluation command
+    # EVAL_CMD="meds-evaluation-cli predictions_path=\"$MOTOR_PREDICTION_FOLDER\" \
+    #   output_dir=\"$MOTOR_OUTPUT_DIR\""
 
-    # Run the third command to compute the metrics
-    echo "Running meds-evaluation for $TASK_NAME..."
-    echo "Executing command: $EVAL_CMD"
+    # # Run the third command to compute the metrics
+    # echo "Running meds-evaluation for $TASK_NAME..."
+    # echo "Executing command: $EVAL_CMD"
 
-    # Execute the command
-    eval $EVAL_CMD
+    # # Execute the command
+    # eval $EVAL_CMD
 
-    # Check if the third command succeeded
-    if [ $? -ne 0 ]; then
-        echo "Error: Running meds-evaluation failed for task $TASK_NAME"
-    fi
+    # # Check if the third command succeeded
+    # if [ $? -ne 0 ]; then
+    #     echo "Error: Running meds-evaluation failed for task $TASK_NAME"
+    # fi
 
     echo "Completed processing of task: $TASK_NAME"
     echo "----------------------------------------"
@@ -351,17 +351,17 @@ echo "All tasks processed."
 
 
 # phenotype
-# export CUDA_VISIBLE_DEVICES=7
+# export CUDA_VISIBLE_DEVICES=2
 
 #phenotype
 # bash run.sh \
 #   --meds_reader        /shared/share_mala/zj2398/mimic/data/meds_v0.6_reader  \
 #   --num_proc           24 \
-#   --model_path         /shared/share_mala/zj2398/models/ntp_8k/transformer/best-269840 \
-#   --model_name         transformer_ntp \
+#   --model_path         /shared/share_mala/zj2398/models/tpp_8k/mamba_2e-4_5.0/best_75368 \
+#   --model_name         mamba_tpp_2e-4 \
 #   --tokens_per_batch   65536 \
 #   --device             cuda:0 \
-#   --use_ntp            yes \
+#   --use_ntp            no \
 #   --cohort_type        phenotype \
 #   --cache_path         /shared/share_mala/zj2398/huggingface/datasets \
 #   --min_subjects_per_batch 8 \
@@ -393,20 +393,6 @@ echo "All tasks processed."
 
 
 # kuvira
-# bash run.sh \
-#   --pretraining_data    /data/models/zj2398/femr/cumc_0.1/mtpp_shared \
-#   --meds_reader        /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/post_transform_meds_reader \
-#   --num_proc           32 \
-#   --model_path         /data/models/zj2398/femr/cumc_0.1/mtpp_shared/transformer/best_39446 \
-#   --model_name         mtpp_shared \
-#   --tokens_per_batch   65536 \
-#   --device             cuda:0 \
-#   --min_subjects_per_batch 8 \
-#   --ontology_path       /data/models/zj2398/femr/cumc_0.1/mtpp_shared/ontology.pkl \
-#   --main_split_path     /data2/processed_datasets/zj2398/femr/cumc/mtpp_vocab_all/cumc_split.csv \
-#   --loss_type  labeled_subjects \
-#   --output_dir   /data/results/zj2398/femr/cumc_0.1/phenotype \
-#   /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/task_labels/phenotype_tte/
 
 # bash run.sh \
 #   --pretraining_data   /data2/processed_datasets/zj2398/femr/cumc_0.1/tpp \
