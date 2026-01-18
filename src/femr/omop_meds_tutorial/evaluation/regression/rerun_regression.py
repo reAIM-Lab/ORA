@@ -57,12 +57,13 @@ def main():
     args = create_arg_parser().parse_args()
     model_list = args.model_list.split(",")
     print(model_list)
-    summary_dir = Path(args.result_dir)/"summary_dir"
-    main_split_path = Path("/shared/share_mala/zj2398/models/motor_8k/main_split.csv")
+    summary_dir = Path(args.result_dir)/"summary_tables"
+    # main_split_path = Path("/shared/share_mala/zj2398/models/motor_8k/main_split.csv")
+    main_split_path = Path("/data2/processed_datasets/zj2398/femr/cumc/mtpp/main_split.csv")
     main_split = pd.read_csv(main_split_path)
     train_subject_ids = main_split[main_split["split_name"] == "train"]["subject_id"]
     test_subject_ids = main_split[main_split["split_name"] == "test"]["subject_id"]
-    for label_name in ["bilirubin","creatinine","pao2","platelets"]:
+    for label_name in ["bilirubin","creatinine","spo2","platelets"]:
         labels = pd.read_parquet(Path(args.label_dir)/label_name/f"{label_name}.parquet")
         for model_name in model_list:
             cols = ["subject_id", "prediction_time", "numerical_value"]
@@ -71,8 +72,8 @@ def main():
             train_data = pd.read_parquet(features_label_data / "train.parquet").drop_duplicates(subset=cols)
             test_data = pd.read_parquet(features_label_data / "test.parquet").drop_duplicates(subset=cols)
             # print(f"Total labels: {len(labels)}")
-            # print(f"Original train features labels: {len(train_data['features'])}")
-            # print(f"Original test features labels: {len(test_data['features'])}")
+            print(f"Original train features labels: {len(train_data['features'])}")
+            print(f"Original test features labels: {len(test_data['features'])}")
 
             train_data = train_data.merge(labels[cols].drop_duplicates(),   # avoid duplicate matches in B
                 on=cols,
@@ -82,8 +83,8 @@ def main():
                 on=cols,
                 how="inner"
             )
-            # print(f"New train features labels: {len(train_data)}")
-            # print(f"New test features labels: {len(test_data)}")
+            print(f"New train features labels: {len(train_data)}")
+            print(f"New test features labels: {len(test_data)}")
 
             # print(f"New train df: {len(train_df)}")
             # print(f"New test df: {len(test_df)}")
@@ -118,13 +119,13 @@ def main():
             # model.fit(train_set['features'].to_list(), train_set["numerical_value"])
             # y_pred = model.predict(test_data['features'])
 
-            pl.DataFrame({
-                "subject_id": test_data["subject_id"].tolist(),
-                "prediction_time": test_data["prediction_time"].tolist(),
-                "y_true": y_true.tolist(),
-                "y_pred": y_pred.tolist(),
-                "residual": (test_data["numerical_value"] - y_pred).tolist(),
-            }).write_parquet(output_dir / "test_predictions_50k.parquet")
+            # pl.DataFrame({
+            #     "subject_id": test_data["subject_id"].tolist(),
+            #     "prediction_time": test_data["prediction_time"].tolist(),
+            #     "y_true": y_true.tolist(),
+            #     "y_pred": y_pred.tolist(),
+            #     "residual": (test_data["numerical_value"] - y_pred).tolist(),
+            # }).write_parquet(output_dir / "test_predictions_50k.parquet")
 
             # rmse = float(np.sqrt(mean_squared_error(test_data["numerical_value"], y_pred)))
             # mae = float(mean_absolute_error(test_data["numerical_value"], y_pred))
@@ -169,9 +170,9 @@ python rerun_regression.py \
     --label_dir /shared/share_mala/zj2398/mimic/task/regression/cohort/icu_stay_4h_100k
 
 python rerun_regression.py \
-    --result_dir /shared/share_mala/zj2398/mimic/task/regression \
-    --model_list mamba_tpp,mamba_mtpp \
-    --label_dir /shared/share_mala/zj2398/mimic/task/regression/cohort/icu_stay_4h_100k
+    --result_dir /data/results/zj2398/femr/cumc/regression \
+    --model_list mtpp_shared,tpp \
+    --label_dir /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/task_labels/regression_100k/
 
     transformer_mtpp,mamba_ntp,mamba_tpp,mamba_mtpp
 '''

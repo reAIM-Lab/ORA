@@ -279,7 +279,7 @@ bash run.sh \
   --meds_reader        /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/post_transform_meds_reader \
   --num_proc           20 \
   --model_path          /data2/processed_datasets/zj2398/femr/cumc/mtpp/transformer/best_1730112 \
-  --model_name         transformer_tpp \
+  --model_name         transformer_mtpp \
   --tokens_per_batch   65536 \
   --device             cuda:0 \
   --use_ntp            no \
@@ -292,6 +292,7 @@ bash run.sh \
   --classification_cohort /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/task_labels/patient_outcomes_clean/
 
   # /data2/processed_datasets/zj2398/femr/cumc/mtpp/transformer/best_1730112
+# /data2/processed_datasets/zj2398/femr/cumc/tpp/transformer/best_0.1_468585
 
 ```
 
@@ -305,12 +306,13 @@ Evaluates phenotype classification and survival analysis (time-to-event) tasks.
 
 ```bash
 # export CUDA_VISIBLE_DEVICES=2
+# export CUDA_VISIBLE_DEVICES=2
 # mimic
 bash run.sh \
   --meds_reader        /data/raw_data/mimic/files/mimiciv/meds_v0.6/3.1/MEDS_cohort-reader \
   --num_proc           24 \
-  --model_path         /xxx/transformer/best_159744 \
-  --model_name         transformer_ntp \
+  --model_path         /data2/processed_datasets/zj2398/femr/mimic/ntp/mamba_2e-4_5.0/best_101112 \
+  --model_name         mamba_ntp_2e-4 \
   --tokens_per_batch   65536 \
   --device             cuda:0 \
   --use_ntp            yes \
@@ -319,11 +321,12 @@ bash run.sh \
   --min_subjects_per_batch 8 \
   --truncation  330 \
   --observation_window 730 \
-  --ontology_path       /data2/processed_datasets/zj2398/femr/cumc/motor/ontology.pkl \
-  --main_split_path     /data2/processed_datasets/zj2398/femr/mimic/main_split.path \
+  --ontology_path       /data2/processed_datasets/zj2398/femr/mimic/ntp/ontology.pkl \
+  --main_split_path     /data2/processed_datasets/zj2398/femr/mimic/ntp/main_split.csv \
   --output_dir   /data/results/zj2398/femr/mimic/phenotype  \
   --classification_cohort  /data2/processed_datasets/mimic/phenotype_task/binary/ \
   --tte_cohort /data2/processed_datasets/mimic/phenotype_task/tte/
+
 
 # cumc
 bash run.sh \
@@ -377,7 +380,7 @@ Evaluates continuous value prediction tasks (e.g., predicting lab values).
 **Script:** `evaluation/regression/run_regression.sh`
 
 **Example Usage:**
-<!-- export CUDA_VISIBLE_DEVICES=4 -->
+<!-- export CUDA_VISIBLE_DEVICES=1 -->
 ```bash
 bash run_regression.sh \
   --meds_reader        /shared/share_mala/zj2398/mimic/data/meds_v0.6_reader \
@@ -400,36 +403,36 @@ bash run_regression.sh \
 
 bash run_regression.sh \
   --meds_reader        /data/raw_data/mimic/files/mimiciv/meds_v0.6/3.1/MEDS_cohort-reader \
-  --num_proc           20 \
-  --model_path        /data2/processed_datasets/zj2398/femr/mimic/mtpp/mamba/best-51858 \
-  --model_name         mamba_mtpp_1e-5 \
+  --num_proc           24 \
+  --model_path        /data2/processed_datasets/zj2398/femr/mimic/ntp/mamba_2e-4_5.0/best_101112 \
+  --model_name         mamba_ntp_2e-4 \
   --tokens_per_batch   65536 \
   --device             cuda:0 \
   --min_subjects_per_batch 8 \
-  --ontology_path      /data2/processed_datasets/zj2398/femr/mimic/mtpp/ontology.pkl \
-  --main_split_path    /data2/processed_datasets/zj2398/femr/mimic/mtpp/main_split.csv \
+  --ontology_path     /data2/processed_datasets/zj2398/femr/mimic/ntp/ontology.pkl \
+  --main_split_path    /data2/processed_datasets/zj2398/femr/mimic/ntp/main_split.csv \
   --cohort_dir    /data2/processed_datasets/mimic/regression/icu_stay_4h_100k/ \
   --output_dir   /data/results/zj2398/femr/mimic/regression \
-  --use_ntp no \
+  --use_ntp yes \
   --cache_path /data2/huggingface/zj2398/ \
-  --tasks "creatinine" \
+  --tasks "bilirubin,creatinine" \
   --regression 
 
 bash run_regression.sh \
   --meds_reader        /data/raw_data/mimic/files/mimiciv/meds_v0.6/3.1/MEDS_cohort-reader \
-  --num_proc           20 \
-  --model_path        /data2/processed_datasets/zj2398/femr/mimic/mtpp/mamba/best-51858 \
-  --model_name         mamba_mtpp_1e-5 \
+  --num_proc           24 \
+  --model_path        /data2/processed_datasets/zj2398/femr/mimic/ntp/mamba_2e-4_5.0/best_101112 \
+  --model_name         mamba_ntp_2e-4 \
   --tokens_per_batch   65536 \
   --device             cuda:0 \
   --min_subjects_per_batch 8 \
-  --ontology_path      /data2/processed_datasets/zj2398/femr/mimic/mtpp/ontology.pkl \
-  --main_split_path    /data2/processed_datasets/zj2398/femr/mimic/mtpp/main_split.csv \
+  --ontology_path     /data2/processed_datasets/zj2398/femr/mimic/ntp/ontology.pkl \
+  --main_split_path    /data2/processed_datasets/zj2398/femr/mimic/ntp/main_split.csv \
   --cohort_dir    /data2/processed_datasets/mimic/regression/icu_stay_4h_100k/ \
   --output_dir   /data/results/zj2398/femr/mimic/regression \
-  --use_ntp no \
+  --use_ntp yes \
   --cache_path /data2/huggingface/zj2398/ \
-  --tasks "platelets" \
+  --tasks "pao2" \
   --regression 
 ```
 ### Parameters for run_regression.sh
