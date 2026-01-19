@@ -1,6 +1,43 @@
 import numpy as np
 import pandas as pd
 from pathlib import Path
+from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
+
+def _bootstrap_regression_metrics(y_true, y_pred, n_boot=100, seed=0):
+    """
+    Returns dict:
+      {"rmse": (mean,std), "mae": (mean,std), "r2": (mean,std)}
+    std is bootstrap std (ddof=1). If not enough samples, returns (None,None).
+    """
+    y_true = np.asarray(y_true)
+    y_pred = np.asarray(y_pred)
+    n = len(y_true)
+    if n < 2:
+        return {"rmse": (None, None), "mae": (None, None), "r2": (None, None)}
+
+    rng = np.random.default_rng(seed)
+    rmses, maes, r2s = [], [], []
+
+    for _ in range(n_boot):
+        idx = rng.integers(0, n, size=n)  # sample with replacement
+        yt = y_true[idx]
+        yp = y_pred[idx]
+
+        rmse_b = float(np.sqrt(mean_squared_error(yt, yp)))
+        mae_b = float(mean_absolute_error(yt, yp))
+        r2_b = float(r2_score(yt, yp))
+
+        rmses.append(rmse_b)
+        maes.append(mae_b)
+        r2s.append(r2_b)
+
+    def _mean_std(arr):
+        arr = np.asarray(arr, dtype=float)
+        mean = float(arr.mean())
+        std = float(arr.std(ddof=1)) if len(arr) > 1 else 0.0
+        return (mean, std)
+
+    return {"rmse": _mean_std(rmses), "mae": _mean_std(maes), "r2": _mean_std(r2s)}
 
 def _metric_mean_std(metrics: dict, key: str):
     """

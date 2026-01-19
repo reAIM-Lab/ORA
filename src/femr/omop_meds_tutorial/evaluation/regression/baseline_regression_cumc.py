@@ -13,6 +13,7 @@ import pandas as pd
 import numpy as np
 from pathlib import Path
 from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
+from femr.omop_meds_tutorial.evaluation.eval_utils import _metric_mean_std, _update_metric_table,_bootstrap_regression_metrics
 import meds_reader
 import functools
 from typing import Dict, List, Tuple
@@ -25,6 +26,7 @@ from collections import defaultdict
 COHORT_DIR = Path("/data2/processed_datasets/zj2398/cumc_data/regression_100k/")
 MEDS_PATH = "/data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/post_transform_meds_reader"
 SPLIT_PATH = "/data2/processed_datasets/zj2398/femr/cumc/motor/main_split.csv"
+
 # OUTPUT_DIR = "/data/results/zj2398/femr/cumc_0.1/regression_2_5_months/most_recent"
 
 CODE_DICT = {
@@ -34,7 +36,7 @@ CODE_DICT = {
     "spo2":"LOINC/2708-6//UCUM/%",
 }
 
-
+MODEL_COL = "Most Recent Imputation"
 # ============================================================================
 # Data Loading
 # ============================================================================
@@ -129,38 +131,6 @@ def aggregate_results(accumulated: Dict[int, float], chunk: Dict[int, float]) ->
     """Merge results from parallel workers."""
     accumulated.update(chunk)
     return accumulated
-
-
-# ============================================================================
-# Evaluation
-# ============================================================================
-def evaluate(test_df: pd.DataFrame, predictions: Dict[int, float], task: str) -> Dict:
-    """Calculate and print metrics."""
-    test_df = test_df.copy()
-    test_df['prediction'] = test_df.index.map(predictions)
-    
-    # valid_mask = ~test_df['prediction'].isna()
-    # n_valid = valid_mask.sum()
-    # n_total = len(test_df)
-    
-    print(f"\nResults for {task}:")
-    # print(f"  Valid predictions: {n_valid}/{n_total} ({100*n_valid/n_total:.1f}%)")
-    
-    # if n_valid > 0:
-    #     y_true = test_df.loc[valid_mask, 'numerical_value']
-    #     y_pred = test_df.loc[valid_mask, 'prediction']
-    
-    y_true = test_df['numerical_value']
-    y_pred = test_df['prediction']
-    rmse = np.sqrt(mean_squared_error(y_true, y_pred))
-    mae = mean_absolute_error(y_true, y_pred)
-    r2 = r2_score(y_true, y_pred)
-    
-    print(f"  RMSE: {rmse:.4f}")
-    print(f"  MAE:  {mae:.4f}")
-    print(f"  R²:   {r2:.4f}")
-    
-    return {'task': task, 'rmse': rmse, 'mae': mae, 'r2': r2}
     
 
 
@@ -202,8 +172,33 @@ def main():
         )
         
         # Evaluate
-        metrics = evaluate(test_df, predictions, task)
-        all_results.append(metrics)
+        # metrics = evaluate(test_df, predictions, task)
+        # all_results.append(metrics)
+
+        y_pred = test_df.index.map(predictions)
+        y_true = test_df['numerical_value']
+
+        metrics = _bootstrap_regression_metrics(
+            y_true, y_pred,
+            n_boot=100,
+            seed=0  # you can vary per task if you want, e.g. hash(task) & 0xffffffff
+        )
+
+        rmse_mean, rmse_std = _metric_mean_std(metrics, "rmse")
+        mae_mean, mae_std   = _metric_mean_std(metrics, "mae")
+        r2_mean, r2_std     = _metric_mean_std(metrics, "r2")
+
+        print(f"\n{'='*50}")
+        print(f"Naive Baseline Results (bootstrap {N_BOOT}x):")
+        print(f"{'='*50}")
+        print(f"RMSE: {rmse_mean:.4f} ({rmse_std:.4f})")
+        print(f"MAE:  {mae_mean:.4f} ({mae_std:.4f})")
+        print(f"R2:   {r2_mean:.4f} ({r2_std:.4f})")
+        print(f"{'='*50}")
+
+        _update_metric_table(result_dir, "rmse", task, MODEL_COL, rmse_mean, rmse_std)
+        _update_metric_table(result_dir, "mae",  task, MODEL_COL, mae_mean,  mae_std)
+        _update_metric_table(result_dir, "r2",   task, MODEL_COL, r2_mean,   r2_std)
     
     # Summary table
     print(f"\n{'='*60}")
@@ -215,3 +210,34 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+# ============================================================================
+# Evaluation
+# # # ============================================================================
+# def evaluate(test_df: pd.DataFrame, predictions: Dict[int, float], task: str) -> Dict:
+#     """Calculate and print metrics."""
+#     test_df = test_df.copy()
+#     test_df['prediction'] = test_df.index.map(predictions)
+    
+#     # valid_mask = ~test_df['prediction'].isna()
+#     # n_valid = valid_mask.sum()
+#     # n_total = len(test_df)
+    
+#     print(f"\nResults for {task}:")
+#     # print(f"  Valid predictions: {n_valid}/{n_total} ({100*n_valid/n_total:.1f}%)")
+    
+#     # if n_valid > 0:
+#     #     y_true = test_df.loc[valid_mask, 'numerical_value']
+#     #     y_pred = test_df.loc[valid_mask, 'prediction']
+    
+#     y_true = test_df['numerical_value']
+#     y_pred = test_df['prediction']
+#     rmse = np.sqrt(mean_squared_error(y_true, y_pred))
+#     mae = mean_absolute_error(y_true, y_pred)
+#     r2 = r2_score(y_true, y_pred)
+    
+#     print(f"  RMSE: {rmse:.4f}")
+#     print(f"  MAE:  {mae:.4f}")
+#     print(f"  R²:   {r2:.4f}")
+    
+#     return {'task': task, 'rmse': rmse, 'mae': mae, 'r2': r2}

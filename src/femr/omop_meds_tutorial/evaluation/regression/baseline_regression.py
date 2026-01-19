@@ -6,48 +6,12 @@ from sklearn.metrics import mean_squared_error, mean_absolute_error,r2_score
 import meds_reader
 from tqdm import tqdm
 from collections import defaultdict
-from femr.omop_meds_tutorial.evaluation.eval_utils import _metric_mean_std, _update_metric_table
+from femr.omop_meds_tutorial.evaluation.eval_utils import _metric_mean_std, _update_metric_table,_bootstrap_regression_metrics
 
 cohort_dir = Path("/shared/share_mala/zj2398/mimic/task/regression/cohort/icu_stay_4h_100k/")
 result_dir = Path("/shared/share_mala/zj2398/mimic/task/regression/summary_dir")
-MODEL_COL = "baseline"
+MODEL_COL = "Most Recent Imputation"
 N_BOOT = 100
-
-def _bootstrap_regression_metrics(y_true, y_pred, n_boot=100, seed=0):
-    """
-    Returns dict:
-      {"rmse": (mean,std), "mae": (mean,std), "r2": (mean,std)}
-    std is bootstrap std (ddof=1). If not enough samples, returns (None,None).
-    """
-    y_true = np.asarray(y_true)
-    y_pred = np.asarray(y_pred)
-    n = len(y_true)
-    if n < 2:
-        return {"rmse": (None, None), "mae": (None, None), "r2": (None, None)}
-
-    rng = np.random.default_rng(seed)
-    rmses, maes, r2s = [], [], []
-
-    for _ in range(n_boot):
-        idx = rng.integers(0, n, size=n)  # sample with replacement
-        yt = y_true[idx]
-        yp = y_pred[idx]
-
-        rmse_b = float(np.sqrt(mean_squared_error(yt, yp)))
-        mae_b = float(mean_absolute_error(yt, yp))
-        r2_b = float(r2_score(yt, yp))
-
-        rmses.append(rmse_b)
-        maes.append(mae_b)
-        r2s.append(r2_b)
-
-    def _mean_std(arr):
-        arr = np.asarray(arr, dtype=float)
-        mean = float(arr.mean())
-        std = float(arr.std(ddof=1)) if len(arr) > 1 else 0.0
-        return (mean, std)
-
-    return {"rmse": _mean_std(rmses), "mae": _mean_std(maes), "r2": _mean_std(r2s)}
 
 
 for task in ["pao2","platelets","creatinine","bilirubin"]:
@@ -179,40 +143,45 @@ for task in ["pao2","platelets","creatinine","bilirubin"]:
 
     # Step 7: Calculate evaluation metrics
     print("\nCalculating metrics...")
-    valid_mask = ~test_df['prediction'].isna()
-    n_valid = valid_mask.sum()
-    n_invalid = (~valid_mask).sum()
+    # valid_mask = ~test_df['prediction'].isna()
+    # n_valid = valid_mask.sum()
+    # n_invalid = (~valid_mask).sum()
 
-    print(f"Valid predictions: {n_valid} ({100*n_valid/len(test_df):.2f}%)")
-    print(f"Invalid predictions: {n_invalid} ({100*n_invalid/len(test_df):.2f}%)")
+    # print(f"Valid predictions: {n_valid} ({100*n_valid/len(test_df):.2f}%)")
+    # print(f"Invalid predictions: {n_invalid} ({100*n_invalid/len(test_df):.2f}%)")
         
-    if n_valid > 0:
-        y_true = test_df.loc[valid_mask, "numerical_value"].to_numpy()
-        y_pred = test_df.loc[valid_mask, "prediction"].to_numpy()
+    # if n_valid > 0:
+    # y_true = test_df.loc[valid_mask, "numerical_value"].to_numpy()
+    # y_pred = test_df.loc[valid_mask, "prediction"].to_numpy()
 
-        metrics = _bootstrap_regression_metrics(
-            y_true, y_pred,
-            n_boot=N_BOOT,
-            seed=0  # you can vary per task if you want, e.g. hash(task) & 0xffffffff
-        )
+        # if n_valid > 0:
+    y_true = test_df["numerical_value"].to_numpy()
+    y_pred = test_df["prediction"].to_numpy()
 
-        rmse_mean, rmse_std = _metric_mean_std(metrics, "rmse")
-        mae_mean, mae_std   = _metric_mean_std(metrics, "mae")
-        r2_mean, r2_std     = _metric_mean_std(metrics, "r2")
+    metrics = _bootstrap_regression_metrics(
+        y_true, y_pred,
+        n_boot=N_BOOT,
+        seed=0  # you can vary per task if you want, e.g. hash(task) & 0xffffffff
+    )
 
-        print(f"\n{'='*50}")
-        print(f"Naive Baseline Results (bootstrap {N_BOOT}x):")
-        print(f"{'='*50}")
-        print(f"RMSE: {rmse_mean:.4f} ({rmse_std:.4f})")
-        print(f"MAE:  {mae_mean:.4f} ({mae_std:.4f})")
-        print(f"R2:   {r2_mean:.4f} ({r2_std:.4f})")
-        print(f"{'='*50}")
+    rmse_mean, rmse_std = _metric_mean_std(metrics, "rmse")
+    mae_mean, mae_std   = _metric_mean_std(metrics, "mae")
+    r2_mean, r2_std     = _metric_mean_std(metrics, "r2")
 
-        _update_metric_table(result_dir, "rmse", task, MODEL_COL, rmse_mean, rmse_std)
-        _update_metric_table(result_dir, "mae",  task, MODEL_COL, mae_mean,  mae_std)
-        _update_metric_table(result_dir, "r2",   task, MODEL_COL, r2_mean,   r2_std)
-    else:
-        print("No valid predictions to evaluate!")
+    print(f"\n{'='*50}")
+    print(f"Naive Baseline Results (bootstrap {N_BOOT}x):")
+    print(f"{'='*50}")
+    print(f"RMSE: {rmse_mean:.4f} ({rmse_std:.4f})")
+    print(f"MAE:  {mae_mean:.4f} ({mae_std:.4f})")
+    print(f"R2:   {r2_mean:.4f} ({r2_std:.4f})")
+    print(f"{'='*50}")
+
+    _update_metric_table(result_dir, "rmse", task, MODEL_COL, rmse_mean, rmse_std)
+    _update_metric_table(result_dir, "mae",  task, MODEL_COL, mae_mean,  mae_std)
+    _update_metric_table(result_dir, "r2",   task, MODEL_COL, r2_mean,   r2_std)
+
+    # else:
+    #     print("No valid predictions to evaluate!")
 
 
 # Optional: Save results
