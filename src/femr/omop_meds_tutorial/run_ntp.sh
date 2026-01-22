@@ -44,21 +44,36 @@ python prepare.py \
 
 
 # multi-gpu pretraining
-# export CUDA_VISIBLE_DEVICES=2
-# accelerate launch \
-#   --num_processes 2 \
+# export CUDA_VISIBLE_DEVICES=1,2
+accelerate launch \
+  --num_processes 2 \
+torchrun \
+  --nproc_per_node=2 \
+  pretrain.py \
+  --pretraining_data /data2/processed_datasets/zj2398/femr/cumc/ntp \
+  --meds_reader /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/post_transform_meds_reader \
+  --per_device_train_batch_size 1 \
+  --output_dir /data2/processed_datasets/zj2398/femr/cumc/ntp/mamba \
+  --checkpoint_dir /data2/processed_datasets/zj2398/femr/cumc/ntp/mamba/checkpoint-1848322 \
+  --model mamba \
+  --learning_rate 2e-4 \
+  --max_grad_norm 5.0 \
+  --n_layers 28 \
+  --hf_run_name cumc_mamba_ntp_2e-4_5.0_continue \
+  --loss_type ntp
+
   python pretrain.py \
   --pretraining_data /data2/processed_datasets/zj2398/femr/cumc/ntp \
   --meds_reader /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/post_transform_meds_reader \
   --per_device_train_batch_size 1 \
   --output_dir /data2/processed_datasets/zj2398/femr/cumc/ntp/mamba \
+  --checkpoint_dir /data2/processed_datasets/zj2398/femr/cumc/ntp/mamba/checkpoint-1848322 \
   --model mamba \
   --learning_rate 2e-4 \
   --max_grad_norm 5.0 \
   --n_layers 28 \
-  --hf_run_name cumc_mamba_ntp_2e-4_5.0 \
+  --hf_run_name cumc_mamba_ntp_2e-4_5.0_continue \
   --loss_type ntp
-
 
 
 

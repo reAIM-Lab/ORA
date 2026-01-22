@@ -7,40 +7,40 @@ set -euo pipefail
 # TRAIN_LOG="$LOG_DIR/train_mamba_$(date +%Y%m%d_%H%M%S).log"
 # mkdir -p "$LOG_DIR"
 
-echo "[$(date)] starting both jobs..."
+# echo "[$(date)] starting both jobs..."
 # echo "Logs:"
 # echo "  prepare -> $PREP_LOG"
 # echo "  train   -> $TRAIN_LOG"
 # echo
 
 python prepare.py \
-  --pretraining_data /user/zj2398/cache/deephit_tpp \
-  --ontology_path  /user/zj2398/cache/deephit_tpp/ontology.pkl \
+  --pretraining_data /data2/processed_datasets/zj2398/femr/cumc/tpp \
+  --ontology_path  /data2/processed_datasets/zj2398/femr/cumc/tpp/ontology.pkl \
   --loss_type tpp \
   --tokens_per_batch 8192 \
   --model mamba \
-  --num_threads 40 \
-  --hf_cache_path /shared/share_mala/zj2398/huggingface/datasets \
-  --meds_reader /shared/share_mala/zj2398/mimic/data/meds_v0.6_reader
+  --num_threads 32 \
+  --hf_cache_path /data2/huggingface/zj2398 \
+  --meds_reader /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/post_transform_meds_reader
   
   # >"$PREP_LOG" 2>&1 &
 
 # ---- job 2: training (background) ----
 # multi-gpu pretraining
-# export CUDA_VISIBLE_DEVICES=0 ,1,2,3
+# export CUDA_VISIBLE_DEVICES=0,2
 
 
 accelerate launch \
-  --num_processes 4 \
+  --num_processes 2 \
   pretrain.py \
-  --pretraining_data /user/zj2398/cache/deephit_tpp \
-  --meds_reader /shared/share_mala/zj2398/mimic/data/meds_v0.6_reader \
+  --pretraining_data /data2/processed_datasets/zj2398/femr/cumc/tpp \
+  --meds_reader  /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/post_transform_meds_reader \
   --per_device_train_batch_size 1 \
-  --output_dir /shared/share_mala/zj2398/models/tpp_8k/mamba_2e-4_5.0 \
+  --output_dir /data2/processed_datasets/zj2398/femr/cumc/tpp/mamba \
+  --checkpoint_dir /data2/processed_datasets/zj2398/femr/cumc/tpp/mamba/checkpoint-69391 \
   --learning_rate 2e-4 \
-  --checkpoint_dir /shared/share_mala/zj2398/models/tpp_8k/mamba_2e-4_5.0/checkpoint-37684 \
   --max_grad_norm 5.0 \
-  --model mamba \
   --n_layers 28 \
-  --hf_run_name mimic_mamba_tpp_2e-4_5.0 \
+  --hf_run_name cumc_mamba_tpp_2e-4_5.0_continue \
+  --model mamba \
   --loss_type tpp

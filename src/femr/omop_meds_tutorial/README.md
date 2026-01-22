@@ -278,8 +278,8 @@ bash run.sh \
 bash run.sh \
   --meds_reader        /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/post_transform_meds_reader \
   --num_proc           20 \
-  --model_path          /data2/processed_datasets/zj2398/femr/cumc/mtpp/transformer/best_1730112 \
-  --model_name         transformer_mtpp \
+  --model_path          /data2/processed_datasets/zj2398/femr/cumc/mtpp/mamba/best_902083 \
+  --model_name         mamba_mark \
   --tokens_per_batch   65536 \
   --device             cuda:0 \
   --use_ntp            no \
@@ -332,8 +332,8 @@ bash run.sh \
 bash run.sh \
   --meds_reader        /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/post_transform_meds_reader \
   --num_proc           20 \
-  --model_path         /data2/processed_datasets/zj2398/femr/cumc/tpp/transformer/best_756945 \
-  --model_name         transformer_tpp \
+  --model_path         /data2/processed_datasets/zj2398/femr/cumc/mtpp/mamba/best_902083 \
+  --model_name         mamba_unmark \
   --tokens_per_batch   65536 \
   --device             cuda:0 \
   --use_ntp            no \
@@ -342,8 +342,8 @@ bash run.sh \
   --truncation  1825 \
   --observation_window 730 \
   --cache_path        /data2/huggingface/zj2398/ \
-  --ontology_path       /data2/processed_datasets/zj2398/femr/cumc/motor/ontology.pkl \
-  --main_split_path     /data2/processed_datasets/zj2398/femr/cumc/main_split.csv \
+  --ontology_path       /data2/processed_datasets/zj2398/femr/cumc/mtpp/ontology.pkl \
+  --main_split_path     /data2/processed_datasets/zj2398/femr/cumc/mtpp/main_split.csv \
   --output_dir   /data/results/zj2398/femr/cumc/phenotype  \
   --classification_cohort /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/task_labels/phenotype_tte/binary/ \
   --tte_cohort  /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/task_labels/phenotype_tte/tte/
@@ -419,20 +419,20 @@ bash run_regression.sh \
   --regression 
 
 bash run_regression.sh \
-  --meds_reader        /data/raw_data/mimic/files/mimiciv/meds_v0.6/3.1/MEDS_cohort-reader \
+  --meds_reader         /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/post_transform_meds_reader \
   --num_proc           24 \
-  --model_path        /data2/processed_datasets/zj2398/femr/mimic/ntp/mamba_2e-4_5.0/best_101112 \
-  --model_name         mamba_ntp_2e-4 \
+  --model_path         /data2/processed_datasets/zj2398/femr/cumc/mtpp/mamba/best_902083 \
+  --model_name         mamba_mtpp \
   --tokens_per_batch   65536 \
   --device             cuda:0 \
   --min_subjects_per_batch 8 \
-  --ontology_path     /data2/processed_datasets/zj2398/femr/mimic/ntp/ontology.pkl \
-  --main_split_path    /data2/processed_datasets/zj2398/femr/mimic/ntp/main_split.csv \
-  --cohort_dir    /data2/processed_datasets/mimic/regression/icu_stay_4h_100k/ \
-  --output_dir   /data/results/zj2398/femr/mimic/regression \
-  --use_ntp yes \
-  --cache_path /data2/huggingface/zj2398/ \
-  --tasks "pao2" \
+  --ontology_path      /data2/processed_datasets/zj2398/femr/cumc//mtpp/ontology.pkl \
+  --main_split_path    /data2/processed_datasets/zj2398/femr/cumc/mtpp/main_split.csv \
+  --cohort_dir   /data2/processed_datasets/zj2398/cumc_data/regression_100k/ \
+  --output_dir   /data/results/zj2398/femr/cumc/regression \
+  --use_ntp no \
+  --cache_path  /data2/huggingface/zj2398 \
+  --tasks "platelets,bilirubin,creatinine,spo2" \
   --regression 
 ```
 ### Parameters for run_regression.sh

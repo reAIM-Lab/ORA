@@ -204,7 +204,7 @@ done
 
 echo "All selected tasks processed."
 
-#export CUDA_VISIBLE_DEVICES=5
+#export CUDA_VISIBLE_DEVICES=0
 # bilirubin,creatinine,pao2,platelets
 
 # bash run_regression.sh \
@@ -282,8 +282,8 @@ echo "All selected tasks processed."
 # bash run_regression_2.sh \
 #   --meds_reader         /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/post_transform_meds_reader \
 #   --num_proc           24 \
-#   --model_path         /data2/processed_datasets/zj2398/femr/cumc/mtpp/transformer/best_1730112 \
-#   --model_name         mtpp_shared \
+#   --model_path         /data2/processed_datasets/zj2398/femr/cumc/mtpp/mamba/best_902083 \
+#   --model_name         mamba_mtpp \
 #   --tokens_per_batch   65536 \
 #   --device             cuda:0 \
 #   --min_subjects_per_batch 8 \

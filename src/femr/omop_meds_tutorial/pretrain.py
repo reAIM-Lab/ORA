@@ -283,7 +283,7 @@ def main():
 
         # prediction_loss_only=True,
         # dataloader_num_workers=1,
-        dataloader_num_workers=64,
+        dataloader_num_workers=40,
 
         save_total_limit=10,
         load_best_model_at_end=True,
@@ -322,7 +322,7 @@ export CUDA_VISIBLE_DEVICES=2,3,4,5,6,7
 
 kuvira
 
-export CUDA_VISIBLE_DEVICES=4,5,6,7
+export CUDA_VISIBLE_DEVICES=1,5,6,7
 
 accelerate launch \
   --num_processes 4 \
