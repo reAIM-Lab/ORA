@@ -177,9 +177,9 @@ echo "All tasks completed!"
 
 
 # bash run_linear_prob_with_few_shots_motor.sh \
-# --base_dir /shared/share_mala/zj2398/mimic/task/phenotype_task/motor/features \
-# --label_path /shared/share_mala/zj2398/mimic/task/phenotype_task/motor/labels \
-# --output_dir /shared/share_mala/zj2398/mimic/task/few_shot_results \
+# --base_dir /shared/share_mala/zj2398/mimic/task/phenotype_task/motor/features/ \
+# --label_path /shared/share_mala/zj2398/mimic/task/phenotype_task/motor/labels/ \
+# --output_dir /shared/share_mala/zj2398/mimic/task/few_shot_results/ \
 # --meds_dir /shared/share_mala/zj2398/mimic/data/meds_v0.6_reader \
 # --model_name motor
 # '''

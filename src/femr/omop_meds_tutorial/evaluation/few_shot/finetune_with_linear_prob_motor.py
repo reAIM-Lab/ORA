@@ -49,21 +49,21 @@ def join_labels(features: Mapping[str, np.ndarray], labels: pd.DataFrame) -> Map
 
     features_array = features["features"][indices, :]
     feature_list = [feature for feature in features_array]
-    # return {
-    #     "boolean_values": np.array(boolean_label),
-    #     "subject_ids": features["subject_ids"][indices],
-    #     # "times": features["feature_times"][indices],
-    #     "features": feature_list,
-    #     "prediction_times" : np.asarray(prediction_times)
-    # }
-
-    pd.DataFrame({
+    return {
+        "boolean_values": np.array(boolean_label),
         "subject_id": features["subject_ids"][indices],
         # "times": features["feature_times"][indices],
         "features": feature_list,
-        "prediction_time" : np.asarray(prediction_times),
-        "boolean_values": np.array(boolean_label)
-    })
+        "prediction_time" : np.asarray(prediction_times)
+    }
+
+    # pd.DataFrame({
+    #     "subject_id": features["subject_ids"][indices],
+    #     # "times": features["feature_times"][indices],
+    #     "features": feature_list,
+    #     "prediction_time" : np.asarray(prediction_times),
+    #     "boolean_values": np.array(boolean_label)
+    # })
     
 def main(args):
     meds_dir = Path(args.meds_dir)
@@ -76,7 +76,7 @@ def main(args):
     # features_label_input_dir = Path(args.features_label_input_dir)
     # features_label = pl.read_parquet(list(features_label_input_dir.rglob('*.parquet')))
     # print(f"before task name is {args.task_name}, model name is {args.model_name}")
-    task_name = args.task_name.strip(args.model_name).rstrip("_")
+    task_name = args.task_name.strip(f"{args.model_name}_730").rstrip("_")
     print(f"Inside linear probing, the task name is {task_name}")
     labels = pd.read_parquet(Path(args.label_path)/f"{task_name}.parquet")
     labels = labels[labels.subject_id.isin(features["subject_ids"])]
@@ -87,6 +87,7 @@ def main(args):
     features_label = join_labels(features,labels)
     # for key,value in features_label.items():
     #     print(key,value.shape,value)
+    print(features_label)
 
     output_dir = Path(args.output_dir)
     task_output_dir = output_dir / task_name
