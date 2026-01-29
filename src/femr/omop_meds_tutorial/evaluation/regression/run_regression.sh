@@ -165,27 +165,34 @@ for TASK_DIR in "$COHORT_BASE_DIR"*/; do
     echo "[$CURRENT/$TASK_COUNT] Processing task: $TASK_NAME"
     echo "cohort_base_dir: $COHORT_BASE_DIR"
     echo "Task directory: $TASK_DIR"
+    motor_features_name="${TASK_NAME}_${MODEL_NAME}"
 
-    GENERATE_CMD="python -u \"$GEN_FEATURES_PY\" \
-        --model_path \"$MODEL_PATH\" \
-        --model_name \"$MODEL_NAME\" \
-        --meds_reader \"$OMOP_MEDS_READER\" \
-        --num_proc \"$NUM_PROC\" \
-        --tokens_per_batch \"$TOKENS_PER_BATCH\" \
-        --device \"$DEVICE\" \
-        --min_subjects_per_batch \"$MIN_SUBJECTS_PER_BATCH\" \
-        --cohort_dir \"$TASK_DIR\" \
-        --ontology_path \"$ONTOLOGY_PATH\" \
-        --output_root \"$OUTPUT_DIR\" \
-        --use_ntp \"$USE_NTP\" \
-        --cache_path \"$CACHE_PATH\" \
-        --loss_type "labeled_subjects" \
-        --task_type "regression" " 
-    [ -n "$OBSERVATION_WINDOW" ] && GENERATE_CMD="$GENERATE_CMD --observation_window \"$OBSERVATION_WINDOW\""
+    FEATURES_DIR="${OUTPUT_DIR}/${MODEL_NAME}/features"
+    FEATURE_FILE="${FEATURES_DIR}/${motor_features_name}.pkl"
 
-    echo "Executing: $GENERATE_CMD"
-    eval $GENERATE_CMD || { echo "Error: feature generation failed for $TASK_NAME"; echo "----------------------------------------"; continue; }
+    if [[ -f "$FEATURE_FILE" ]]; then
+        echo "Found existing features, reusing: $FEATURE_FILE"
+    else
+        GENERATE_CMD="python -u \"$GEN_FEATURES_PY\" \
+            --model_path \"$MODEL_PATH\" \
+            --model_name \"$MODEL_NAME\" \
+            --meds_reader \"$OMOP_MEDS_READER\" \
+            --num_proc \"$NUM_PROC\" \
+            --tokens_per_batch \"$TOKENS_PER_BATCH\" \
+            --device \"$DEVICE\" \
+            --min_subjects_per_batch \"$MIN_SUBJECTS_PER_BATCH\" \
+            --cohort_dir \"$TASK_DIR\" \
+            --ontology_path \"$ONTOLOGY_PATH\" \
+            --output_root \"$OUTPUT_DIR\" \
+            --use_ntp \"$USE_NTP\" \
+            --cache_path \"$CACHE_PATH\" \
+            --loss_type "labeled_subjects" \
+            --task_type "regression" " 
+        [ -n "$OBSERVATION_WINDOW" ] && GENERATE_CMD="$GENERATE_CMD --observation_window \"$OBSERVATION_WINDOW\""
 
+        echo "Executing: $GENERATE_CMD"
+        eval $GENERATE_CMD || { echo "Error: feature generation failed for $TASK_NAME"; echo "----------------------------------------"; continue; }
+    fi
     FINETUNE_CMD="python -u \"$FINETUNE_PY\" \
         --cohort_label \"$TASK_NAME\" \
         --model_name \"$MODEL_NAME\" \
@@ -204,7 +211,7 @@ done
 
 echo "All selected tasks processed."
 
-#export CUDA_VISIBLE_DEVICES=0
+#export CUDA_VISIBLE_DEVICES=1
 # bilirubin,creatinine,pao2,platelets
 
 # bash run_regression.sh \

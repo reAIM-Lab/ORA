@@ -193,16 +193,34 @@ def main():
 
         # potential issue 1 scale back?
         # not ridge... just linear regression
-
+        y_true = np.asarray(test_data["numerical_value"], dtype=np.float64)
         model = Pipeline([
             ("scaler", StandardScaler(with_mean=True, with_std=True)),
             ("ridge", LinearRegression()),
         ])
+        # model = Pipeline([
+        #     ("scaler", StandardScaler()),  # normalize X
+        #     ("ridge", RidgeCV(alphas=[1])),
+        # ])
+
+        # # normalization
+        # y_train_mean = y_train.mean()
+        # y_train_std = y_train.std()
+        # y_train_norm = (y_train - y_train_mean) / y_train_std
+        # model.fit(X_train, y_train_norm)
+        # y_pred_norm = model.predict(X_test)
+        # y_pred = y_pred_norm * y_train_std + y_train_mean
+        # print("using norm prediction")
+
         model.fit(X_train, y_train)
-        y_true = np.asarray(test_data["numerical_value"], dtype=np.float64)
         y_pred = model.predict(X_test)
-        # model.fit(train_set['features'].to_list(), train_set["numerical_value"])
-        # y_pred = model.predict(test_data['features'])
+
+        regressor = model.named_steps["ridge"]
+
+        print(f"Coefficients shape: {regressor.coef_.shape}")  # (768,)
+        print(f"Coefficients: {regressor.coef_}")
+        print(f"Bias (intercept): {regressor.intercept_}")
+
 
         pl.DataFrame({
             "subject_id": test_data["subject_ids"].tolist(),
@@ -262,3 +280,31 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+'''
+python finetune_regression.py \
+    --cohort_label bilirubin \
+    --model_name mamba_mtpp \
+    --main_split_path /data2/processed_datasets/zj2398/femr/cumc/mtpp/main_split.csv \
+    --meds_reader /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/post_transform_meds_reader \
+    --model_path /data2/processed_datasets/zj2398/femr/cumc/mtpp/mamba/best_902083 \
+    --output_root /data/results/zj2398/femr/cumc/regression 
+
+bash run_regression.sh \
+  --meds_reader         /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/post_transform_meds_reader \
+  --num_proc           24 \
+  --model_path         /data2/processed_datasets/zj2398/femr/cumc/mtpp/mamba/best_902083 \
+  --model_name         mamba_mtpp \
+  --tokens_per_batch   65536 \
+  --device             cuda:0 \
+  --min_subjects_per_batch 8 \
+  --ontology_path      /data2/processed_datasets/zj2398/femr/cumc//mtpp/ontology.pkl \
+  --main_split_path    /data2/processed_datasets/zj2398/femr/cumc/mtpp/main_split.csv \
+  --cohort_dir   /data2/processed_datasets/zj2398/cumc_data/regression_100k/ \
+  --output_dir   /data/results/zj2398/femr/cumc/regression \
+  --use_ntp no \
+  --cache_path  /data2/huggingface/zj2398 \
+  --tasks "platelets,bilirubin,creatinine,spo2" \
+  --regression 
+'''

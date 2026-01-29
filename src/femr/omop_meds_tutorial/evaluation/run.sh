@@ -11,7 +11,7 @@ OBSERVATION_WINDOW=""
 # Default to false for linear interpolation
 USE_LINEAR_INTERPOLATION=false
 TRUNCATION=365
-
+SKIPPED=0
 
 # Function to display help
 show_help() {
@@ -135,16 +135,16 @@ while [ $# -gt 0 ]; do
             exit 1
             ;;
         *)
-            # # First non-option argument is the cohort base directory
-            # if [ -z "$TTE_COHORT" ]; then
-            #     TTE_COHORT="$1"
-            # else
-            #     echo "Error: Unexpected argument: $1" >&2
-            #     echo "Try '$SCRIPT_NAME --help' for more information." >&2
-            #     exit 1
-            # fi
-            # shift
-            # ;;
+            # First non-option argument is the cohort base directory
+            if [ -z "$TASK_LIST" ]; then
+                TASK_LIST="$1"
+            else
+                echo "Error: Unexpected argument: $1" >&2
+                echo "Try '$SCRIPT_NAME --help' for more information." >&2
+                exit 1
+            fi
+            shift
+            ;;
     esac
 done
 
@@ -219,14 +219,14 @@ for TASK_DIR in "$CLASS_COHORT"*/; do
     TASK_NAME=$(basename "$TASK_DIR")
 
     # Check if task list is specified and if current task is in the list
-    # if [ -n "$TASK_LIST" ]; then
-    #     # Convert comma-separated list to array and check if task is in it
-    #     if ! echo ",$TASK_LIST," | grep -q ",$TASK_NAME,"; then
-    #         SKIPPED=$((SKIPPED + 1))
-    #         echo "[$SKIPPED skipped] Skipping task: $TASK_NAME (not in specified task list)"
-    #         continue
-    #     fi
-    # fi
+    if [ -n "$TASK_LIST" ]; then
+        # Convert comma-separated list to array and check if task is in it
+        if ! echo ",$TASK_LIST," | grep -q ",$TASK_NAME,"; then
+            SKIPPED=$((SKIPPED + 1))
+            echo "[$SKIPPED skipped] Skipping task: $TASK_NAME (not in specified task list)"
+            continue
+        fi
+    fi
 
     CURRENT=$((CURRENT + 1))
 
@@ -351,7 +351,7 @@ echo "All tasks processed."
 
 
 # phenotype
-# export CUDA_VISIBLE_DEVICES=2
+# export CUDA_VISIBLE_DEVICES=0
 
 #phenotype
 # bash run.sh \

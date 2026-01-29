@@ -125,15 +125,18 @@ def process_subjects(
             if event.code == target_code
             and event.time is not None
             and event.numeric_value is not None
-            and event.numeric_value != 0
+            # and event.numeric_value != 0
         ]
+        # history = []
+        #  for event in subject.events
+        #     if event.code == target_code
         
         # Generate prediction for each test sample
         for row_idx, pred_time in test_lookup[subject.subject_id]:
             # Find most recent value before prediction_time
             last_value = None
             for event_time, event_value in history:
-                if event_time < pred_time:
+                if event_time <= pred_time:
                     last_value = event_value
                 else:
                     break  # Events are time-sorted

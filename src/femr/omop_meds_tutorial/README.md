@@ -277,9 +277,9 @@ bash run.sh \
 # cumc
 bash run.sh \
   --meds_reader        /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/post_transform_meds_reader \
-  --num_proc           20 \
-  --model_path          /data2/processed_datasets/zj2398/femr/cumc/mtpp/mamba/best_902083 \
-  --model_name         mamba_mark \
+  --num_proc           30 \
+  --model_path         /data2/processed_datasets/zj2398/femr/cumc/motor/transformer/best_578576 \
+  --model_name         motor \
   --tokens_per_batch   65536 \
   --device             cuda:0 \
   --use_ntp            no \
@@ -289,7 +289,8 @@ bash run.sh \
   --ontology_path       /data2/processed_datasets/zj2398/femr/cumc/motor/ontology.pkl \
   --main_split_path     /data2/processed_datasets/zj2398/femr/cumc/main_split.csv \
   --output_dir   /data/results/zj2398/femr/cumc/outcome/  \
-  --classification_cohort /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/task_labels/patient_outcomes_clean/
+  --classification_cohort /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/task_labels/patient_outcomes_clean/ 
+
 
   # /data2/processed_datasets/zj2398/femr/cumc/mtpp/transformer/best_1730112
 # /data2/processed_datasets/zj2398/femr/cumc/tpp/transformer/best_0.1_468585
@@ -306,7 +307,7 @@ Evaluates phenotype classification and survival analysis (time-to-event) tasks.
 
 ```bash
 # export CUDA_VISIBLE_DEVICES=2
-# export CUDA_VISIBLE_DEVICES=2
+# export CUDA_VISIBLE_DEVICES=1
 # mimic
 bash run.sh \
   --meds_reader        /data/raw_data/mimic/files/mimiciv/meds_v0.6/3.1/MEDS_cohort-reader \
@@ -331,9 +332,9 @@ bash run.sh \
 # cumc
 bash run.sh \
   --meds_reader        /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/post_transform_meds_reader \
-  --num_proc           20 \
-  --model_path         /data2/processed_datasets/zj2398/femr/cumc/mtpp/mamba/best_902083 \
-  --model_name         mamba_unmark \
+  --num_proc           24 \
+  --model_path         /data2/processed_datasets/zj2398/femr/cumc/motor/transformer/best_578576 \
+  --model_name         motor \
   --tokens_per_batch   65536 \
   --device             cuda:0 \
   --use_ntp            no \
@@ -342,8 +343,8 @@ bash run.sh \
   --truncation  1825 \
   --observation_window 730 \
   --cache_path        /data2/huggingface/zj2398/ \
-  --ontology_path       /data2/processed_datasets/zj2398/femr/cumc/mtpp/ontology.pkl \
-  --main_split_path     /data2/processed_datasets/zj2398/femr/cumc/mtpp/main_split.csv \
+  --ontology_path       /data2/processed_datasets/zj2398/femr/cumc/tpp/ontology.pkl \
+  --main_split_path     /data2/processed_datasets/zj2398/femr/cumc/tpp/main_split.csv \
   --output_dir   /data/results/zj2398/femr/cumc/phenotype  \
   --classification_cohort /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/task_labels/phenotype_tte/binary/ \
   --tte_cohort  /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/task_labels/phenotype_tte/tte/
@@ -421,13 +422,13 @@ bash run_regression.sh \
 bash run_regression.sh \
   --meds_reader         /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/post_transform_meds_reader \
   --num_proc           24 \
-  --model_path         /data2/processed_datasets/zj2398/femr/cumc/mtpp/mamba/best_902083 \
-  --model_name         mamba_mtpp \
+  --model_path         /data2/processed_datasets/zj2398/femr/cumc/motor/transformer/best_578576 \
+  --model_name         motor \
   --tokens_per_batch   65536 \
   --device             cuda:0 \
   --min_subjects_per_batch 8 \
-  --ontology_path      /data2/processed_datasets/zj2398/femr/cumc//mtpp/ontology.pkl \
-  --main_split_path    /data2/processed_datasets/zj2398/femr/cumc/mtpp/main_split.csv \
+  --ontology_path      /data2/processed_datasets/zj2398/femr/cumc/tpp/ontology.pkl \
+  --main_split_path    /data2/processed_datasets/zj2398/femr/cumc/tpp/main_split.csv \
   --cohort_dir   /data2/processed_datasets/zj2398/cumc_data/regression_100k/ \
   --output_dir   /data/results/zj2398/femr/cumc/regression \
   --use_ntp no \
