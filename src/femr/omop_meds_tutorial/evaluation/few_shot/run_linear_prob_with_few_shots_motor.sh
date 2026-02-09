@@ -41,8 +41,8 @@ while [ $# -gt 0 ]; do
       MODEL_NAME="$2"
       shift 2
       ;;
-    --label_path)
-      LABEL_PATH="$2"
+    --task_list)
+      TASK_LIST="$2"
       shift 2
       ;;
     -h|--help)
@@ -81,44 +81,50 @@ if [ ! -d "$MEDS_DIR" ]; then
 fi
 
 # Iterate through each cohort folder
-# for cohort_dir in "$BASE_DIR"*/; do
-#   # Extract task name from folder name
-#   task_name=$(basename "$cohort_dir")
+for cohort_dir in "$BASE_DIR"*/; do
+  # Extract task name from folder name
+  task_name=$(basename "$cohort_dir")
 
-#   # Skip if not a directory
-#   if [ ! -d "$cohort_dir" ]; then
-#     continue
-#   fi
+  # Skip if not a directory
+  if [ ! -d "$cohort_dir" ]; then
+    continue
+  fi
 
-#   echo "Processing cohort: $task_name"
+  # Or if TASK_LIST is comma-separated like "task1,task2,task3"
+  if [ -n "$TASK_LIST" ] && ! echo "$TASK_LIST" | grep -q "\<$task_name\>"; then
+    echo "Skip $task_name, not in the list"
+    continue
+  fi
 
-#   # Find features_with_label directory
-#   features_dir=$(find "$cohort_dir" -type d -name "features_with_label" | head -n 1)
+  echo "Processing cohort: $task_name"
 
-#   if [ -z "$features_dir" ]; then
-#     echo "Warning: No features_with_label directory found for $task_name. Skipping..."
-#     continue
-#   fi
+  cohort_dir="$cohort_dir/$MODEL_NAME"
+  # Find features_with_label directory
+  features_dir=$(find "$cohort_dir" -type d -name "features_with_label" | head -n 1)
 
-  # echo "Found features directory: $features_dir"
+  if [ -z "$features_dir" ]; then
+    echo "Warning: No features_with_label directory found for $task_name. Skipping..."
+    continue
+  fi
 
-for pkl_file in "$BASE_DIR"*.pkl; do
-  # Skip if the glob didn't match anything
-  [ -e "$pkl_file" ] || continue
+  echo "Found features directory: $features_dir"
 
-  task_name=$(basename "$pkl_file" .pkl)
+# for pkl_file in "$BASE_DIR"*.pkl; do
+#   # Skip if the glob didn't match anything
+#   [ -e "$pkl_file" ] || continue
 
-  echo "Processing file: $task_name"
-  echo "Full path: $pkl_file"
+#   task_name=$(basename "$pkl_file" .pkl)
 
-  # >>> your processing code here <<<
+#   echo "Processing file: $task_name"
+#   echo "Full path: $pkl_file"
+
+#   # >>> your processing code here <<<
 
   # Run the fine-tuning command
   echo "Running benchmark for $task_name..."
-  python finetune_with_linear_prob_motor.py \
-    --features_label_input_pkl "$pkl_file" \
+  python few_shot_motor.py \
+    --features_label_input_dir "$features_dir" \
     --model_name "$MODEL_NAME" \
-    --label_path "$LABEL_PATH" \
     --task_name "$task_name" \
     --output_dir "$OUTPUT_DIR" \
     --meds_dir "$MEDS_DIR"
@@ -169,17 +175,16 @@ echo "All tasks completed!"
 
 # '''
 # bash run_linear_prob_with_few_shots_motor.sh \
-# --base_dir /shared/share_mala/zj2398/mimic/task/patient_outcome_task/motor/features/ \
-# --label_path /shared/share_mala/zj2398/mimic/task/patient_outcome_task/motor/labels/ \
-# --output_dir /shared/share_mala/zj2398/mimic/task/few_shot_results/ \
+# --base_dir /shared/share_mala/zj2398/mimic/task/patient_outcome_task/results/ \
+# --output_dir /shared/share_mala/zj2398/mimic/task/patient_outcome_task/few_shot_results/ \
 # --meds_dir /shared/share_mala/zj2398/mimic/data/meds_v0.6_reader \
+# --task_list "in_hospital_mortality,long_los,readmission" \
 # --model_name motor
-
 
 # bash run_linear_prob_with_few_shots_motor.sh \
-# --base_dir /shared/share_mala/zj2398/mimic/task/phenotype_task/motor/features/ \
-# --label_path /shared/share_mala/zj2398/mimic/task/phenotype_task/motor/labels/ \
-# --output_dir /shared/share_mala/zj2398/mimic/task/few_shot_results/ \
+# --base_dir /shared/share_mala/zj2398/mimic/task/phenotype_task/results/ \
+# --output_dir /shared/share_mala/zj2398/mimic/task/phenotype_task/few_shot_results/ \
 # --meds_dir /shared/share_mala/zj2398/mimic/data/meds_v0.6_reader \
-# --model_name motor
+# --task_list "ami,masld,stroke" \
+# --model_name motor_730
 # '''

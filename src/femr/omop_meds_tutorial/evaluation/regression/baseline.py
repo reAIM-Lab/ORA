@@ -25,6 +25,7 @@ python baseline.py \
 import argparse
 import functools
 from collections import defaultdict
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Dict, List, Tuple
 
@@ -44,12 +45,19 @@ from femr.omop_meds_tutorial.evaluation.eval_utils import (
 N_BOOT = 100
 MODEL_COL = "Most Recent Imputation"
 
+# MIMIC_CODE_DICT = {
+#     "platelets": "LAB//51265//K/uL",
+#     "creatinine": "LAB//50912//mg/dL",
+#     "bilirubin": "LAB//50885//mg/dL",
+#     "pao2":"LAB//50821//mm Hg",
+# }
+
 MIMIC_CODE_DICT = {
-    "platelets": "LAB//51265//K/uL",
-    "creatinine": "LAB//50912//mg/dL",
-    "bilirubin": "LAB//50885//mg/dL",
-    "pao2":"LAB//50821//mm Hg",
+    "MAP": "LAB//220052//mmHg",
+    "lactate":"LAB//50813//mmol/L",
+    "urine":"SUBJECT_FLUID_OUTPUT//226559//ml",
 }
+
 
 CUMC_CODE_DICT = {
     "platelets": "LOINC/26515-7//UCUM/10*9/L",
@@ -127,15 +135,23 @@ def process_subjects(
             and event.numeric_value is not None
             # and event.numeric_value != 0
         ]
+
         # history = []
-        #  for event in subject.events
-        #     if event.code == target_code
+        # for event in subject.events:
+        #     if event.code == target_code and event.time is not None:
+        #         if event.numeric_value is not None:
+        #             history.append((event.time, event.numeric_value))
+        #         else:
+        #             history.append((event.time, 0))
+
+            # and event.numeric_value != 0
         
         # Generate prediction for each test sample
         for row_idx, pred_time in test_lookup[subject.subject_id]:
             # Find most recent value before prediction_time
             last_value = None
             for event_time, event_value in history:
+                if event_time <= pred_time:
                 if event_time <= pred_time:
                     last_value = event_value
                 else:
@@ -169,9 +185,9 @@ def evaluate_and_save(
     print(f"  MAE:  {mae_mean:.4f} ({mae_std:.4f})")
     print(f"  R2:   {r2_mean:.4f} ({r2_std:.4f})")
     
-    _update_metric_table(result_dir, "rmse", task, MODEL_COL, rmse_mean, rmse_std)
-    _update_metric_table(result_dir, "mae", task, MODEL_COL, mae_mean, mae_std)
-    _update_metric_table(result_dir, "r2", task, MODEL_COL, r2_mean, r2_std)
+    # _update_metric_table(result_dir, "rmse", task, MODEL_COL, rmse_mean, rmse_std)
+    # _update_metric_table(result_dir, "mae", task, MODEL_COL, mae_mean, mae_std)
+    # _update_metric_table(result_dir, "r2", task, MODEL_COL, r2_mean, r2_std)
 
 
 # ============================================================================

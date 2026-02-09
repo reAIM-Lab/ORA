@@ -5,94 +5,26 @@ import numpy as np
 import polars as pl
 import json
 import pickle
-import sys
 from meds import train_split, tuning_split, held_out_split
 from sklearn.linear_model import LogisticRegressionCV
 from sklearn.metrics import auc, precision_recall_curve, roc_auc_score
-from typing import Mapping
-import pandas as pd
+
 MINIMUM_NUM_CASES = 10
-TRAIN_SIZES = [100,1000,10000,100000,-1]
-# TRAIN_SIZES = [-1]
+TRAIN_SIZES = [100, 1000, 10000, 100000]
 
 
-def join_labels(features: Mapping[str, np.ndarray], labels: pd.DataFrame) -> Mapping[str, np.ndarray]:
-    indices = []
-    boolean_label = []
-    prediction_times = []
-
-    order = np.lexsort((features["feature_times"], features["subject_ids"]))
-
-    feature_index = 0
-    # print(f"label_name is {label_name}")
-    for label in labels.itertuples(index=False):
-        while ((feature_index + 1) < len(order)):
-            next_key = (features['subject_ids'][order[feature_index + 1]], features["feature_times"][order[feature_index + 1]])
-            if next_key <= (label.subject_id, label.prediction_time):
-                feature_index += 1
-            else:
-                break
-
-        is_valid = (
-            (feature_index < len(order))
-            and (features["subject_ids"][order[feature_index]] == label.subject_id)
-            and (features["feature_times"][order[feature_index]] <= label.prediction_time)
-        )
-            
-        assert is_valid, (
-            f'{feature_index} {label} {features["subject_ids"][order[feature_index]]} '
-            + f'{features["feature_times"][order[feature_index]]} {len(order)} {next_key}'
-        )
-        indices.append(order[feature_index])
-        boolean_label.append(label.boolean_value)
-        prediction_times.append(label.prediction_time)
-
-    features_array = features["features"][indices, :]
-    feature_list = [feature for feature in features_array]
-    return {
-        "boolean_values": np.array(boolean_label),
-        "subject_id": features["subject_ids"][indices],
-        # "times": features["feature_times"][indices],
-        "features": feature_list,
-        "prediction_time" : np.asarray(prediction_times)
-    }
-
-    # pd.DataFrame({
-    #     "subject_id": features["subject_ids"][indices],
-    #     # "times": features["feature_times"][indices],
-    #     "features": feature_list,
-    #     "prediction_time" : np.asarray(prediction_times),
-    #     "boolean_values": np.array(boolean_label)
-    # })
-    
 def main(args):
     meds_dir = Path(args.meds_dir)
     subject_splits_path = meds_dir / "metadata" / "subject_splits.parquet"
     print(f"Loading subject_splits.parquet from {subject_splits_path}")
     subject_splits = pl.read_parquet(subject_splits_path)
-    with open(args.features_label_input_pkl,'rb') as file:
-        features = pickle.load(file)
-
-    # features_label_input_dir = Path(args.features_label_input_dir)
-    # features_label = pl.read_parquet(list(features_label_input_dir.rglob('*.parquet')))
-    # print(f"before task name is {args.task_name}, model name is {args.model_name}")
-    task_name = args.task_name.strip(f"{args.model_name}_730").rstrip("_")
-    print(f"Inside linear probing, the task name is {task_name}")
-    labels = pd.read_parquet(Path(args.label_path)/f"{task_name}.parquet")
-    labels = labels[labels.subject_id.isin(features["subject_ids"])]
-    labels = labels.sort_values(["subject_id", "prediction_time"])
-    # print(labels)
-    # print(features.keys(),features["subject_ids"])
-    # sys.exit(0)
-    features_label = join_labels(features,labels)
-    # for key,value in features_label.items():
-    #     print(key,value.shape,value)
-    print(features_label)
+    features_label_input_dir = Path(args.features_label_input_dir)
+    features_label = pl.read_parquet(list(features_label_input_dir.rglob('*.parquet')))
 
     output_dir = Path(args.output_dir)
-    task_output_dir = output_dir / task_name
+    task_output_dir = output_dir / args.task_name
     task_output_dir.mkdir(exist_ok=True, parents=True)
-    
+
     features_label = features_label.sort("subject_id", "prediction_time")
 
     train_dataset = features_label.join(
@@ -100,10 +32,9 @@ def main(args):
     ).filter(
         pl.col("split").is_in([train_split, tuning_split])
     ).with_row_index(
-        name="sample_ids",
+        name="sample_id",
         offset=1
     )
-    # print(f"train_dataset: {train_dataset}")
     test_dataset = features_label.join(
         subject_splits.select("subject_id", "split"), "subject_id"
     ).filter(
@@ -118,8 +49,7 @@ def main(args):
         if should_terminate:
             break
 
-        if len(train_dataset) < size or size == -1:
-            # print()
+        if len(train_dataset) < size:
             size = len(train_dataset)
             should_terminate = True
 
@@ -161,9 +91,6 @@ def main(args):
                         break
                     else:
                         n_positive_cases = len(subset.filter(pl.col("boolean_value") == True))
-                        # print(f"number of positive cases: {n_positive_cases}")
-                        # print(f"remaining true cases: {remaining_train_set.filter(pl.col('boolean_value') == True)}")
-                        # print(f"remaining false cases: {remaining_train_set.filter(pl.col('boolean_value') == False)}")
                         sampling_percentage = size_required / len(remaining_train_set)
                         n_positives_to_sample = max(MINIMUM_NUM_CASES, int(n_positive_cases * sampling_percentage))
                         positives_subset = remaining_train_set.filter(pl.col("boolean_value") == True).sample(
@@ -184,8 +111,6 @@ def main(args):
                         break
 
                 existing_sample_ids.update(subset["sample_id"].to_list())
-                print(f"length of existing_sample_ids: {len(existing_sample_ids)}")
-
                 if logistic_model_file.exists():
                     print(
                         f"The logistic regression model already exist for {size} shots, loading it from {logistic_model_file}"
@@ -194,12 +119,10 @@ def main(args):
                         model = pickle.load(f)
                 else:
                     model = LogisticRegressionCV(scoring="roc_auc", random_state=args.seed, max_iter=500)
-                    print(f"Fitting the model with {len(subset)} samples")
                     model.fit(np.asarray(subset["features"].to_list()), subset["boolean_value"].to_numpy())
                     with open(logistic_model_file, "wb") as f:
                         pickle.dump(model, f)
 
-                print(f"Predicting the test set with {len(test_dataset)} samples")
                 y_pred = model.predict_proba(np.asarray(test_dataset["features"].to_list()))[:, 1]
                 logistic_predictions = pl.DataFrame(
                     {
@@ -227,7 +150,7 @@ def main(args):
                 )
                 pr_auc = auc(recall, precision)
                 metrics = {"roc_auc": roc_auc, "pr_auc": pr_auc}
-                print("Logistic:", size, task_name, metrics)
+                print("Logistic:", size, args.task_name, metrics)
                 with open(logistic_test_metrics_file, "w") as f:
                     json.dump(metrics, f, indent=4)
             except ValueError as e:
@@ -239,8 +162,8 @@ if __name__ == "__main__":
         description="Arguments for Context Clues linear probing"
     )
     parser.add_argument(
-        "--features_label_input_pkl",
-        dest="features_label_input_pkl",
+        "--features_label_input_dir",
+        dest="features_label_input_dir",
         action="store",
         required=True,
     )
@@ -265,12 +188,6 @@ if __name__ == "__main__":
     parser.add_argument(
         "--model_name",
         dest="model_name",
-        action="store",
-        required=True,
-    )
-    parser.add_argument(
-        "--label_path",
-        dest="label_path",
         action="store",
         required=True,
     )
