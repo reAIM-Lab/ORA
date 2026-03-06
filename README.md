@@ -1,11 +1,11 @@
 ORA
 
-Credit: this project is adopted from FEMR https://github.com/som-shahlab/femr
+Credit: this project is adapted from an upstream open-source EHR framework.
 
 Step 1. Converting into meds_reader
 ------------------------
 
-The FEMR library uses the [meds_reader](https://github.com/EthanSteinberg/meds_reader) utility for processing MEDS data. This requires a second preprocessing step
+The ORA library uses the [meds_reader](https://github.com/EthanSteinberg/meds_reader) utility for processing MEDS data. This requires a second preprocessing step
 
 ```bash
 pip install meds_reader==0.1.3
@@ -26,18 +26,18 @@ meds_reader_convert $OMOP_MEDS $OMOP_MEDS_READER --num_threads 16
 Step 2. Downloading Athena
 -------------------------
 
-FEMR uses OHDSI's Athena tool for ontology processing. Go to https://athena.ohdsi.org/ and download the folder.
+ORA uses OHDSI's Athena tool for ontology processing. Go to https://athena.ohdsi.org/ and download the folder.
 
 You can create an account for free.
 
 Note: Make sure to run the CPT4 fixer script in the Athena download before continuing!
 
-Step 3. Installing FEMR
+Step 3. Installing ORA
 ------------------------
 
-Finally, you need to install FEMR.
+Finally, you need to install ORA.
 
-This code currently uses a branch of FEMR, mimic_tutorial, in order to function. However, soon these changes will be merged upstream into femr 2.4
+This code currently uses a branch of ORA, mimic_tutorial, in order to function. However, soon these changes will be merged upstream into ora 2.4
 
 ```bash
 git clone https://github.com/reAIM-Lab/EHR_TTE.git
@@ -112,15 +112,15 @@ The `prepare.py` script performs the following:
 
 ```bash
 python prepare.py \
-  --pretraining_data /user/zj2398/cache/mtpp_all_shared_6100_bin_5 \
+  --pretraining_data $Path_to_pretraining_data \
   --ontology_path ontology_path \
   --time_bins 8 \
   --value_bins 5 \
   --loss_type mtpp \
   --num_final_tasks 6100 \
   --num_threads 32 \
-  --hf_cache_path /shared/share_mala/zj2398/huggingface/datasets \
-  --meds_reader /shared/share_mala/zj2398/mimic/data/meds_v0.6_reader
+  --hf_cache_path $Path_to_hf_cache \
+  --meds_reader $Path_to_meds_reader
 ```
 
 **Parameters:**
@@ -173,9 +173,9 @@ export CUDA_VISIBLE_DEVICES=0,1,2,3
 accelerate launch \
   --num_processes 4 \
   pretrain.py \
-  --pretraining_data /user/zj2398/cache/mtpp_all_shared_6100_bin_5 \
-  --meds_reader /shared/share_mala/zj2398/mimic/data/meds_v0.6_reader \
-  --output_dir /user/zj2398/cache/mtpp_all_shared_6100_bin_5/transformer \
+  --pretraining_data $Path_to_pretraining_data \
+  --meds_reader $Path_to_meds_reader \
+  --output_dir $Path_to_output_dir \
   --model transformer \
   --hf_run_name mimic_mtpp_shared_aligned_task_bin_5 \
   --loss_type mtpp_shared
@@ -185,9 +185,9 @@ accelerate launch \
 
 ```bash
 python pretrain.py \
-  --pretraining_data /user/zj2398/cache/mtpp_all_shared_6100_bin_5 \
-  --meds_reader /shared/share_mala/zj2398/mimic/data/meds_v0.6_reader \
-  --output_dir /user/zj2398/cache/output \
+  --pretraining_data $Path_to_pretraining_data \
+  --meds_reader $Path_to_meds_reader \
+  --output_dir $Path_to_output_dir \
   --model transformer \
   --hf_run_name my_run \
   --loss_type mtpp \
@@ -255,20 +255,20 @@ Evaluates binary classification tasks (e.g., predicting patient outcomes).
 ```bash
 # Mimic
 bash run.sh \
-  --meds_reader        /shared/share_mala/zj2398/mimic/data/meds_v0.6_reader  \
+  --meds_reader        $Path_to_meds_reader  \
   --num_proc           32 \
-  --model_path         /shared/share_mala/zj2398/models/mtpp_8k/mtpp_all_shared_6100_bin_5/mamba_2e-4_5.0_cosine/best_56076 \
+  --model_path         $Path_to_model_checkpoint \
   --model_name         mamba_mtpp \
   --tokens_per_batch   65536 \
   --device             cuda:0 \
   --use_ntp            no \
   --cohort_type        outcome \
-  --cache_path           /shared/share_mala/zj2398/huggingface/datasets \
+  --cache_path           $Path_to_hf_cache \
   --min_subjects_per_batch 8 \
-  --ontology_path       /user/zj2398/cache/mtpp_8k/ontology.pkl \
-  --main_split_path     /user/zj2398/cache/mtpp_8k/main_split.csv \
-  --output_dir   /shared/share_mala/zj2398/mimic/task/patient_outcome_task  \
-  --classification_cohort /shared/share_mala/zj2398/mimic/task/patient_outcome_task/cohort/
+  --ontology_path       $Path_to_ontology \
+  --main_split_path     $Path_to_main_split_csv \
+  --output_dir   $Path_to_output_dir  \
+  --classification_cohort $Path_to_classification_cohort
 
 
 ```
@@ -286,23 +286,23 @@ Evaluates phenotype classification and survival analysis (time-to-event) tasks.
 # export CUDA_VISIBLE_DEVICES=1
 # mimic
 bash run.sh \
-  --meds_reader        /data/raw_data/mimic/files/mimiciv/meds_v0.6/3.1/MEDS_cohort-reader \
+  --meds_reader        $Path_to_meds_reader \
   --num_proc           24 \
-  --model_path         /data2/processed_datasets/zj2398/femr/mimic/ntp/mamba_2e-4_5.0/best_101112 \
+  --model_path         $Path_to_model_checkpoint \
   --model_name         mamba_ntp_2e-4 \
   --tokens_per_batch   65536 \
   --device             cuda:0 \
   --use_ntp            yes \
   --cohort_type        phenotype \
-  --cache_path        /data2/huggingface/zj2398/ \
+  --cache_path        $Path_to_hf_cache \
   --min_subjects_per_batch 8 \
   --truncation  330 \
   --observation_window 730 \
-  --ontology_path       /data2/processed_datasets/zj2398/femr/mimic/ntp/ontology.pkl \
-  --main_split_path     /data2/processed_datasets/zj2398/femr/mimic/ntp/main_split.csv \
-  --output_dir   /data/results/zj2398/femr/mimic/phenotype  \
-  --classification_cohort  /data2/processed_datasets/mimic/phenotype_task/binary/ \
-  --tte_cohort /data2/processed_datasets/mimic/phenotype_task/tte/
+  --ontology_path       $Path_to_ontology \
+  --main_split_path     $Path_to_main_split_csv \
+  --output_dir   $Path_to_output_dir  \
+  --classification_cohort  $Path_to_classification_cohort \
+  --tte_cohort $Path_to_tte_cohort
 
 ```
 ### Parameters for run.sh
@@ -320,7 +320,7 @@ bash run.sh \
 | `--tte_cohort` | Yes | Path to time-to-event cohort directory (required for TTE tasks) |
 | `--observational window` | No| Observational Window before the prediction time. Use 730 for phenotype prediction |
 | `--truncation` | Yes | 330 for mimic and 1825 for cumc |
-| `--cache_path` | Yes | Path to store hugginface datasets. You can set a dir like /data2/user/huggingface |
+| `--cache_path` | Yes | Path to store hugginface datasets. You can set a dir like $Path_to_hf_cache |
 | `--device` | Yes | GPU device to use (e.g., `cuda:0`, `cuda:1`) |
 | `--tokens_per_batch` | No | Maximum tokens per batch (default: 65536). Adjust based on GPU memory |
 | `--min_subjects_per_batch` | No | Minimum patients per batch (default: 8) |
@@ -337,19 +337,19 @@ Evaluates continuous value prediction tasks (e.g., predicting lab values).
 <!-- export CUDA_VISIBLE_DEVICES=1 -->
 ```bash
 bash run_regression.sh \
-  --meds_reader        /shared/share_mala/zj2398/mimic/data/meds_v0.6_reader \
+  --meds_reader        $Path_to_meds_reader \
   --num_proc           24 \
-  --model_path         /shared/share_mala/zj2398/models/tpp_8k/transformer/best_221573 \
+  --model_path         $Path_to_model_checkpoint \
   --model_name         transformer-unmark \
   --tokens_per_batch   65536 \
   --device             cuda:0 \
   --min_subjects_per_batch 8 \
-  --ontology_path      /user/zj2398/cache/mtpp_8k/ontology.pkl \
-  --main_split_path    /user/zj2398/cache/mtpp_8k/main_split.csv \
-  --cohort_dir   /shared/share_mala/zj2398/mimic/task/regression/cohort/icu_stay_4h_100k/ \
-  --output_dir   /shared/share_mala/zj2398/mimic/task/regression/ \
+  --ontology_path      $Path_to_ontology \
+  --main_split_path    $Path_to_main_split_csv \
+  --cohort_dir   $Path_to_regression_cohort \
+  --output_dir   $Path_to_output_dir \
   --use_ntp no \
-  --cache_path /shared/share_mala/zj2398/huggingface/datasets \
+  --cache_path $Path_to_hf_cache \
   --tasks "bilirubin,creatinine" \
   --regression 
 

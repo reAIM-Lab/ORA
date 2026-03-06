@@ -1,11 +1,11 @@
 # Repository Guidelines
 
 ## Project Structure & Module Organization
-- `src/femr/` — Python package code. Key submodules: `models/`, `featurizers/`, `labelers/`, `transforms/`, `post_etl_pipelines/`.
+- `src/ora/` — Python package code. Key submodules: `models/`, `featurizers/`, `labelers/`, `transforms/`, `post_etl_pipelines/`.
 - `tests/` — pytest suite organized by package area (e.g., `tests/models/`).
 - `tools/` — utility scripts (e.g., Stanford OMOP helpers).
 - `tutorials/` — notebooks and examples; excluded from some lint checks.
-- CLI entry point: `femr_stanford_omop_fixer` (see README for usage).
+- CLI entry point: `ora_stanford_omop_fixer` (see README for usage).
 
 ## Build, Test, and Development Commands
 - Dev install: `python -m venv .venv && source .venv/bin/activate`
@@ -18,7 +18,7 @@
 
 ## Coding Style & Naming Conventions
 - Python 3.10 target; 4-space indentation; max line length 120.
-- Use type hints; `py.typed` is shipped and MyPy runs in stricter mode for `femr`.
+- Use type hints; `py.typed` is shipped and MyPy runs in stricter mode for `ora`.
 - Naming: modules/functions `snake_case`, classes `PascalCase`, constants `UPPER_CASE`.
 - Tools/config: Black (`line_length=120`), isort (profile in `pyproject.toml`), Flake8 (see `.flake8` ignores), MyPy (`.mypy.ini`).
 
@@ -26,7 +26,7 @@
 - Framework: pytest. Place tests under `tests/` mirroring package paths.
 - Naming: files `test_*.py`, functions `test_*`.
 - Add unit tests for new logic and regression tests for fixed bugs.
-- Prefer small, deterministic tests; use fixtures in `tests/femr_test_tools.py` when applicable.
+- Prefer small, deterministic tests; use shared fixtures in `tests/` when applicable.
 
 ## Commit & Pull Request Guidelines
 - Commit messages: use imperative mood and concise scope, e.g., `feat(models): add RMSNorm`. Reference issues when relevant.

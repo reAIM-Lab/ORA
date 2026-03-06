@@ -3,7 +3,7 @@ requires = ["setuptools >= 69.0", "setuptools-scm>=8.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "femr"
+name = "ora"
 version = "0.2.0"
 description = "Framework for Electronic Medical Records. A python package for building models using EHR data."
 readme = "README.md"
@@ -34,13 +34,6 @@ dependencies = [
 ]
 requires-python=">3.9"
 #dynamic = ["version"]
-
-[tool.setuptools_scm]
-version_file = "src/femr/_version.py"
-
-[project.scripts]
-
-femr_stanford_omop_fixer = "femr.post_etl_pipelines.stanford:femr_stanford_omop_fixer_program"
 
 [project.optional-dependencies]
 build = [
@@ -74,6 +67,6 @@ match = "src/.*\\.py"
 
 [tool.pytest.ini_options]
 pythonpath = [
+    "src",
     "tests"
 ]
-
