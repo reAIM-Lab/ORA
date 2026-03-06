@@ -41,6 +41,10 @@ while [ $# -gt 0 ]; do
       MODEL_NAME="$2"
       shift 2
       ;;
+    --observational_window)
+      WINDOW="$2"
+      shift 2
+      ;;
     --task_list)
       TASK_LIST="$2"
       shift 2
@@ -96,9 +100,18 @@ for cohort_dir in "$BASE_DIR"*/; do
     continue
   fi
 
-  echo "Processing cohort: $task_name"
+  echo "Processing cohort: $task_name, cohort_dir $cohort_dir"
 
-  cohort_dir="$cohort_dir/$MODEL_NAME"
+  # if [-n "$WINDOW"]:
+  #   cohort_dir=f"{$cohort_dir}/"{$MODEL_NAME}_{$WINDOW}"; then
+  # fi
+
+  if [ -n "$WINDOW" ]; then
+    cohort_dir="$cohort_dir${MODEL_NAME}_${WINDOW}"
+  else
+    cohort_dir="$cohort_dir$MODEL_NAME"
+  fi
+
   # Find features_with_label directory
   features_dir=$(find "$cohort_dir" -type d -name "features_with_label" | head -n 1)
 
@@ -187,4 +200,12 @@ echo "All tasks completed!"
 # --meds_dir /shared/share_mala/zj2398/mimic/data/meds_v0.6_reader \
 # --task_list "ami,masld,stroke" \
 # --model_name motor_730
+# '''
+
+# bash run_linear_prob_with_few_shots_motor.sh \
+# --base_dir /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/models/femr/motor_large_no_visit_id/results/ \
+# --output_dir /data/results/foundation_benchmarking/CUMC/log_prob/ \
+# --meds_dir /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/post_transform_meds_reader \
+# --task_list "death,long_los,readmission" \
+# --model_name motor 
 # '''
