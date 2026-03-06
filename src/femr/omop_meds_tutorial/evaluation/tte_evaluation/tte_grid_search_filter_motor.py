@@ -322,49 +322,4 @@ if __name__ == "__main__":
     print(tasks_list)
     run(tasks_list, args.old_phenotype_path,args.output_name,args.truncation,args.tte_cohort)
 
-'''
-command:
-export CUDA_VISIBLE_DEVICES=1
 
-python tte_grid_search_filter.py \
-    --tasks masld \
-    --truncation 330 \
-    --output_name first_event \
-    --old_phenotype_path /shared/share_mala/zj2398/mimic/task/phenotype_task/
-
-python tte_grid_search_filter.py \
-    --tasks stroke \
-    --truncation 330 \
-    --output_name first_event \
-    --old_phenotype_path /shared/share_mala/zj2398/mimic/task/phenotype_task/ \
-    --tte_cohort /shared/share_mala/zj2398/mimic/task/phenotype/tte_first
-
-    
-python tte_grid_search_filter_motor.py \
-    --tasks AMI,Celiac \
-    --truncation 1825 \
-    --output_name "" \
-    --old_phenotype_path /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/models/femr/motor_large_no_visit_id \
-    --tte_cohort /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/task_labels/phenotype_tte/tte/
-
-python tte_grid_search_filter_motor.py \
-    --tasks Ischemic_Stroke,MASLD \
-    --truncation 1825 \
-    --output_name "" \
-    --old_phenotype_path /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/models/femr/motor_large_no_visit_id \
-    --tte_cohort /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/task_labels/phenotype_tte/tte/
-
-python tte_grid_search_filter_motor.py \
-    --tasks Ischemic_Stroke \
-    --truncation 1825 \
-    --output_name "" \
-    --old_phenotype_path /data/results/zj2398/femr/cumc/phenotype \
-    --tte_cohort /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/task_labels/phenotype_tte/tte/
-
-python tte_grid_search_filter_motor.py \
-    --tasks MASLD \
-    --truncation 1825 \
-    --output_name "" \
-    --old_phenotype_path /data/results/zj2398/femr/cumc/phenotype \
-    --tte_cohort /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/task_labels/phenotype_tte/tte/
-'''
