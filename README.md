@@ -1,4 +1,4 @@
-### ORA
+# ORA
 Implementation for One Loss to Rule Them All: Marked Time-to-Event for Structured EHR Foundation Models
 
 
