@@ -1,7 +1,8 @@
 ### ORA
+Implementation for One Loss to Rule Them All: Marked Time-to-Event for Structured EHR Foundation Models
 
 
-Credit: this project is adapted from an upstream open-source EHR framework.
+Credit: this project is adapted from an upstream open-source EHR framework: https://github.com/som-shahlab/femr
 
 Step 1. Converting into meds_reader
 ------------------------
