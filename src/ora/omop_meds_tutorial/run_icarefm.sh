@@ -28,29 +28,29 @@ RUN_NAME=mimic_icarefm_transformer_value_1000_test     # differs
 MEDS_READER=/path/to/mimic_meds_reader
 HF_CACHE=/path/to/hf_cache
 
-# python prepare.py \
-#   --pretraining_data "$MODEL_DIR" \
-#   --ontology_path "$MODEL_DIR/ontology.pkl" \
-#   --meds_reader "$MEDS_READER" \
-#   --num_threads 32 \
-#   --tokens_per_batch 16384 \
-#   --value_count_threshold 1000 \
-#   --model transformer \
-#   --loss_type "$LOSS_TYPE" \
-#   --hf_cache_path "$HF_CACHE"
+python prepare.py \
+  --pretraining_data "$MODEL_DIR" \
+  --ontology_path "$MODEL_DIR/ontology.pkl" \
+  --meds_reader "$MEDS_READER" \
+  --num_threads 32 \
+  --tokens_per_batch 16384 \
+  --value_count_threshold 1000 \
+  --model transformer \
+  --loss_type "$LOSS_TYPE" \
+  --hf_cache_path "$HF_CACHE"
 
-# accelerate launch \
-#   --num_processes 3 \
-#   pretrain.py \
-#   --pretraining_data "$MODEL_DIR" \
-#   --meds_reader "$MEDS_READER" \
-#   --output_dir "$MODEL_DIR/transformer" \
-#   --model transformer \
-#   --loss_type "$LOSS_TYPE" \
-#   --learning_rate 1e-5 \
-#   --max_grad_norm 1.0 \
-#   --n_epochs 20 \
-#   --hf_run_name "$RUN_NAME"
+accelerate launch \
+  --num_processes 3 \
+  pretrain.py \
+  --pretraining_data "$MODEL_DIR" \
+  --meds_reader "$MEDS_READER" \
+  --output_dir "$MODEL_DIR/transformer" \
+  --model transformer \
+  --loss_type "$LOSS_TYPE" \
+  --learning_rate 1e-5 \
+  --max_grad_norm 1.0 \
+  --n_epochs 20 \
+  --hf_run_name "$RUN_NAME"
 
 # --- Pretraining FLOPs / time -------------------------------------------------
 # One short run measures both: steps 0-499 under the profiler give FLOPs/token, steps
@@ -63,21 +63,21 @@ HF_CACHE=/path/to/hf_cache
 # CUDA_VISIBLE_DEVICES is required, not optional. Plain `python pretrain.py` on a multi-GPU
 # box makes HF Trainer wrap the model in nn.DataParallel across every visible GPU while
 # world_size stays 1, so the measured rates would not describe a single GPU.
-export CUDA_VISIBLE_DEVICES=0
+# export CUDA_VISIBLE_DEVICES=0
 
-python pretrain.py \
-  --pretraining_data "$MODEL_DIR"  \
-  --meds_reader "$MEDS_READER" \
-  --output_dir "$MODEL_DIR/transformer" \
-  --model transformer \
-  --loss_type icarefm \
-  --learning_rate 1e-5 \
-  --max_grad_norm 1.0 \
-  --n_epochs 20 \
-  --hf_run_name mimic_icarefm_transformer_profile \
-  --profile_steps 1000 \
-  --time_steps 1000 \
-  --max_steps 2000
+# python pretrain.py \
+#   --pretraining_data "$MODEL_DIR"  \
+#   --meds_reader "$MEDS_READER" \
+#   --output_dir "$MODEL_DIR/transformer" \
+#   --model transformer \
+#   --loss_type icarefm \
+#   --learning_rate 1e-5 \
+#   --max_grad_norm 1.0 \
+#   --n_epochs 20 \
+#   --hf_run_name mimic_icarefm_transformer_profile \
+#   --profile_steps 1000 \
+#   --time_steps 1000 \
+#   --max_steps 2000
 
 # --- Mamba variant ------------------------------------------------------------
 # Recipe behind /path/to/cache/icarefm/mamba/best_45080, which the eval scripts point at.

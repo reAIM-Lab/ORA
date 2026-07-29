@@ -50,19 +50,19 @@ python prepare.py \
 # --survivehr_time_scale_days is the one flag with no ICareFM counterpart. It is passed
 # explicitly because survivehr_task.pkl was pickled with the old 365.25 (years) default and
 # pretrain.py overrides that attribute from the CLI; 1.0 keeps the ODE head in days.
-# accelerate launch \
-#   --num_processes 3 \
-#   pretrain.py \
-#   --pretraining_data "$MODEL_DIR" \
-#   --meds_reader "$MEDS_READER" \
-#   --output_dir "$MODEL_DIR/transformer" \
-#   --model transformer \
-#   --loss_type "$LOSS_TYPE" \
-#   --learning_rate 1e-5 \
-#   --max_grad_norm 1.0 \
-#   --n_epochs 20 \
-#   --survivehr_time_scale_days 1.0 \
-#   --hf_run_name "$RUN_NAME"
+accelerate launch \
+  --num_processes 3 \
+  pretrain.py \
+  --pretraining_data "$MODEL_DIR" \
+  --meds_reader "$MEDS_READER" \
+  --output_dir "$MODEL_DIR/transformer" \
+  --model transformer \
+  --loss_type "$LOSS_TYPE" \
+  --learning_rate 1e-5 \
+  --max_grad_norm 1.0 \
+  --n_epochs 20 \
+  --survivehr_time_scale_days 1.0 \
+  --hf_run_name "$RUN_NAME"
 
 # --- Pretraining FLOPs / time -------------------------------------------------
 # One short run measures both: steps 0-499 under the profiler give FLOPs/token, steps
@@ -75,22 +75,22 @@ python prepare.py \
 # CUDA_VISIBLE_DEVICES is required, not optional. Plain `python pretrain.py` on a multi-GPU
 # box makes HF Trainer wrap the model in nn.DataParallel across every visible GPU while
 # world_size stays 1, so the measured rates would not describe a single GPU.
-export CUDA_VISIBLE_DEVICES=0
+# export CUDA_VISIBLE_DEVICES=0
 
-python pretrain.py \
-  --pretraining_data "$MODEL_DIR" \
-  --meds_reader "$MEDS_READER" \
-  --output_dir "$MODEL_DIR/transformer" \
-  --model transformer \
-  --loss_type survivehr \
-  --learning_rate 1e-5 \
-  --max_grad_norm 1.0 \
-  --n_epochs 20 \
-  --survivehr_time_scale_days 1.0 \
-  --hf_run_name mimic_survivehr_transformer_profile \
-  --profile_steps 1000 \
-  --time_steps 1000 \
-  --max_steps 2000
+# python pretrain.py \
+#   --pretraining_data "$MODEL_DIR" \
+#   --meds_reader "$MEDS_READER" \
+#   --output_dir "$MODEL_DIR/transformer" \
+#   --model transformer \
+#   --loss_type survivehr \
+#   --learning_rate 1e-5 \
+#   --max_grad_norm 1.0 \
+#   --n_epochs 20 \
+#   --survivehr_time_scale_days 1.0 \
+#   --hf_run_name mimic_survivehr_transformer_profile \
+#   --profile_steps 1000 \
+#   --time_steps 1000 \
+#   --max_steps 2000
 
 # --- Mamba variant ------------------------------------------------------------
 # Recipe behind /path/to/cache/survivehr/mamba_2e-4. Different learning rate and
