@@ -1,5 +1,5 @@
 """
-One of ORA's main features is utilities for helping write labeling functions.
+One of FEMR's main features is utilities for helping write labeling functions.
 
 The following are two simple labelers for inpatient mortality and long admission for MIMIC-IV.
 """

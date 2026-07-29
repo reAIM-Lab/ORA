@@ -39,16 +39,18 @@ Step 3. Installing ORA
 
 Finally, you need to install ORA.
 
-This code currently uses a branch of ORA, mimic_tutorial, in order to function. However, soon these changes will be merged upstream into ora 2.4
-
 ```bash
-git clone https://github.com/reAIM-Lab/EHR_TTE.git
-cd EHR_TTE
 pip install -e .
 pip install xformers
 ```
 
-Make sure to also install the correct gpu enabled version of PyTorch
+Make sure to also install the correct gpu enabled version of PyTorch.
+
+The tabular baselines additionally need `xgboost` and `scikit-survival`:
+
+```bash
+pip install xgboost scikit-survival
+```
 
 
 Step 4. Preparing For Pretraining
@@ -69,10 +71,29 @@ The framework supports multiple pretraining objectives:
 | `motor` | MOTOR (Multi-task Temporal Risk) - Predicts time until multiple medical events | General purpose foundation model |
 | `tpp` | TPP (Temporal Point Process) - Models timing of medical events | Time-focused modeling |
 | `mtpp` | MTPP (Multivariate TPP) - Models both timing and lab values | When lab values are important |
-| `mtpp_shared` | Shared MTPP - MTPP with shared parameters across tasks | Memory-efficient MTPP variant |
+| `mtpp_shared` | Shared MTPP - MTPP with shared parameters across tasks. **This is ORA.** | The proposed objective |
 | `ntp` | NTP (Next Token Prediction) - CLMBR-style next code prediction | Language model-style pretraining |
+| `survivehr` | SurvivEHR - DeSurv competing-risk parameterization with per-code Gaussian value heads | Foundation-model baseline |
+| `icarefm` | ICareFM - threshold-conditioned hourly hazard bins with masked BCE on first threshold crossing | Foundation-model baseline |
+| `mtpp_factorized` | Ablation of ORA that predicts time and value **separately** rather than jointly | Ablation |
+| `mtpp_value` | Ablation variant with a dedicated value head | Ablation |
 
 **Note:** `mtpp` and `mtpp_shared` support the `--value_bins` parameter for discretizing continuous lab values.
+
+### Baseline objectives
+
+`survivehr` and `icarefm` are our own reimplementations: neither method publishes weights or a usable
+implementation for MEDS-formatted data. They are implemented against the same vocabulary, tokenizer and
+backbone as every other objective here, so that the pretraining loss is the only thing that varies.
+
+- **SurvivEHR** is ported against the officially released code: the identical DeSurv competing-risk
+  parameterization and per-code Gaussian value heads. See `src/ora/models/tasks/survivehr_task.py` and
+  `src/ora/models/architecture/survivehr_head.py`.
+- **ICareFM** has no public implementation, so it follows the paper's supplementary description:
+  48 hourly hazard bins, prediction heads conditioned on the queried threshold and its direction,
+  thresholds resampled at every training step, and a masked binary cross-entropy loss on the first
+  threshold crossing. See `src/ora/models/tasks/icarefm_task.py` and `ICareFMTaskHead` in
+  `src/ora/models/architecture/embedding.py`.
 
 ## Quick Start Workflow
 
@@ -135,7 +156,7 @@ python prepare.py \
 | `--athena_path` | No | Path to Athena ontology data for creating the medical code ontology (optional if ontology already exists) |
 | `--time_bins` | No | Number of time bins for temporal discretization (default: 8) |
 | `--value_bins` | No | Number of bins for discretizing lab values in MTPP tasks (default: 10) |
-| `--loss_type` | Yes | Type of pretraining task: `motor`, `tpp`, `mtpp`, or `ntp` |
+| `--loss_type` | Yes | Type of pretraining task: `motor`, `tpp`, `mtpp`, `mtpp_shared`, `mtpp_value`, `ntp`, `survivehr`, or `icarefm` |
 | `--num_final_tasks` | No | Number of final prediction tasks for MTPP (default: 8192) |
 | `--num_threads` | No | Number of parallel threads for data processing (default: 16) |
 | `--hf_cache_path` | No | HuggingFace datasets cache directory |
@@ -204,7 +225,7 @@ python pretrain.py \
 | `--meds_reader` | Yes | Path to MEDS reader database (same as prepare.py) |
 | `--output_dir` | Yes | Directory where model checkpoints will be saved during training |
 | `--model` | Yes | Model architecture: `transformer` or `mamba` |
-| `--loss_type` | Yes | Type of pretraining loss: `motor`, `tpp`, `mtpp`, `mtpp_shared`, or `ntp` (must match prepare.py) |
+| `--loss_type` | Yes | Type of pretraining loss: `motor`, `tpp`, `mtpp_shared`, `mtpp_factorized`, `mtpp_value`, `ntp`, `survivehr`, or `icarefm` (must match prepare.py) |
 | `--hf_run_name` | Yes | Name for the training run (displayed in WandB) |
 | `--checkpoint_dir` | No | Path to checkpoint to resume training from |
 | `--learning_rate` | No | Learning rate for optimizer (default: 1e-5) |
@@ -321,7 +342,7 @@ bash run.sh \
 | `--classification_cohort` | Yes | Path to classification task cohort directory (required for classification tasks) |
 | `--tte_cohort` | Yes | Path to time-to-event cohort directory (required for TTE tasks) |
 | `--observational window` | No| Observational Window before the prediction time. Use 730 for phenotype prediction |
-| `--truncation` | Yes | 330 for mimic and 1825 for cumc |
+| `--truncation` | Yes | 330 for mimic and 1825 for institutional |
 | `--cache_path` | Yes | Path to store hugginface datasets. You can set a dir like $Path_to_hf_cache |
 | `--device` | Yes | GPU device to use (e.g., `cuda:0`, `cuda:1`) |
 | `--tokens_per_batch` | No | Maximum tokens per batch (default: 65536). Adjust based on GPU memory |
@@ -369,7 +390,7 @@ bash run_regression.sh \
 | `--output_dir` | Yes | Directory where regression results will be saved |
 | `--ontology_path` | Yes | Path to ontology.pkl file |
 | `--main_split_path` | Yes | Path to main_split.csv file |
-| `--tasks` | Yes | Comma-separated list of regression targets (MIMIC: `"pao2,platelets,bilirubin,creatinine"` CUMC: `"spo2,platelets,bilirubin,creatinine"`) |
+| `--tasks` | Yes | Comma-separated list of regression targets (MIMIC: `"pao2,platelets,glucose,creatinine"`; institutional: `"spo2,platelets,glucose,creatinine"`) |
 | `--regression` | Yes | Flag to enable regression mode (no value needed) |
 | `--device` | Yes | GPU device (e.g., `cuda:0`) |
 | `--cache_path` | Yes | HuggingFace datasets cache directory |
@@ -377,6 +398,51 @@ bash run_regression.sh \
 | `--min_subjects_per_batch` | Yes | Minimum patients per batch = tokens_per_batch/8192 (default: 8) |
 | `--num_proc` | No | Number of parallel processes (default: 24) |
 | `--use_ntp` | Yes | Whether to use NTP mode: `yes` or `no` |
+
+## 5.4. Tabular Baselines
+
+Two tabular baselines live under `src/ora/omop_meds_tutorial/evaluation/`. Both use XGBoost for the
+binary tasks and DeepHit for time-to-event; they differ only in the feature set.
+
+| Directory | Features | Reported as |
+|---|---|---|
+| `baseline/` | `CountFeaturizer` code counts only | XGBoost / DeepHit |
+| `baseline_value/` | code counts **plus** the MEDS-Tab numeric aggregation set (`code/count`, `value/count`, `value/sum`, `value/sum_sqd`, `value/min`, `value/max` over `[7d, full]` windows) | Value-added XGBoost / DeepHit |
+
+```bash
+cd src/ora/omop_meds_tutorial/evaluation/baseline_value
+python -m ora.omop_meds_tutorial.evaluation.baseline_value.validate_featurizer --num_subjects 200
+bash extract.sh
+python run_all.py --n_jobs 24
+```
+
+Both drivers use `from train_utils import ...`, so run them as scripts from inside their own directory.
+See `baseline_value/README.md` for the feature specification, the hyperparameter grids, and what
+differs between the two.
+
+## 5.5. Significance Testing
+
+`src/ora/omop_meds_tutorial/evaluation/p_test/` computes paired bootstrap confidence intervals for the
+difference between ORA and each baseline (10,000 resamples, seed 42).
+
+| Script | Produces |
+|---|---|
+| `regression/classification_test.py` | ΔAUROC 95% CIs |
+| `tte/tte_test.py`, `tte/compare.py` | ΔC-index 95% CIs |
+| `regression/regression_test.py` | ΔR² 95% CIs |
+| `tte/deephit.py` | The tuned DeepHit baseline (grid over learning rate, batch size, dropout, hidden dimension, weight decay) |
+
+## 5.6. Compute Accounting
+
+Pretraining and feature extraction record FLOPs and wall time:
+
+- `pretrain.py --profile_steps N --time_steps M` runs the torch profiler over the first `N` training
+  steps to measure FLOPs/token, then times the next `M` steps with the profiler off to measure
+  seconds/token. Results are written next to the checkpoints.
+- `evaluation/baseline_value/collect_compute.py` merges the per-task extraction and training JSON
+  (wall-clock, peak RSS, column budget, density) into a single table.
+
+All models in the paper were pretrained on 4× NVIDIA H100 NVL (96 GB VRAM).
 
 ## Evaluation Outputs
 

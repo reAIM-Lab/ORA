@@ -24,7 +24,7 @@ def train_tokenizer(
     vocab_size: int,
     num_numeric: int = 1000,
 ) -> FlatTokenizer:
-    """Train a ORA tokenizer from the given dataset"""
+    """Train a FEMR tokenizer from the given dataset"""
 
     statistics = functools.reduce(
         agg_statistics,
@@ -218,7 +218,7 @@ class FlatTokenizer(transformers.utils.PushToHubMixin):
         **kwargs,
     ):
         """
-        Load the ORA tokenizer.
+        Load the FEMR tokenizer.
 
         Parameters:
             pretrained_model_name_or_path (`str` or `os.PathLike`, *optional*):
@@ -232,7 +232,7 @@ class FlatTokenizer(transformers.utils.PushToHubMixin):
             kwargs: Arguments for loading to pass to transformers.utils.hub.cached_file
 
         Returns:
-            A ORA Tokenizer
+            A FEMR Tokenizer
         """
 
         dictionary_file = transformers.utils.hub.cached_file(
@@ -246,7 +246,7 @@ class FlatTokenizer(transformers.utils.PushToHubMixin):
 
     def save_pretrained(self, save_directory: Union[str, os.PathLike], push_to_hub: bool = False, **kwargs):
         """
-        Save the ORA tokenizer.
+        Save the FEMR tokenizer.
 
 
         This method make sure the batch processor can then be re-loaded using the

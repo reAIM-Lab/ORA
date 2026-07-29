@@ -1,5 +1,5 @@
 """
-ORA also supports generating tabular feature representations, an important baseline for EHR modeling
+FEMR also supports generating tabular feature representations, an important baseline for EHR modeling
 """
 import json
 import meds_reader
@@ -18,6 +18,12 @@ import argparse
 from .generate_labels import LABEL_NAMES, create_omop_meds_tutorial_arg_parser
 from .generate_features import get_model_name
 from .eval_utils import _metric_mean_std, _update_metric_table
+from .p_test.tte.utils import (
+    bootstrap_cindex_parallel,
+    generate_bootstrap_indices,
+    make_structured_array,
+    save_survival_results,
+)
 
 from pycox.models import DeepHitSingle
 from pycox.evaluation import EvalSurv
@@ -158,20 +164,35 @@ def logistic_regression(train_set,test_data,label_output_dir):
 
 
 
-def tte_evaluation(train_set_init, test_set_init,truncation,tte_cohort):
+def tte_evaluation(
+    train_set_init,
+    test_set_init,
+    truncation,
+    tte_cohort,
+    save_path=None,
+    model_name="model",
+    n_bootstrap=10000,
+    seed=42,
+    n_jobs=16,
+):
 
     #need to filter train_set and test_set from tte_cohort
     tte_cohort =  tte_cohort.rename(columns={"time_to_event_days": "time_to_event"}, errors="ignore")
     keys = tte_cohort[["subject_id", "prediction_time","time_to_event", "tte_label"]].drop_duplicates()
     train_set = train_set_init.merge(
         keys, on=["subject_id", "prediction_time"], how="inner"
-    )
+    ).sort_values(["subject_id", "prediction_time"]).reset_index(drop=True)
 
     test_set = test_set_init.merge(
         keys, on=["subject_id", "prediction_time"], how="inner"
-    )
+    ).sort_values(["subject_id", "prediction_time"]).reset_index(drop=True)
     print(f"before and after the train_set is {len(train_set_init)} and {len(train_set)}")
     print(f"before and after the test_set is {len(test_set_init)} and {len(test_set)}")
+
+    test_order = list(zip(
+        test_set["subject_id"].values.tolist(),
+        test_set["prediction_time"].astype(str).values.tolist(),
+    ))
 
     # Extract validation set to stop loss
     val = train_set.sample(frac=0.2, replace=False, random_state=42)
@@ -190,21 +211,21 @@ def tte_evaluation(train_set_init, test_set_init,truncation,tte_cohort):
     get_target = lambda df: (df['time_to_event'].values, df['tte_label'].values)
 
     # x_train: (n_samples, n_features)
-    x_train = np.stack(train_set.features.values)
+    x_train = np.stack(train_set.features.values).astype(np.float32)
 
     # y_train: (discrete_time_indices, event_indicators)
     y_train = labtrans.fit_transform(*get_target(train_set))
 
     durations_train, events_train = get_target(train_set)
 
-    x_val = np.stack(val.features.values)
+    x_val = np.stack(val.features.values).astype(np.float32)
     y_val = labtrans.transform(*get_target(val))
     val = (x_val, y_val)
 
-    x_hyper = np.stack(hyper.features.values)
+    x_hyper = np.stack(hyper.features.values) 
     y_hyper = labtrans.transform(*get_target(hyper))
 
-    x_test = np.stack(test_set.features.values)
+    x_test = np.stack(test_set.features.values).astype(np.float32)
     durations_test, events_test = get_target(test_set)
 
     # Define one layer NN for Deephit
@@ -216,14 +237,11 @@ def tte_evaluation(train_set_init, test_set_init,truncation,tte_cohort):
         'lr': [0.001, 0.0001],
         'batch': [1024, 2048]
     })
-    # grid = ParameterGrid({
-    #     'dropout': [0.1],
-    #     'lr': [0.001],
-    #     'batch': [1024]
-    # })
 
     # Hyperparameter selection
     best_nll = np.inf
+    best_model = None
+    best_params = None
     for param in grid:
         net = tt.practical.MLPVanilla(in_features, [], out_features, True, param['dropout'])
 
@@ -238,6 +256,9 @@ def tte_evaluation(train_set_init, test_set_init,truncation,tte_cohort):
         if nll < best_nll:
             best_model = model
             best_nll = nll
+            best_params = param
+
+    print(f"Best params: {best_params}, NLL: {best_nll:.4f}")
     
 
     # Evaluation best model
@@ -255,10 +276,28 @@ def tte_evaluation(train_set_init, test_set_init,truncation,tte_cohort):
 
     # Create structured arrays with filtered data
     # Create format for sksurv
-    et_train = np.array([(events_train[i], durations_train[i]) for i in range(len(events_train))],
-                    dtype=[('e', bool), ('t', float)])
-    et_test = np.array([(events_test[i], durations_test[i]) for i in range(len(events_test))],
-                    dtype=[('e', bool), ('t', float)])
+    et_train = make_structured_array(durations_train, events_train)
+    et_test = make_structured_array(durations_test, events_test)
+
+    bootstrap_indices = generate_bootstrap_indices(len(et_test), n_bootstrap, seed)
+    c_indices = bootstrap_cindex_parallel(
+        surv,
+        et_train,
+        et_test,
+        truncation,
+        bootstrap_indices,
+        n_jobs,
+    )
+
+    saved_results = {
+        "C-Index": c_indices,
+        "test_order": test_order,
+        "model_name": model_name,
+        "best_params": best_params,
+    }
+
+    if save_path:
+        save_survival_results(saved_results, best_model, save_path, truncation)
     
     # Now all patients have outcomes within 5 years
     # So we can use the full 5-year time grid for all bootstrap samples
@@ -272,9 +311,10 @@ def tte_evaluation(train_set_init, test_set_init,truncation,tte_cohort):
                 (times <= max_time_sample) & \
                 (times <= truncation)
     times_eval = times[eval_mask]
+    ibs_rng = np.random.default_rng(42)
     
     for i in tqdm(range(100)):
-        sample = np.random.choice(len(et_test), len(et_test))
+        sample = ibs_rng.choice(len(et_test), len(et_test))
         surv_at_5yr = surv.iloc[index_truncation, sample]
         risk_at_5yr = 1 - surv_at_5yr
         
@@ -333,7 +373,7 @@ def main():
 
     # labels = ["in_hospital_mortality","readmission","long_los"]
     output_dir = Path(output_root) / "results"
-    summary_dir = output_dir / "summary_tables"
+    summary_dir = output_dir / f"summary_table_{args.truncation}"
     model_col = f"{args.model_name}"
     with meds_reader.SubjectDatabase(args.meds_reader, num_threads=32) as database:
         if args.observation_window:
@@ -396,31 +436,6 @@ def main():
         train_features_list = [feature for feature in train_data["features"]]
         test_features_list = [feature for feature in test_data["features"]]
 
-        # if args.cohort_type == "phenotype":
-        #     print("phenotype prediction")
-        #     train_set = pd.DataFrame({
-        #         "subject_id" : train_data["subject_ids"],
-        #         "prediction_time" : train_data["prediction_times"],
-        #         "tte_label" : train_data["tte_label"],
-        #         "time_to_event": train_data["time_to_event"],
-        #         "boolean_value": train_data["boolean_values"],
-        #         "features" : train_features_list
-        #     }).sample(
-        #         frac=1.0,
-        #         random_state=42
-        #     )
-        #     train_set.to_parquet(features_label_data / "train.parquet", index=False)
-        #     test_set = pd.DataFrame({
-        #         "subject_id" : test_data["subject_ids"],
-        #         "prediction_time" : test_data["prediction_times"],
-        #         "tte_label" : test_data["tte_label"],
-        #         "time_to_event": test_data["time_to_event"],
-        #         "boolean_value": test_data["boolean_values"],
-        #         "features" : test_features_list
-        #     })
-        #     test_set.to_parquet(features_label_data / "test.parquet", index=False)
-
-        # else:
         train_set = pd.DataFrame({
             "subject_id" : train_data["subject_ids"],
             "prediction_time" : train_data["prediction_times"],
@@ -462,9 +477,16 @@ def main():
                 dfs = [pd.read_parquet(f) for f in files]
                 tte_cohort = pd.concat(dfs, ignore_index=True)
 
-            tte_results = tte_evaluation(train_set,test_set,args.truncation,tte_cohort)
-            metrics['C-Index'] = (np.mean(tte_results['C-Index']), np.std(tte_results['C-Index']))
-            metrics['Int-Brier'] = (np.mean(tte_results['Int-Brier']), np.std(tte_results['Int-Brier']))
+            tte_results = tte_evaluation(
+                train_set,
+                test_set,
+                args.truncation,
+                tte_cohort,
+                save_path=label_output_dir,
+                model_name=model_col,
+            )
+            metrics['C-Index'] = (float(np.mean(tte_results['C-Index'])), float(np.std(tte_results['C-Index'])))
+            metrics['Int-Brier'] = (float(np.mean(tte_results['Int-Brier'])), float(np.std(tte_results['Int-Brier'])))
         # tte_result_file = label_output_dir / 'tte_metrics.json'
         # with open(tte_result_file, "w") as f:
         #     json.dump(metrics, f, indent=4)
@@ -490,5 +512,4 @@ def main():
 
 if __name__ == "__main__":
     main()
-
 

@@ -1,5 +1,5 @@
 """
-ORA also supports generating tabular feature representations, an important baseline for EHR modeling
+FEMR also supports generating tabular feature representations, an important baseline for EHR modeling
 """
 import json
 import meds_reader
@@ -280,5 +280,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-

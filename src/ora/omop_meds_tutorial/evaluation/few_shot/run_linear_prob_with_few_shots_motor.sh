@@ -188,24 +188,24 @@ echo "All tasks completed!"
 
 # '''
 # bash run_linear_prob_with_few_shots_motor.sh \
-# --base_dir /shared/share_mala/zj2398/mimic/task/patient_outcome_task/results/ \
-# --output_dir /shared/share_mala/zj2398/mimic/task/patient_outcome_task/few_shot_results/ \
-# --meds_dir /shared/share_mala/zj2398/mimic/data/meds_v0.6_reader \
+# --base_dir /path/to/workspace/mimic/task/patient_outcome_task/results/ \
+# --output_dir /path/to/workspace/mimic/task/patient_outcome_task/few_shot_results/ \
+# --meds_dir /path/to/mimic_meds_reader \
 # --task_list "in_hospital_mortality,long_los,readmission" \
 # --model_name motor
 
 # bash run_linear_prob_with_few_shots_motor.sh \
-# --base_dir /shared/share_mala/zj2398/mimic/task/phenotype_task/results/ \
-# --output_dir /shared/share_mala/zj2398/mimic/task/phenotype_task/few_shot_results/ \
-# --meds_dir /shared/share_mala/zj2398/mimic/data/meds_v0.6_reader \
+# --base_dir /path/to/workspace/mimic/task/phenotype_task/results/ \
+# --output_dir /path/to/workspace/mimic/task/phenotype_task/few_shot_results/ \
+# --meds_dir /path/to/mimic_meds_reader \
 # --task_list "ami,masld,stroke" \
 # --model_name motor_730
 # '''
 
 # bash run_linear_prob_with_few_shots_motor.sh \
-# --base_dir /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/models/ora/motor_large_no_visit_id/results/ \
-# --output_dir /data/results/foundation_benchmarking/CUMC/log_prob/ \
-# --meds_dir /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/post_transform_meds_reader \
+# --base_dir /path/to/institutional_data/models/ora/motor_large_no_visit_id/results/ \
+# --output_dir /path/to/results/INSTITUTIONAL/log_prob/ \
+# --meds_dir /path/to/institutional_data/post_transform_meds_reader \
 # --task_list "death,long_los,readmission" \
 # --model_name motor 
 # '''

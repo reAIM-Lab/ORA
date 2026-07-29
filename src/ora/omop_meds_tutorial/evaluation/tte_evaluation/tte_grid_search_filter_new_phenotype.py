@@ -17,63 +17,6 @@ from ora.omop_meds_tutorial.evaluation.eval_utils import _metric_mean_std, _upda
 np.random.seed(42)
 torch.manual_seed(42)
 
-# this is debugged codes 
-
-# def tte_evaluation(train_set, test_set, task, model_name):
-#     # codes for using the first year labels
-#     # print(f"task is {task}, model is {model_name} initial length {len(train_set)},{len(test_set)}")
-#     # train_set = train_set[train_set["time_to_event"] <= 330]
-#     # test_set  = test_set [test_set ["time_to_event"] <= 330]
-#     # print(f"after length {len(train_set)},{len(test_set)}")
-
-#     val = train_set.sample(frac=0.1, replace=False, random_state=42)
-#     train_set = train_set.drop(val.index)
-
-#     # Transform labels
-#     num_durations = 100
-#     labtrans = DeepHitSingle.label_transform(num_durations)
-#     get_target = lambda df: (df['time_to_event'].values, df['tte_label'].values)
-
-#     # Extract features and labels
-#     x_train = np.stack(train_set.features.values)
-#     y_train = labtrans.fit_transform(*get_target(train_set))
-#     train = (x_train, y_train)
-
-#     x_val = np.stack(val.features.values)
-#     y_val = labtrans.transform(*get_target(val))
-#     val = (x_val, y_val)
-
-#     x_test = np.stack(test_set.features.values)
-#     durations_test, events_test = get_target(test_set)
-
-#     # Define one layer NN for Deephit
-#     in_features = x_train.shape[1]
-#     out_features = labtrans.out_features
-#     net = tt.practical.MLPVanilla(in_features, [], out_features)
-
-#     # Train Deephit
-#     model = DeepHitSingle(net, tt.optim.Adam, duration_index=labtrans.cuts)
-#     epochs, batch = 100, 2048
-#     _ = model.fit(x_train, y_train, batch, epochs, [tt.callbacks.EarlyStopping()],
-#                   val_data=val)
-
-#     # Predict on test set
-#     surv = model.predict_surv_df(x_test)
-
-#     # Compute bootstrapped performance
-#     results = {'C-Index': [], 'Int-Brier': []}
-#     time_grid = np.linspace(durations_test.min(), durations_test.max(), 100)
-#     for _ in tqdm(range(100)):
-#         sample = np.random.choice(len(x_test), len(x_test))
-#         # surv has times as rows and individuals as columns; sample columns
-#         ev = EvalSurv(surv.iloc[:, sample], durations_test[sample], events_test[sample], censor_surv='km')
-#         results['C-Index'].append(ev.concordance_td('antolini'))
-#         results['Int-Brier'].append(ev.integrated_brier_score(time_grid))
-
-#     # Display
-#     for metric in results:
-#         print('{}: {:.3f} ({:.3f})'.format(metric, np.mean(results[metric]), np.std(results[metric])))
-#     return results
 
 def tte_evaluation(train_set, test_set,task,truncation=365,tte_cohort_path=None):
     # Extract validation set to stop loss
@@ -112,21 +55,21 @@ def tte_evaluation(train_set, test_set,task,truncation=365,tte_cohort_path=None)
     get_target = lambda df: (df['time_to_event'].values, df['tte_label'].values)
 
     # x_train: (n_samples, n_features)
-    x_train = np.stack(train_set.features.values)
+    x_train = np.stack(train_set.features.values).astype(np.float32)
 
     # y_train: (discrete_time_indices, event_indicators)
     y_train = labtrans.fit_transform(*get_target(train_set))
 
     durations_train, events_train = get_target(train_set)
 
-    x_val = np.stack(val.features.values)
+    x_val = np.stack(val.features.values).astype(np.float32)
     y_val = labtrans.transform(*get_target(val))
     val = (x_val, y_val)
 
-    x_hyper = np.stack(hyper.features.values)
+    x_hyper = np.stack(hyper.features.values).astype(np.float32)
     y_hyper = labtrans.transform(*get_target(hyper))
 
-    x_test = np.stack(test_set.features.values)
+    x_test = np.stack(test_set.features.values).astype(np.float32)
     durations_test, events_test = get_target(test_set)
 
     # Define one layer NN for Deephit
@@ -142,6 +85,8 @@ def tte_evaluation(train_set, test_set,task,truncation=365,tte_cohort_path=None)
 
     # Hyperparameter selection
     best_nll = np.inf
+    best_model = None
+    best_params = None
     for param in grid:
         net = tt.practical.MLPVanilla(in_features, [], out_features, True, param['dropout'])
 
@@ -156,6 +101,9 @@ def tte_evaluation(train_set, test_set,task,truncation=365,tte_cohort_path=None)
         if nll < best_nll:
             best_model = model
             best_nll = nll
+            best_params = param
+
+    print(f"Best params: {best_params}, NLL: {best_nll:.4f}")
     
 
     # Evaluation best model
@@ -166,20 +114,37 @@ def tte_evaluation(train_set, test_set,task,truncation=365,tte_cohort_path=None)
     times = surv.index.to_numpy()
 
     # the index closest to truncation days
+    print(f"Truncate the cohort into {truncation} days")
     index_truncation = np.argmin(np.abs(times - truncation))
 
     # Create mask for time points within 5 years (for integrated Brier score)
-    # mask_5yr = times <= truncation
-    # times_5yr = times[mask_5yr]  # Time grid from 0 to ~5 years
     # print(f"times_5yr is {times_5yr}")
     results = {'C-Index': [], 'Int-Brier': []}
 
     # Create structured arrays with filtered data
     # Create format for sksurv
-    et_train = np.array([(events_train[i], durations_train[i]) for i in range(len(events_train))],
-                    dtype=[('e', bool), ('t', float)])
-    et_test = np.array([(events_test[i], durations_test[i]) for i in range(len(events_test))],
-                    dtype=[('e', bool), ('t', float)])
+    et_train = make_structured_array(durations_train, events_train)
+    et_test = make_structured_array(durations_test, events_test)
+
+    bootstrap_indices = generate_bootstrap_indices(len(et_test), n_bootstrap, seed)
+    c_indices = bootstrap_cindex_parallel(
+        surv,
+        et_train,
+        et_test,
+        truncation,
+        bootstrap_indices,
+        n_jobs,
+    )
+
+    saved_results = {
+        "C-Index": c_indices,
+        "test_order": test_order,
+        "model_name": model_name,
+        "best_params": best_params,
+    }
+
+    if save_path:
+        save_survival_results(saved_results, best_model, save_path, truncation)
     
     # Now all patients have outcomes within 5 years
     # So we can use the full 5-year time grid for all bootstrap samples
@@ -253,7 +218,7 @@ def tte_evaluation(train_set, test_set,task,truncation=365,tte_cohort_path=None)
 
 def run(tasks, old_phenotype_path_str,output_name,truncation,tte_cohort):
     old_phenotype_dir = Path(old_phenotype_path_str)
-    # phenotype_label_dir = Path("/data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/task_labels/phenotype_tte")
+    # phenotype_label_dir = Path("/path/to/institutional_data/task_labels/phenotype_tte")
     # key_cols = ["subject_id", "prediction_time", "tte_label", "time_to_event"]
     for task in tasks:
         old_phenotype_path = old_phenotype_dir / "results" / task
@@ -292,7 +257,7 @@ def run(tasks, old_phenotype_path_str,output_name,truncation,tte_cohort):
                 json.dump(metrics, f)
             print(f"Saved metrics to {save_file}")
 
-            summary_dir = old_phenotype_dir / "results" / f"summary_table"
+            summary_dir = old_phenotype_dir / "results" / f"summary_table_{truncation}"
             os.makedirs(summary_dir,exist_ok=True)
 
             cidx_mean, cidx_std   = _metric_mean_std(metrics, "C-Index")
@@ -321,5 +286,3 @@ if __name__ == "__main__":
     tasks_list = [t.strip() for t in args.tasks.split(",") if t.strip()]
     print(tasks_list)
     run(tasks_list, args.old_phenotype_path,args.output_name,args.truncation,args.tte_cohort)
-
-

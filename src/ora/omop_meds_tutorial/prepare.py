@@ -10,10 +10,15 @@ import ora.models.processor
 import pandas as pd
 import polars as pl
 import logging
+import time
+import json
 from ora.models.tasks.motor import MOTOR_Task as MOTOR_Task
 from ora.models.tasks.ntp import CLMBRTask as CLMBRTask
 from ora.models.tasks.tpp import TPP_Task as TPP_Task
 from ora.models.tasks.mtpp import MTPP_Task as MTPP_Task
+from ora.models.tasks.mtppvalue import MTPPValue_Task as MTPPValue_Task
+from ora.models.tasks.survivehr_task import SurvivEHRTask
+from ora.models.tasks.icarefm_task import ICareFMTask
 
 
 def main(args):
@@ -67,7 +72,7 @@ def main(args):
         tokenizer_path = pretraining_data_path / 'tokenizer'
         if not tokenizer_path.exists():
             print("Train tokenizer")
-            if args.loss_type == "ntp":
+            if args.loss_type in ("ntp", "survivehr", "icarefm"):
                 tokenizer = CLMBRTokenizer.train(
                     main_database,
                     vocab_size=args.vocab_size,
@@ -83,12 +88,13 @@ def main(args):
             tokenizer.save_pretrained(tokenizer_path)
         else:
             print(f"Loading tokenizer {args.loss_type}")
-            if args.loss_type == "ntp":
+            if args.loss_type in ("ntp", "survivehr", "icarefm"):
                 tokenizer = CLMBRTokenizer.from_pretrained(tokenizer_path, ontology=ontology)
             else:
                 tokenizer = HierarchicalTokenizer.from_pretrained(tokenizer_path, ontology=ontology)
 
-        task_path = pretraining_data_path / f'{args.loss_type}_task.pkl'
+        task_loss_type = "mtpp" if args.loss_type == "mtpp_shared" else args.loss_type
+        task_path = pretraining_data_path / f'{task_loss_type}_task.pkl'
 
         if not task_path.exists():
             # Second, we need to prefit the MOTOR model. This is necessary because piecewise exponential models are unstable without an initial fit
@@ -124,9 +130,36 @@ def main(args):
                     num_value_bins=args.value_bins,
                     value_count_threshold=args.value_count_threshold
                 )
+            elif args.loss_type == "mtpp_value":
+                print("mtpp_value choosen")
+                task = MTPPValue_Task.fit_pretraining_task_info(
+                    main_database,
+                    tokenizer,
+                    num_tasks=8 * 1024,
+                    num_final_tasks=args.num_final_tasks,
+                    num_bins=args.time_bins,
+                    final_layer_size=512,
+                    codes_to_skip=codes_to_skip,
+                    num_value_bins=args.value_bins,
+                    value_count_threshold=args.value_count_threshold,
+                )
             elif args.loss_type == "ntp":
                 print("ntp choosen")
                 task = CLMBRTask(clmbr_vocab_size=len(tokenizer.original_code_to_id))
+            elif args.loss_type == "survivehr":
+                print("survivehr choosen")
+                task = SurvivEHRTask.fit_pretraining_task_info(
+                    main_database,
+                    tokenizer,
+                    value_count_threshold=args.value_count_threshold,
+                )
+            elif args.loss_type == "icarefm":
+                print("icarefm choosen")
+                task = ICareFMTask.fit_pretraining_task_info(
+                    main_database,
+                    tokenizer,
+                    value_count_threshold=args.value_count_threshold,
+                )
             else:
                 print("no task matched")
 
@@ -152,13 +185,18 @@ def main(args):
         #     print(f"example_batch[{key}], shape: {example_batch['batch'][key].shape}, values: {example_batch['batch'][key]}")
 
         # Generate only one style of batches based on model type
+        prepare_timing = {}
+
         if args.model in ("transformer", None):
             train_batches_path = pretraining_data_path / 'train_batches'
             if not train_batches_path.exists():
                 print(f"Convert batches (transformer-style), saving to {train_batches_path}")
+                t0 = time.perf_counter()
                 train_batches = processor.convert_dataset(
                     train_database, tokens_per_batch=args.tokens_per_batch, num_proc=num_threads
                 )
+                prepare_timing["train_batches_time"] = time.perf_counter() - t0
+                print(f"Train batches conversion took {prepare_timing['train_batches_time']:.2f}s")
                 print("Convert batches to pytorch")
                 train_batches.set_format("pt")
                 train_batches.save_to_disk(train_batches_path)
@@ -166,9 +204,12 @@ def main(args):
             val_batches_path = pretraining_data_path / 'val_batches'
             if not val_batches_path.exists():
                 print(f"Convert val batches (transformer-style), saving to {val_batches_path}")
+                t0 = time.perf_counter()
                 val_batches = processor.convert_dataset(
                     val_database, tokens_per_batch=args.tokens_per_batch, num_proc=num_threads
                 )
+                prepare_timing["val_batches_time"] = time.perf_counter() - t0
+                print(f"Val batches conversion took {prepare_timing['val_batches_time']:.2f}s")
                 val_batches.set_format("pt")
                 val_batches.save_to_disk(val_batches_path)
         elif args.model == "mamba":
@@ -176,28 +217,40 @@ def main(args):
             train_batches_mamba_path = pretraining_data_path / 'train_batches_mamba'
             if not train_batches_mamba_path.exists():
                 print(f"Convert batches (mamba-optimized), saving to {train_batches_mamba_path}")
+                t0 = time.perf_counter()
                 train_batches_mamba = processor.convert_dataset_mamba(
                     train_database,
                     tokens_per_batch=args.tokens_per_batch,
                     per_sample_max_tokens=getattr(args, 'mamba_per_sample_max_tokens', 8192),
                     num_proc=num_threads,
                 )
+                prepare_timing["train_batches_time"] = time.perf_counter() - t0
+                print(f"Train batches (mamba) conversion took {prepare_timing['train_batches_time']:.2f}s")
                 train_batches_mamba.set_format("pt")
                 train_batches_mamba.save_to_disk(train_batches_mamba_path)
 
             val_batches_mamba_path = pretraining_data_path / 'val_batches_mamba'
             if not val_batches_mamba_path.exists():
                 print(f"Convert val batches (mamba-optimized), saving to {val_batches_mamba_path}")
+                t0 = time.perf_counter()
                 val_batches_mamba = processor.convert_dataset_mamba(
                     val_database,
                     tokens_per_batch=args.tokens_per_batch,
                     per_sample_max_tokens=getattr(args, 'mamba_per_sample_max_tokens', 8192),
                     num_proc=num_threads,
                 )
+                prepare_timing["val_batches_time"] = time.perf_counter() - t0
+                print(f"Val batches (mamba) conversion took {prepare_timing['val_batches_time']:.2f}s")
                 val_batches_mamba.set_format("pt")
                 val_batches_mamba.save_to_disk(val_batches_mamba_path)
         else:
             raise ValueError(f"Unknown model type: {args.model}")
+
+        if prepare_timing:
+            timing_path = pretraining_data_path / 'prepare_timing.json'
+            with open(timing_path, 'w') as f:
+                json.dump(prepare_timing, f)
+            print(f"Prepare timing saved to {timing_path}")
 
 
 def create_omop_meds_tutorial_argparser():
@@ -317,7 +370,7 @@ def create_omop_meds_tutorial_argparser():
         dest="loss_type",
         action="store",
         required=True,
-        choices=["motor","tpp","mtpp","ntp"],
+        choices=["motor", "tpp", "mtpp", "mtpp_shared", "mtpp_value", "ntp", "survivehr", "icarefm"],
         type=str,
         default=8,
     )

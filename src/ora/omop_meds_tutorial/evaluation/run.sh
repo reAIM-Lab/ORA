@@ -12,6 +12,9 @@ OBSERVATION_WINDOW=""
 USE_LINEAR_INTERPOLATION=false
 TRUNCATION=365
 SKIPPED=0
+# Count inference FLOPs under the torch profiler. Off by default because the profiler
+# inflates the measured inference time; run once with yes, once with no.
+PROFILE_FLOPS=no
 
 # Function to display help
 show_help() {
@@ -40,7 +43,6 @@ show_help() {
 }
 
 # Parse command line options
-# PRETRAINING_DATA_ARG=""
 OMOP_MEDS_READER_ARG=""
 CLASS_COHORT=""
 TTE_COHORT=""
@@ -53,10 +55,6 @@ while [ $# -gt 0 ]; do
             show_help
             exit 0
             ;;
-        # --pretraining_data)
-        #     PRETRAINING_DATA_ARG="$2"
-        #     shift 2
-        #     ;;
         --meds_reader)
             OMOP_MEDS_READER_ARG="$2"
             shift 2
@@ -118,6 +116,10 @@ while [ $# -gt 0 ]; do
             ;;
         --use_ntp)
             USE_NTP="$2"
+            shift 2
+            ;;
+        --profile_flops)
+            PROFILE_FLOPS="$2"
             shift 2
             ;;
         --classification_cohort)
@@ -247,9 +249,13 @@ for TASK_DIR in "$CLASS_COHORT"*/; do
     
     FEATURES_DIR="${OUTPUT_DIR}/${MODEL_NAME}/features"
     FEATURE_FILE="${FEATURES_DIR}/${motor_features_name}.pkl"
+    # The metrics file is per measurement pass, so a timing pass still runs when the FLOPs
+    # pass already produced the features.
+    if [ "$PROFILE_FLOPS" = "yes" ]; then METRICS_KIND=flops; else METRICS_KIND=time; fi
+    METRICS_FILE="${OUTPUT_DIR}/${MODEL_NAME}/flops/${motor_features_name}.${METRICS_KIND}.json"
 
-    if [[ -f "$FEATURE_FILE" ]]; then
-        echo "Found existing features, reusing: $FEATURE_FILE"
+    if [[ -f "$FEATURE_FILE" && -f "$METRICS_FILE" ]]; then
+        echo "Found existing features and ${METRICS_KIND} metrics, reusing: $FEATURE_FILE"
     else
         echo "Features not found, generating: $FEATURE_FILE"
         GENERATE_CMD="python -u -m ora.omop_meds_tutorial.evaluation.generate_features \
@@ -265,6 +271,7 @@ for TASK_DIR in "$CLASS_COHORT"*/; do
             --ontology_path \"$ONTOLOGY_PATH\" \
             --output_root \"$OUTPUT_DIR\" \
             --use_ntp \"$USE_NTP\" \
+            --profile_flops \"$PROFILE_FLOPS\" \
             --task_type \"binary\" \
             --loss_type \"labeled_subjects\""
 
@@ -319,130 +326,38 @@ for TASK_DIR in "$CLASS_COHORT"*/; do
     fi
 
     # Determine the MOTOR prediction folder path based on observation window
-    # if [ -n "$OBSERVATION_WINDOW" ]; then
-    #     MOTOR_PREDICTION_FOLDER="$OUTPUT_DIR/"results"/$TASK_NAME/$MODEL_NAME_$OBSERVATION_WINDOW/test_predictions"
-    #     MOTOR_OUTPUT_DIR="$OUTPUT_DIR/"results"/$TASK_NAME/$MODEL_NAME_$OBSERVATION_WINDOW/"
-    # else
-    #     MOTOR_PREDICTION_FOLDER="$OUTPUT_DIR/"results"/$TASK_NAME/$MODEL_NAME/test_predictions"
-    #     MOTOR_OUTPUT_DIR="$OUTPUT_DIR/"results"/$TASK_NAME/$MODEL_NAME/"
-    # fi
+    if [ -n "$OBSERVATION_WINDOW" ]; then
+        # MOTOR_PREDICTION_FOLDER="$OUTPUT_DIR/"results"/$TASK_NAME/$MODEL_NAME"_"$OBSERVATION_WINDOW/test_predictions"
+        MOTOR_PREDICTION_FOLDER="${OUTPUT_DIR}/results/${TASK_NAME}/${MODEL_NAME}_${OBSERVATION_WINDOW}/test_predictions"
+        MOTOR_OUTPUT_DIR="$OUTPUT_DIR/"results"/$TASK_NAME/$MODEL_NAME_$OBSERVATION_WINDOW/"
+    else
+        MOTOR_PREDICTION_FOLDER="$OUTPUT_DIR/"results"/$TASK_NAME/$MODEL_NAME/test_predictions"
+        MOTOR_OUTPUT_DIR="$OUTPUT_DIR/"results"/$TASK_NAME/$MODEL_NAME/"
+    fi
 
-    # # Build the evaluation command
-    # EVAL_CMD="meds-evaluation-cli predictions_path=\"$MOTOR_PREDICTION_FOLDER\" \
-    #   output_dir=\"$MOTOR_OUTPUT_DIR\""
+    # Build the evaluation command
+    EVAL_CMD="meds-evaluation-cli predictions_path=\"$MOTOR_PREDICTION_FOLDER\" \
+      output_dir=\"$MOTOR_OUTPUT_DIR\""
 
-    # # Run the third command to compute the metrics
-    # echo "Running meds-evaluation for $TASK_NAME..."
-    # echo "Executing command: $EVAL_CMD"
 
-    # # Execute the command
-    # eval $EVAL_CMD
+    # Run the third command to compute the metrics
+    echo "Running meds-evaluation for $TASK_NAME..."
+    echo "Executing command: $EVAL_CMD"
+    # Run the third command to compute the metrics
+    echo "Running meds-evaluation for $TASK_NAME..."
+    echo "Executing command: $EVAL_CMD"
 
-    # # Check if the third command succeeded
-    # if [ $? -ne 0 ]; then
-    #     echo "Error: Running meds-evaluation failed for task $TASK_NAME"
-    # fi
+    # Execute the command
+    eval $EVAL_CMD
+
+    Check if the third command succeeded
+    if [ $? -ne 0 ]; then
+        echo "Error: Running meds-evaluation failed for task $TASK_NAME"
+    fi
 
     echo "Completed processing of task: $TASK_NAME"
     echo "----------------------------------------"
 done
 
 echo "All tasks processed."
-
-
-# phenotype
-# export CUDA_VISIBLE_DEVICES=0
-
-#phenotype
-# bash run.sh \
-#   --meds_reader        /shared/share_mala/zj2398/mimic/data/meds_v0.6_reader  \
-#   --num_proc           24 \
-#   --model_path         /shared/share_mala/zj2398/models/tpp_8k/mamba_2e-4_5.0/best_75368 \
-#   --model_name         mamba_tpp_2e-4 \
-#   --tokens_per_batch   65536 \
-#   --device             cuda:0 \
-#   --use_ntp            no \
-#   --cohort_type        phenotype \
-#   --cache_path         /shared/share_mala/zj2398/huggingface/datasets \
-#   --min_subjects_per_batch 8 \
-#   --ontology_path       /user/zj2398/cache/mtpp_8k/ontology.pkl \
-#   --main_split_path     /user/zj2398/cache/mtpp_8k/main_split.csv \
-#   --output_dir   /shared/share_mala/zj2398/mimic/task/phenotype_task/  \
-#   --truncation   330 \
-#   --observation_window 730 \
-#   --classification_cohort /shared/share_mala/zj2398/mimic/task/phenotype_task/cohort/binary/ \
-#   --tte_cohort /shared/share_mala/zj2398/mimic/task/phenotype_task/cohort/tte/
-
-# outcome
-# bash run.sh \
-#   --meds_reader        /shared/share_mala/zj2398/mimic/data/meds_v0.6_reader  \
-#   --num_proc           24 \
-#   --model_path         /shared/share_mala/zj2398/models/mtpp_8k/mtpp_all_shared_6100_bin_5/transformer/best_159744 \
-#   --model_name         transformer_mtpp \
-#   --tokens_per_batch   65536 \
-#   --device             cuda:0 \
-#   --use_ntp            no \
-#   --cohort_type        outcome \
-#   --cache_path         /shared/share_mala/zj2398/huggingface/datasets \
-#   --min_subjects_per_batch 8 \
-#   --ontology_path       /user/zj2398/cache/mtpp_8k/ontology.pkl \
-#   --main_split_path     /user/zj2398/cache/mtpp_8k/main_split.csv \
-#   --output_dir   /shared/share_mala/zj2398/mimic/task/patient_outcome_task  \
-#   --classification_cohort /shared/share_mala/zj2398/mimic/task/patient_outcome_task/cohort/ 
-
-
-
-# kuvira
-
-# bash run.sh \
-#   --pretraining_data   /data2/processed_datasets/zj2398/ora/cumc_0.1/tpp \
-#   --meds_reader        /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/post_transform_meds_reader \
-#   --num_proc           20 \
-#   --model_path        /data2/processed_datasets/zj2398/ora/cumc_0.1/tpp/transformer_continue/best_42984 \
-#   --model_name         tpp_continue_pretrain \
-#   --tokens_per_batch   65536 \
-#   --device             cuda:0 \
-#   --min_subjects_per_batch 8 \
-#   --ontology_path       /data2/processed_datasets/zj2398/ora/ontology.pkl \
-#   --main_split_path     /data2/processed_datasets/zj2398/ora/cumc/cumc_split.csv \
-#   --loss_type  labeled_subjects \
-#   --output_dir   /data/results/zj2398/ora/cumc_0.1/phenotype \
-#   /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/task_labels/phenotype_tte/
-
-
-
-
-# bash run.sh \
-#   --pretraining_data   /data2/processed_datasets/zj2398/ora/cumc_0.1/motor/ \
-#   --meds_reader        /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/post_transform_meds_reader \
-#   --num_proc           20 \
-#   --model_path         /data2/processed_datasets/zj2398/ora/cumc_0.1/motor/transformer/best_17925 \
-#   --model_name         motor \
-#   --tokens_per_batch   65536 \
-#   --device             cuda:0 \
-#   --min_subjects_per_batch 8 \
-#   --ontology_path       /data2/processed_datasets/zj2398/ora/ontology.pkl \
-#   --main_split_path     /data2/processed_datasets/zj2398/ora/cumc/cumc_split.csv \
-#   --loss_type  labeled_subjects \
-#   --output_dir   /data/results/zj2398/ora/cumc_0.1/phenotype \
-#   /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/task_labels/phenotype_tte/
-
-
-# bash run.sh \
-#   --pretraining_data   /data/models/zj2398/ora/cumc_0.1/mtpp_5_bin \
-#   --meds_reader        /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/post_transform_meds_reader \
-#   --num_proc           20 \
-#   --model_path         /data/models/zj2398/ora/cumc_0.1/mtpp_5_bin/transformer/best_21522 \
-#   --model_name         mtpp_5_bin \
-#   --tokens_per_batch   65536 \
-#   --device             cuda:0 \
-#   --min_subjects_per_batch 8 \
-#   --ontology_path       /data2/processed_datasets/zj2398/ora/ontology.pkl \
-#   --main_split_path     /data2/processed_datasets/zj2398/ora/cumc/cumc_split.csv \
-#   --loss_type  labeled_subjects \
-#   --output_dir   /data/results/zj2398/ora/cumc_0.1/phenotype \
-#   /data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/task_labels/phenotype_tte/
-
-
-
 

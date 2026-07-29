@@ -14,6 +14,7 @@ import torch.utils.data
 import ora.models.tokenizer
 import ora.pat_utils
 from ora.models.tasks.ntp import CLMBRTask
+from ora.models.tasks.survivehr_task import SurvivEHRTask
 import logging
 logger = logging.getLogger(__name__)
 
@@ -161,11 +162,10 @@ class BatchCreator:
         per_subject_hierarchical_weights: List[float] = []
         per_subject_token_indices: List[int] = [0]
 
-        if self.task is not None:
-            self.task.start_subject(subject, self.tokenizer.ontology)
-
         birth = ora.pat_utils.get_subject_birthdate(subject)
         self.tokenizer.start_subject()
+        if self.task is not None:
+            self.task.start_subject(subject, self.tokenizer.ontology)
 
         for event in subject.events:
             if event.time is None or (
@@ -180,7 +180,8 @@ class BatchCreator:
 
         # Purpose: capture all pre‑birth or “person” table codes as a single initial timestep.
         per_subject_token_indices.append(len(per_subject_hierarchical_tokens))
-        per_subject_ages.append((event.time - birth) / datetime.timedelta(days=1))
+        # per_subject_ages.append((event.time - birth) / datetime.timedelta(days=1))
+        per_subject_ages.append((birth - birth) / datetime.timedelta(days=1))
         per_subject_time_data.append([1, 0, 0, 0, 0])
         per_subject_timestamps.append(event.time.replace(tzinfo=datetime.timezone.utc).timestamp())
                 
@@ -196,7 +197,6 @@ class BatchCreator:
                 current_date = event.time.date()
                 codes_seen_today = set()
 
-            # Get the age of the event, delta time to last time
             age = max(datetime.timedelta(seconds=0), event.time - birth)
             if last_time is not None:
                 delta = event.time - last_time
@@ -224,10 +224,22 @@ class BatchCreator:
                     #Ask the task how many labels to place at the previous timestep index. 
                     # num_added = 0/1, depneding on if there is still future tte event to predict
                     #Append that many copies of the current age‐index into per_subject_label_indices
-                    if isinstance(self.task, CLMBRTask):
+                    if isinstance(self.task, (CLMBRTask, SurvivEHRTask)):
                         clmbr_token_id = self.tokenizer.get_event_code_token(event)
                         clmbr_features = [clmbr_token_id] if clmbr_token_id is not None else None
-                        num_added = self.task.add_event(last_time, event.time, clmbr_features, actually_add=actually_add)
+                        if isinstance(self.task, SurvivEHRTask):
+                            num_added = self.task.add_event(
+                                last_time,
+                                event.time,
+                                clmbr_features,
+                                next_numeric_value=getattr(event, "numeric_value", None),
+                                next_text_value=getattr(event, "text_value", None),
+                                actually_add=actually_add,
+                            )
+                        else:
+                            num_added = self.task.add_event(
+                                last_time, event.time, clmbr_features, actually_add=actually_add
+                            )
                     else:
                         num_added = self.task.add_event(last_time, event.time, features, actually_add=actually_add)
                     for _ in range(num_added):
@@ -434,7 +446,7 @@ def _add_dimension(data: Any) -> Any:
 
 
 class FEMRBatchProcessor:
-    """The ORA Batch processor creates batches for processing by a transformer or mamba."""
+    """The FEMR Batch processor creates batches for processing by a transformer or mamba."""
 
     def __init__(self, tokenizer, task=None, cache_path=None):
         self.creator = BatchCreator(tokenizer, task)
@@ -465,7 +477,7 @@ class FEMRBatchProcessor:
             formatter_kwargs: Arguments for a datasets formatter when converting datatypes
 
         Returns:
-            A batch, ready to be fed into a ORA transformer model
+            A batch, ready to be fed into a FEMR transformer model
         """
         self.creator.start_batch()
         self.creator.add_subject(subject, offset=offset, max_length=max_length, actually_add=actually_add)
@@ -575,7 +587,7 @@ class FEMRBatchProcessor:
             num_proc=num_proc // 4,
             writer_batch_size=8,
             cache_dir=self.cache_path,
-            # cache_dir = "/data2/huggingface/zj2398"
+            # cache_dir = "/path/to/hf_cache"
         )
 
         # batch_dataset = datasets.Dataset.from_generator(

@@ -20,7 +20,7 @@ class FEMRTransformerConfig(transformers.PretrainedConfig):
         hidden_act: str = "gelu",
         **kwargs,
     ) -> None:
-        """Defined a configuration for a ORA Transformer.
+        """Defined a configuration for a FEMR Transformer.
 
         Arguments:
             vocab_size: The number of tokens in the vocabulary
@@ -29,7 +29,7 @@ class FEMRTransformerConfig(transformers.PretrainedConfig):
             intermediate_size: The size of the FFN in the transformer layers
             n_heads: The number of attention heads
             n_layers: The number of transformer encoder layers
-            attention_width: ORA by default uses a local attention transformer with a width defined here
+            attention_width: FEMR by default uses a local attention transformer with a width defined here
             use_normed_ages: Whether or not to provide normalized ages as a feature to the model
             use_bias: Whether or not to use bias terms in the transformer layers
             hidden_act: The type of activation function to use in the transformer
@@ -69,7 +69,7 @@ class FEMRMambaConfig(transformers.PretrainedConfig):
         config_kwargs: Dict[str, Any] = None,
         **kwargs,
     ) -> None:
-        """Configuration for a ORA Mamba model.
+        """Configuration for a FEMR Mamba model.
 
         Arguments:
             vocab_size: The number of tokens in the vocabulary
@@ -105,7 +105,7 @@ class FEMRMambaConfig(transformers.PretrainedConfig):
 
 class FEMRTaskConfig(transformers.PretrainedConfig):
     def __init__(self, task_type: str = "", task_kwargs: Mapping[str, Any] = {}, **kwargs):
-        """A generic ORA task definition. This holds state used for initalizing a tasks.py class.
+        """A generic FEMR task definition. This holds state used for initalizing a tasks.py class.
 
         Task.get_task_config returns the task type and kwargs used to initialize this.
 

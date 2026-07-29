@@ -150,6 +150,8 @@ def map_statistics(
                 res['text_counts'][text] += 1 / num_subjects
             for value in v['numeric_samples']:
                 res['numeric_samples'].add(value, 1 / (num_subjects * len(v['numeric_samples'])))
+            # we want to count the number of numercial value per property for all patients, so the / weight or * weight doesn't matter, as it will be 
+            # normalized later by  frac_numeric = property_data["numeric_count"] / total_numeric_weight
             res['numeric_count'] += len(v['numeric_samples']) / weight
 
     return {
@@ -216,6 +218,7 @@ def convert_statistics_to_msgpack(
             bins = sorted(list(set(np.quantile(numeric_samples, np.linspace(0, 1, num=num_numeric_for_property + 1)))))
             bins = bins[1:-1]
 
+            # replace the tokenizer first and last quantile with -inf and inf
             samples = [float('-inf')]
             samples.extend(bins)
             samples.append(float("inf"))
@@ -273,7 +276,7 @@ class HierarchicalTokenizer(transformers.utils.PushToHubMixin):
         min_fraction: float = 1/1000,
         banned_properties: Set[str] = {}, 
     ) -> HierarchicalTokenizer:
-        """Train a ORA tokenizer from the given dataset"""
+        """Train a FEMR tokenizer from the given dataset"""
 
         properties = db.properties
         for banned in banned_properties:
@@ -345,7 +348,7 @@ class HierarchicalTokenizer(transformers.utils.PushToHubMixin):
         **kwargs,
     ):
         """
-        Load the ORA tokenizer.
+        Load the FEMR tokenizer.
 
         Parameters:
             pretrained_model_name_or_path (`str` or `os.PathLike`, *optional*):
@@ -359,7 +362,7 @@ class HierarchicalTokenizer(transformers.utils.PushToHubMixin):
             kwargs: Arguments for loading to pass to transformers.utils.hub.cached_file
 
         Returns:
-            A ORA Tokenizer
+            A FEMR Tokenizer
         """
 
         dictionary_file = transformers.utils.hub.cached_file(
@@ -373,7 +376,7 @@ class HierarchicalTokenizer(transformers.utils.PushToHubMixin):
 
     def save_pretrained(self, save_directory: Union[str, os.PathLike], push_to_hub: bool = False, **kwargs):
         """
-        Save the ORA tokenizer.
+        Save the FEMR tokenizer.
 
 
         This method make sure the batch processor can then be re-loaded using the

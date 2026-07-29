@@ -378,11 +378,11 @@ def main():
     """
     # Configuration - UPDATE THESE PATHS
     # Configuration - UPDATE THESE PATHS
-    meds_path = "/data2/processed_datasets/ehr_foundation_data/ohdsi_cumc_deid/ohdsi_cumc_deid_2023q4r3_v3_mapped/post_transform_meds_reader/"  # Path to your MEDS data
-    visits_parquet_path = "/data2/processed_datasets/zj2398/cumc_data/outpatient_visits_new.parquet"  # Output from Task 1
+    meds_path = "/path/to/institutional_data/post_transform_meds_reader/"  # Path to your MEDS data
+    visits_parquet_path = "/path/to/workspace/institutional_data/outpatient_visits_new.parquet"  # Output from Task 1
     # meds_path = "xxx"  # Path to your MEDS data
     # visits_parquet_path = "xxx"  # Path to visits parquet from Task 1
-    output_dir = "/data2/processed_datasets/zj2398/cumc_data/regression_2-5"  # Output directory for cohort files
+    output_dir = "/path/to/workspace/institutional_data/regression_2-5"  # Output directory for cohort files
     
     # Create output directory if it doesn't exist
     os.makedirs(output_dir, exist_ok=True)

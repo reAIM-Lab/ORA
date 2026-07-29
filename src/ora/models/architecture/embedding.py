@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import collections
 import math
+import time
 from datetime import datetime
 from typing import Any, Dict, List, Mapping, Optional, Tuple, Union
 from dataclasses import dataclass
@@ -29,11 +30,12 @@ import ora.models.tasks.motor
 import ora.models.tokenizer
 import ora.models.architecture.xformers
 
+from ora.models.architecture.survivehr_head import SurvivEHRCausalTaskHead
 from ora.models.architecture.rewrite_stat_dict import load_ora_model_with_compat
 from ora.models.tasks.motor import LabeledSubjectTask
 
 # logger = logging.getLogger(__name__)
-
+# just for test
 
 @dataclass(frozen=False)
 class TotalFlops:
@@ -1171,6 +1173,478 @@ class MTPPSharedTaskHead(nn.Module):
         loss = total_loss / total_count
 
         return loss, result
+
+class MTPPFactorizedTaskHead(nn.Module):
+    """ORA-Factorized: the ORA head with the time-value table forced to be a multiplication table.
+
+    ORA (`MTPPSharedTaskHead`) predicts, for each numerical code, a free table of `T x V`
+    probabilities over (time bin, value bin) pairs.  This head instead predicts two separate
+    lists -- `when` over the T time bins and `what` over the V value bins -- which is the same
+    as building that table as `cell[k, l] = when[k] * what[l]`.  Every row of such a table has
+    the same shape, so the value distribution cannot depend on the horizon.
+
+    Under that constraint the ORA loss splits term for term into the "two separate losses"
+    design (one loss for event timing, one for values) that Reviewer 1 asks about:
+
+        observed  : -log cell[t*, v*]            ->  -log when[t*]  -  log what[v*]
+        censored  : -log(1 - sum of cells < c*)  ->  -log(1 - sum of when[] < c*)
+
+    Everything else is deliberately identical to `MTPPSharedTaskHead`: the non-numerical
+    branch, the shared trunk, the value mask, the eps conventions, the survival construction,
+    and the averaging -- each (prediction point, code) pair counts once, so an observed event
+    counts once even though it now contributes two log terms.  `tests/test_mtpp_factorized.py`
+    checks that equivalence numerically.
+    """
+
+    def __init__(
+            self,
+            hidden_size: int,
+            pretraining_task_info: List[Tuple[str, float]],
+            non_numerical_task: List[str],
+            numerical_task: List[str],
+            value_bins: Union[np.ndarray, List],
+            non_numerical_task_time_bins: Union[np.ndarray, List],
+            numerical_task_time_bins: Union[np.ndarray, List],
+            final_layer_size: int,
+            linear_interpolation: bool = False,
+    ):
+        super().__init__()
+
+        value_bins = np.asarray(value_bins)
+        non_numerical_task_time_bins = np.asarray(non_numerical_task_time_bins)
+        numerical_task_time_bins = np.asarray(numerical_task_time_bins)
+
+        assert value_bins.shape[0] == numerical_task_time_bins.shape[0], "no matching dimension for number of numerical tasks"
+        assert non_numerical_task_time_bins.shape[1] == numerical_task_time_bins.shape[1], "no matching dimension for time bins"
+
+        self.num_time_bins = numerical_task_time_bins.shape[1] - 1
+        self.num_value_bins = value_bins.shape[1] - 1
+        self.non_numerical_task_time_bins = non_numerical_task_time_bins
+        self.numerical_task_time_bins = numerical_task_time_bins
+        self.value_bins = value_bins
+
+        self.numerical_tasks = numerical_task
+        self.non_numerical_tasks = non_numerical_task
+        self.final_layer_size = final_layer_size
+
+        # Shared first-stage trunk, identical to MTPPSharedTaskHead.
+        self.final_layer = nn.Linear(hidden_size, self.num_time_bins * final_layer_size)
+        self.non_numerical_task_layer = nn.Linear(final_layer_size, len(self.non_numerical_tasks))
+
+        # "when" for numerical codes: same form as the non-numerical branch.  ORA gets this
+        # marginal for free from its table; here it is parameterised directly.
+        self.numerical_time_task_layer = nn.Linear(final_layer_size, len(self.numerical_tasks))
+
+        # "what" must not depend on the time bin, so it reads the backbone feature through its
+        # own trunk rather than the time-slot features.  The output layer matches ORA's.
+        self.value_trunk = nn.Linear(hidden_size, final_layer_size)
+        self.value_task_layer = nn.Linear(final_layer_size, self.num_value_bins * len(self.numerical_tasks))
+
+        self.softmax = nn.Softmax(dim=1)
+        self.norm = ora.models.rmsnorm.RMSNorm(final_layer_size)
+        self.value_norm = ora.models.rmsnorm.RMSNorm(final_layer_size)
+
+        self.non_numerical_task_layer.bias.data.zero_()
+        self.numerical_time_task_layer.bias.data.zero_()
+        self.value_task_layer.bias.data.zero_()
+
+    @staticmethod
+    def _survival(probs: torch.Tensor) -> torch.Tensor:
+        """P(no event before each time bin), i.e. [1, 1 - cumsum(probs)[:-1]] along the time axis."""
+        cdf = torch.cumsum(probs, dim=1)
+        return torch.cat([torch.ones_like(probs[:, :1, :]), 1.0 - cdf[:, :-1, :]], dim=1)
+
+    def forward(self, features: torch.Tensor, batch: Mapping[str, torch.Tensor], return_logits=False):
+        eps = 1e-6
+        total_loss = torch.tensor(0.0, device=features.device)
+        total_count = 0
+        result = {}
+
+        # Shared trunk: [prediction_points, time_bins, final_layer_size]
+        time_features = self.norm(
+            self.final_layer(features).reshape(features.shape[0], self.num_time_bins, self.final_layer_size)
+        )
+
+        # ========== NON-NUMERICAL CODES (unchanged from ORA) ==========
+        non_numerical_probs = self.softmax(self.non_numerical_task_layer(time_features))
+        if torch.any(torch.isnan(non_numerical_probs)) or torch.any(torch.isinf(non_numerical_probs)):
+            raise ValueError("NaN/inf detected in non-numerical time probabilities")
+        assert batch["non_numerical_is_event"].shape == non_numerical_probs.shape, \
+            f"Shape mismatch: probs {non_numerical_probs.shape} vs is_event {batch['non_numerical_is_event'].shape}"
+
+        marked_bins = batch["non_numerical_is_event"]
+        is_censored = batch["non_numerical_is_censored"].unsqueeze(1).expand(-1, self.num_time_bins, -1)
+        selected_probs = torch.where(
+            is_censored,
+            torch.clamp(self._survival(non_numerical_probs), min=eps),
+            torch.clamp(non_numerical_probs, min=eps),
+        )
+        L_non = -torch.sum(torch.where(marked_bins, torch.log(selected_probs), torch.zeros_like(selected_probs)))
+
+        total_loss += L_non
+        total_count += torch.sum(marked_bins)
+
+        if return_logits:
+            result["time_dependent_logits"] = non_numerical_probs
+
+        # ========== NUMERICAL CODES (two marginals instead of a free table) ==========
+        if "numerical_time_event_bin" not in batch:
+            print("No numerical codes found in batch")
+        else:
+            time_event_in_bin = batch["numerical_time_event_bin"]    # [points, time_bins, tasks]
+            time_censor_in_bin = batch["numerical_time_censor_bin"]  # [points, time_bins, tasks]
+            value_event_in_bin = batch["numerical_value_event_bin"]  # [points, value_bins, tasks]
+            num_points, _, num_numerical_tasks = time_event_in_bin.shape
+
+            # "when": one distribution over the T time bins per numerical code.
+            when = self.softmax(self.numerical_time_task_layer(time_features)).clamp_min(eps)
+
+            # "what": one distribution over the V value bins, from a time-independent trunk.
+            value_logits = self.value_task_layer(self.value_norm(self.value_trunk(features))).reshape(
+                num_points, self.num_value_bins, num_numerical_tasks
+            )
+            valid = torch.as_tensor(batch["value_valid_mask"], device=value_logits.device, dtype=torch.bool)
+            if valid.shape[1] - self.num_value_bins == 1:
+                valid = valid[:, 1:]
+            valid = valid.T.unsqueeze(0)  # [1, value_bins, tasks]
+            assert not torch.any(value_event_in_bin & ~valid), "Events found in invalid value bins"
+            # Codes whose value quantiles collapsed keep only eps in their unusable bins.  Those
+            # bins are never scored (asserted above); the floor just avoids a 0/0 in the backward
+            # pass of log().
+            what = self.softmax(value_logits.masked_fill(~valid, -1e10)).clamp_min(eps)
+
+            # Censored: the value axis marginalises out, leaving the survival of "when".
+            survival = torch.clamp(self._survival(when), min=eps, max=1.0 - eps)
+            L_num_cens = -torch.sum(
+                torch.where(time_censor_in_bin, torch.log(survival), torch.zeros_like(when))
+            )
+
+            # Observed: -log when[t*] - log what[v*].  Both terms are restricted to the events
+            # ORA itself scores (its time-by-value outer product), so the two arms see exactly
+            # the same supervision set.
+            time_marked = time_event_in_bin & value_event_in_bin.any(dim=1, keepdim=True)
+            value_marked = value_event_in_bin & time_event_in_bin.any(dim=1, keepdim=True)
+            L_num_event = -(
+                torch.sum(torch.where(time_marked, torch.log(when), torch.zeros_like(when)))
+                + torch.sum(torch.where(value_marked, torch.log(what), torch.zeros_like(what)))
+            )
+
+            total_loss += L_num_cens + L_num_event
+            # One unit per (prediction point, code) pair, exactly as in ORA: an observed event
+            # counts once even though it contributes two log terms.
+            total_count += torch.sum(time_censor_in_bin) + torch.sum(time_marked)
+
+            if return_logits:
+                result["loss_components"] = {
+                    "L_non_num": L_non.detach(),
+                    "L_num_event": L_num_event.detach(),
+                    "L_num_censor": L_num_cens.detach(),
+                }
+                result["time_marginal_probs"] = when
+                result["value_marginal_probs"] = what
+                result["value_dependent_logits"] = when.unsqueeze(2) * what.unsqueeze(1)
+
+        return total_loss / total_count, result
+
+
+class MTPPValueTaskHead(nn.Module):
+    def __init__(
+            self,
+            hidden_size: int,
+            pretraining_task_info: List[Tuple[str, float]],
+            numerical_task: List[str],
+            value_bins: Union[np.ndarray, List],
+            numerical_task_time_bins: Union[np.ndarray, List],
+            final_layer_size: int,
+            linear_interpolation: bool = False,
+            # num_value_bins: int = 10,
+    ):
+        super().__init__()
+ 
+
+        # Handle both numpy array and list (from config deserialization)
+        if not isinstance(value_bins, np.ndarray):
+            value_bins = np.array(value_bins)
+        # if not isinstance(non_numerical_task_time_bins, np.ndarray):
+        #     non_numerical_task_time_bins = np.array(non_numerical_task_time_bins)
+        if not isinstance(numerical_task_time_bins, np.ndarray):
+            numerical_task_time_bins = np.array(numerical_task_time_bins)
+            
+        assert value_bins.shape[0] == numerical_task_time_bins.shape[0], "no matching dimension for number of numerical tasks"
+        # assert non_numerical_task_time_bins.shape[1] == numerical_task_time_bins.shape[1], "no matching dimension for time bins"
+
+        self.num_time_bins = numerical_task_time_bins.shape[1] - 1  # Each task has same number of bins
+        # self.time_bins = time_bins  # Store time bins for potential debugging
+        # self.non_numerical_task_time_bins = non_numerical_task_time_bins
+        self.numerical_task_time_bins = numerical_task_time_bins
+        self.num_value_bins = value_bins.shape[1] - 1
+        self.value_bins = value_bins
+        
+        # Get task counts from input data structure - we'll determine from batch data
+        # For now, assume we'll get the correct task counts from the batch
+        self.numerical_tasks = numerical_task
+        # self.non_numerical_tasks = non_numerical_task
+
+        self.final_layer_size = final_layer_size
+        
+        # Original layer for non-numerical codes: time prediction only
+        # print(f"hidden size is {hidden_size}")
+        # self.non_numerical_final_layer = nn.Linear(hidden_size, self.num_time_bins * final_layer_size)
+        self.final_layer = nn.Linear(hidden_size, self.num_time_bins*final_layer_size)
+
+        # self.non_numerical_task_layer = nn.Linear(self.final_layer_size, len(self.non_numerical_tasks))  # All tasks initially
+        
+        # Additional layer for numerical codes: time × value prediction
+        # self.numerical_final_layer = nn.Linear(hidden_size, self.num_time_bins * self.num_value_bins * final_layer_size)
+        self.numerical_task_layer = nn.Linear(self.final_layer_size, self.num_value_bins*len(self.numerical_tasks))
+        # We'll determine the actual number of numerical tasks from batch data
+        # self.numerical_task_layer = nn.Linear(self.final_layer_size, num_numerical_tasks).to(features.device)
+        
+        self.softmax = nn.Softmax(dim=1)
+        self.norm = ora.models.rmsnorm.RMSNorm(self.final_layer_size)
+        # self.numerical_norm = ora.models.rmsnorm.RMSNorm(self.final_layer_size)
+        # self.non_numerical_norm = ora.models.rmsnorm.RMSNorm(self.final_layer_size*self.num_value_bins)
+        # self.linear_interpolation = linear_interpolation
+        self.H_t  = math.log(self.num_time_bins)
+        self.H_tv = math.log(self.num_time_bins * self.num_value_bins)
+        
+        # Set initial biases
+        # self.non_numerical_task_layer.bias.data.zero_()
+        self.numerical_task_layer.bias.data.zero_()
+
+    def forward(self, features: torch.Tensor, batch: Mapping[str, torch.Tensor], return_logits=False):
+        """
+        Numerical-only MTPP head.
+        """
+        eps = 1e-6
+        total_loss = torch.tensor(0.0, device=features.device)
+        total_count = 0
+        result = {}
+
+        if "numerical_time_event_bin" not in batch:
+            raise ValueError("MTPPValueTaskHead requires numerical_* tensors in the task batch.")
+
+        time_event_in_bin = batch["numerical_time_event_bin"]  # [pred_points, time_bins, numerical_tasks]
+        time_censor_in_bin = batch["numerical_time_censor_bin"]  # [pred_points, time_bins, numerical_tasks]
+        value_event_in_bin = batch["numerical_value_event_bin"]  # [pred_points, value_bins, numerical_tasks]
+        
+        batch_size, _, num_numerical_tasks = time_event_in_bin.shape
+        time_independent_features = self.final_layer(features).reshape(
+            batch_size, self.num_time_bins, self.final_layer_size
+        )
+        
+        numerical_task_logits = self.numerical_task_layer(self.norm(time_independent_features)).reshape(
+            batch_size, self.num_time_bins*self.num_value_bins,len(self.numerical_tasks)
+        )
+
+        device = numerical_task_logits.device
+        value_valid_mask = torch.as_tensor(batch["value_valid_mask"], device=device, dtype=torch.bool)
+
+        if value_valid_mask.shape[1] - value_event_in_bin.shape[1] == 1:
+            value_valid_mask = value_valid_mask[:,1:]
+        
+        valid_mask_expanded = value_valid_mask.T.unsqueeze(0) 
+        invalid_events = value_event_in_bin & (~valid_mask_expanded)  # [pred_points, value_bins, numerical_tasks]
+        assert not torch.any(invalid_events), f"Events in bin found in invalid value bins {invalid_events}"
+
+
+
+        mask_tv = valid_mask_expanded.expand(self.num_time_bins,-1,-1) #[num_time_bins,value_bins, numerical_tasks]
+        expanded_mask = mask_tv.reshape(1,self.num_time_bins * self.num_value_bins, num_numerical_tasks)
+
+        # Use large negative value instead of -inf
+        mask_value = -1e10  # This effectively zeros out in softmax but avoids -inf
+        numerical_task_logits = numerical_task_logits.masked_fill(~expanded_mask, mask_value)
+
+        numerical_probs_flat = self.softmax(numerical_task_logits)
+
+        # torch.logsumexp()
+        # torch.exp(torch.logsum(numerical_log_probs_flat))
+
+        # numerical_log_probs = numerical_log_probs_flat.reshape(batch_size, self.num_time_bins, self.num_value_bins, num_numerical_tasks)
+        numerical_probs = numerical_probs_flat.reshape(batch_size, self.num_time_bins, self.num_value_bins, num_numerical_tasks)
+
+        numerical_probs = numerical_probs.clamp_min(eps)
+
+        # # assert check
+        expanded_valid_mask_assert = mask_tv.unsqueeze(0).expand(batch_size,-1,-1,-1)
+        numerical_probs = numerical_probs*expanded_valid_mask_assert
+
+        assert torch.all(numerical_probs[~expanded_valid_mask_assert] <= eps), \
+        "Non-zero probabilities found in invalid bins."
+        assert torch.all(numerical_probs[expanded_valid_mask_assert] >= eps), \
+        "zero probabilities found in valid bins."
+        
+        numerical_loss = torch.tensor(0.0, device=features.device)
+        total_num_count = 0
+        L_num_event = torch.tensor(0.0, device=features.device)
+        L_num_cens  = torch.tensor(0.0, device=features.device)
+
+
+        if torch.any(time_censor_in_bin):
+            time_only_probs = torch.sum(numerical_probs, dim=2)
+            cdf = torch.cumsum(time_only_probs, dim=1)
+            integrated_logits = torch.cat([torch.ones_like(time_only_probs[:, :1, :]), 1.0 - cdf[:, :-1, :]], dim=1)
+            integrated_logits_stable = torch.clamp(integrated_logits, min=eps, max=1.0-eps)
+
+            censored_loss_values = torch.where(
+                time_censor_in_bin,
+                torch.log(integrated_logits_stable),
+                torch.zeros_like(time_only_probs)
+            )
+            
+            censored_count = torch.sum(time_censor_in_bin)
+            L_num_cens = -torch.sum(censored_loss_values) 
+            numerical_loss += L_num_cens
+            total_num_count += censored_count
+
+        if torch.any(time_event_in_bin) and torch.any(value_event_in_bin):
+            event_bins = time_event_in_bin.unsqueeze(2) & value_event_in_bin.unsqueeze(1)
+            
+            event_loss_values = torch.where(
+                event_bins,
+                torch.log(numerical_probs),
+                torch.zeros_like(numerical_probs)
+            )
+            
+            event_count = torch.sum(event_bins)
+            if event_count > 0:
+
+                L_num_event = -torch.sum(event_loss_values)
+                numerical_loss += L_num_event
+                total_num_count += event_count
+
+        if total_num_count > 0:
+            total_count += total_num_count
+            total_loss += numerical_loss
+
+        if return_logits:
+            result["loss_components"] = {
+                "L_num_event":   L_num_event.detach(),
+                "L_num_censor":  L_num_cens.detach(),
+            }
+            result["value_dependent_logits"] = numerical_probs
+
+        if total_count == 0:
+            loss = torch.zeros((), device=features.device)
+        else:
+            loss = total_loss / total_count
+
+        return loss, result
+
+
+class ICareFMTaskHead(nn.Module):
+    """Paper-style ICareFM hazard head for dynamically sampled threshold queries.
+
+    `ICareFMTask.cleanup` produces query rows of the form
+    `(anchor_index, target_code_index, tau, direction, y, weight)`. This head
+    turns the anchor history representation and query condition into T_surv
+    hourly hazard logits, then applies the globally normalized masked BCE from
+    the implementation plan. The current task cleanup samples `tau` and
+    `direction` independently for every materialized query row.
+    """
+
+    def __init__(
+        self,
+        hidden_size: int,
+        target_codes: List[str],
+        t_surv: int = 48,
+        tau_max: float = 4.0,
+    ):
+        super().__init__()
+        # Supplement B.3 uses a d/2 variable embedding and a d/2 direction
+        # embedding, then concatenates them into a d-dimensional condition.
+        if hidden_size % 2 != 0:
+            raise ValueError("ICareFMTaskHead requires an even hidden_size for the paper's d/2 conditioning split.")
+        if len(target_codes) == 0:
+            raise ValueError("ICareFMTaskHead requires at least one target code.")
+
+        self.num_targets = len(target_codes)
+        self.t_surv = int(t_surv)
+        self.tau_max = float(tau_max)
+        condition_size = hidden_size // 2
+
+        # One learnable u_k vector per numerical target code. During forward,
+        # tau scales the selected u_k so the condition changes continuously with
+        # the sampled threshold magnitude.
+        self.threshold_embeddings = nn.Embedding(self.num_targets, condition_size)
+
+        # Direction 1 means high-threshold query, direction 0 means low-threshold
+        # query. This is the second half of the ICareFM condition vector.
+        self.direction_embeddings = nn.Embedding(2, condition_size)
+
+        # Deviation from the paper: a single shared MLP across all target codes.
+        # Per-code differentiation is carried entirely by `threshold_embeddings`
+        # (the u_k vectors) and `direction_embeddings` in the condition vector,
+        # which avoids the ~num_targets x hidden^2 parameter blowup of per-code
+        # heads (1.3B -> ~1.2M for hidden=768, t_surv=48).
+        self.head = nn.Sequential(
+            nn.Linear(hidden_size * 2, hidden_size),
+            nn.SiLU(),
+            nn.Linear(hidden_size, self.t_surv),
+        )
+        self.last_metrics: Dict[str, torch.Tensor] = {}
+
+    def forward(self, features: torch.Tensor, batch: Mapping[str, torch.Tensor], return_logits: bool = False):
+        """Compute masked dynamic-threshold BCE for one collated ICareFM batch."""
+        query_anchor_idx = batch["query_anchor_idx"].to(device=features.device, dtype=torch.long)
+        if query_anchor_idx.numel() == 0:
+            # Keep the zero loss connected to the graph so distributed/mixed
+            # precision training handles empty-query batches cleanly.
+            loss = features.sum() * 0.0
+            self.last_metrics = {
+                "icarefm/num_queries": features.new_tensor(0.0),
+                "icarefm/valid_weights": features.new_tensor(0.0),
+                "icarefm/event_fraction": features.new_tensor(0.0),
+            }
+            return loss, {"icarefm_logits": None}
+
+        # Query tensors are produced on CPU by the collator; move them to the
+        # same device/dtype as the backbone features for head computation.
+        query_target_idx = batch["query_target_idx"].to(device=features.device, dtype=torch.long)
+        query_tau = batch["query_tau"].to(device=features.device, dtype=features.dtype).unsqueeze(1)
+        query_direction = batch["query_direction"].to(device=features.device, dtype=torch.long)
+        y = batch["query_y"].to(device=features.device, dtype=features.dtype)
+        weight = batch["query_weight"].to(device=features.device, dtype=features.dtype)
+
+        # Build condition_k = concat(tau * u_k, direction_embedding[delta]).
+        threshold_condition = query_tau * self.threshold_embeddings(query_target_idx)
+        direction_condition = self.direction_embeddings(query_direction)
+
+        # `features` has already been narrowed to `label_indices` in FEMRModel,
+        # so query_anchor_idx indexes rows within that selected-anchor tensor.
+        head_input = torch.cat(
+            (features[query_anchor_idx], threshold_condition, direction_condition),
+            dim=1,
+        )
+
+        logits = self.head(head_input).to(features.dtype)
+
+        # BCEWithLogits is the stable form of
+        # y*log(sigmoid(logit)) + (1-y)*log(1-sigmoid(logit)).
+        loss_values = F.binary_cross_entropy_with_logits(logits, y, reduction="none")
+        valid_weights = weight.sum()
+        if valid_weights.item() == 0:
+            loss = features.sum() * 0.0
+        else:
+            # Global masked normalization over all valid query-bin observations.
+            loss = (loss_values * weight).sum() / (valid_weights + 1e-8)
+
+        with torch.no_grad():
+            # These metrics are consumed by the existing training callback.
+            self.last_metrics = {
+                "icarefm/num_queries": features.new_tensor(float(query_anchor_idx.numel())),
+                "icarefm/valid_weights": valid_weights.detach(),
+                "icarefm/event_fraction": ((y * weight).sum() / (valid_weights + 1e-8)).detach(),
+                "icarefm/logit_mean": logits.detach().float().mean(),
+            }
+
+        result = {}
+        if return_logits:
+            # Keep logits optional to avoid retaining large tensors during normal
+            # Trainer loss-only training.
+            result["icarefm_logits"] = logits
+        return loss, result
     
 def remove_first_dimension(data: Any) -> Any:
     if isinstance(data, collections.abc.Mapping):
@@ -1245,10 +1719,18 @@ class FEMRModel(transformers.PreTrainedModel):
             return MOTORTaskHead(self.hidden_size, **task_kwargs)
         elif self.loss_type == "tpp":
             return TPPTaskHead(self.hidden_size, **task_kwargs)
-        elif self.loss_type == "mtpp":
-            return MTPPTaskHead(self.hidden_size, **task_kwargs)
+        # elif self.loss_type == "mtpp":
+        #     return MTPPTaskHead(self.hidden_size, **task_kwargs)
         elif self.loss_type == "mtpp_shared":
             return MTPPSharedTaskHead(self.hidden_size, **task_kwargs)
+        elif self.loss_type == "mtpp_factorized":
+            return MTPPFactorizedTaskHead(self.hidden_size, **task_kwargs)
+        elif self.loss_type == "mtpp_value":
+            return MTPPValueTaskHead(self.hidden_size, **task_kwargs)
+        elif self.loss_type == "survivehr":
+            return SurvivEHRCausalTaskHead(self.hidden_size, **task_kwargs)
+        elif self.loss_type == "icarefm":
+            return ICareFMTaskHead(self.hidden_size, **task_kwargs)
         else:
             raise RuntimeError("Could not determine head for task " + self.loss_type)
 
@@ -1267,15 +1749,21 @@ class FEMRModel(transformers.PreTrainedModel):
         features = self.backbone(batch["transformer"], s)
         if "task" in batch and self.config.task_config is not None:
             features = features.reshape(-1, features.shape[-1])
-            features = features[batch["transformer"]["label_indices"], :]
+            label_indices = batch["transformer"]["label_indices"]
+            features = features[label_indices, :]
             # print(f"features before forward: {features.shape}")
-            
-            loss, result = self.task_model(features, batch["task"], return_logits=return_logits)
+
+            task_batch = batch["task"]
+            if self.loss_type == "survivehr":
+                task_batch = dict(task_batch)
+                task_batch["label_subject_ids"] = batch["subject_ids"][label_indices]
+
+            loss, result = self.task_model(features, task_batch, return_logits=return_logits)
             if return_reprs:
                 result["representations"] = features
             if return_logits or return_reprs:
-                result["timestamps"] = batch["transformer"]["timestamps"][batch["transformer"]["label_indices"]]
-                result["subject_ids"] = batch["subject_ids"][batch["transformer"]["label_indices"]]
+                result["timestamps"] = batch["transformer"]["timestamps"][label_indices]
+                result["subject_ids"] = batch["subject_ids"][label_indices]
             return loss, result
         else:
             loss = 0
@@ -1320,7 +1808,7 @@ def compute_features(
         ontology: Optional[ora.ontology.Ontology] = None,
         observation_window: Optional[int] = None,
         min_subjects_per_batch: int = 1,
-        total_flops: TotalFlops = None,
+        profile_flops: bool = False,
         loss_type: str = None,
         use_ntp: bool = False,
         cache_path: str = None,
@@ -1334,14 +1822,17 @@ def compute_features(
         num_proc: The number of processors to use
         tokens_per_batch: The maximum number of tokens per batch
         device: Which type of compute to use
-        ontology: A ORA ontology object, which is necessary for models that use a hierarchical tokenizer
+        ontology: A FEMR ontology object, which is necessary for models that use a hierarchical tokenizer
         observation_window: The observation window in which the features are extracted
-        total_flops: TotalFlops to record the total number of flops
+        profile_flops: Run each forward pass under the torch profiler to count FLOPs. The
+            profiler's per-batch overhead inflates "infer_time", so measure FLOPs and time in
+            two separate passes rather than trusting both from one run.
 
     Returns:
         A dictionary of numpy arrays, with three keys, "subject_ids", "feature_times" and "features"
          -  "subject_ids" and "feature_times" define the subject and time each feature refers to
          -  "features" provides the representations at each subject id and feature time
+        plus "preprocess_time", "infer_time" and "total_flops" (0 unless profile_flops).
     """
     task = ora.models.tasks.motor.LabeledSubjectTask(labels, observation_window)
 
@@ -1377,9 +1868,11 @@ def compute_features(
     cpu_device = torch.device("cpu")
 
     print(f"The maximum context length is {tokens_per_batch/min_subjects_per_batch},  {min_subjects_per_batch} subjects and {tokens_per_batch} tokens per batch")
+    preprocess_t0 = time.perf_counter()
     batches = processor.convert_dataset(
         filtered_data, tokens_per_batch=tokens_per_batch, min_subjects_per_batch=min_subjects_per_batch, num_proc=num_proc
     )
+    preprocess_time = time.perf_counter() - preprocess_t0
 
     batches.set_format("pt")
 
@@ -1389,32 +1882,51 @@ def compute_features(
     all_feature_times = []
     all_representations = []
 
+    batch_flops_list = []
+    batch_times_wall = []
+    use_cuda = device is not None and 'cuda' in str(device)
+
+    if use_cuda:
+        activities = [ProfilerActivity.CPU, ProfilerActivity.CUDA]
+    else:
+        activities = [ProfilerActivity.CPU]
+
     with torch.no_grad():
         with torch.autocast(device_type="cuda", dtype=torch.bfloat16):
             for batch in tqdm(loader):
                 if device:
                     batch = to_device(batch, device)
 
-                if total_flops:
-                    with profile(
-                            activities=[ProfilerActivity.CPU, ProfilerActivity.CUDA],
-                            with_flops=True,
-                    ) as prof:
-                        _, result = model(**batch, return_reprs=True)
+                # Always timed; only profiled on request. Sync around the forward pass so
+                # async CUDA work lands inside the measured interval.
+                if use_cuda:
+                    torch.cuda.synchronize(device)
+                t0 = time.perf_counter()
 
-                    for event in prof.key_averages():
-                        if hasattr(event, "flops") and event.flops > 0:
-                            # Convert to GFLOPs
-                            total_flops.total_flops += event.flops / 1e9
+                if profile_flops:
+                    with profile(activities=activities, with_flops=True) as prof:
+                        _, result = model(**batch, return_reprs=True)
+                    # Sum FLOPs from all profiled events
+                    batch_flops_list.append(sum(
+                        evt.flops for evt in prof.key_averages()
+                        if evt.flops is not None and evt.flops > 0
+                    ))
                 else:
                     _, result = model(**batch, return_reprs=True)
+
+                if use_cuda:
+                    torch.cuda.synchronize(device)
+                batch_times_wall.append(time.perf_counter() - t0)
 
                 all_subject_ids.append(result["subject_ids"].to(cpu_device, non_blocking=True))
                 all_feature_times.append(result["timestamps"].to(cpu_device, non_blocking=True))
                 all_representations.append(result["representations"].to(cpu_device, non_blocking=True))
 
-    torch.cuda.synchronize()
+    if use_cuda:
+        torch.cuda.synchronize()
 
+    sum_flops = sum(batch_flops_list)
+    total_wall = sum(batch_times_wall)
     all_subject_ids_np = torch.concatenate(all_subject_ids).numpy()
     all_feature_times_np = torch.concatenate(all_feature_times).numpy()
     all_representations_np = torch.concatenate(all_representations).numpy()
@@ -1423,4 +1935,7 @@ def compute_features(
         "subject_ids": all_subject_ids_np,
         "feature_times": all_feature_times_np.astype("datetime64[s]"),
         "features": all_representations_np,
+        "total_flops": sum_flops,
+        "preprocess_time": preprocess_time,
+        "infer_time": total_wall,
     }
