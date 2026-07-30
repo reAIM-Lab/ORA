@@ -17,7 +17,7 @@ baseline discarded.
 
 Usage::
 
-    python -m ora.omop_meds_tutorial.evaluation.tabular.features.validate_featurizer \
+    python -m ora.omop_meds_tutorial.evaluation.baseline.feature_extraction.validate_featurizer \
         --num_subjects 200
 
 (defaults point at storage/ora/meds_v0.6_reader and the MIMIC AMI binary cohort)

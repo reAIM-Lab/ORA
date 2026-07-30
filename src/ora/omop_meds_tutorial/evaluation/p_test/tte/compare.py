@@ -10,7 +10,7 @@ Run with: python -m ora.omop_meds_tutorial.evaluation.tte.compare
 from pathlib import Path
 import pickle
 
-from ..common.survival_utils import paired_bootstrap_test
+from ...common.survival_utils import paired_bootstrap_test
 
 BASE = Path("/path/to/workspace/mimic/task/phenotype_task/results")
 TASKS = ["ami", "masld", "stroke"]

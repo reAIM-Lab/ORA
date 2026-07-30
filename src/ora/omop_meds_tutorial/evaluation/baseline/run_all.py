@@ -1,32 +1,35 @@
-"""Train the strengthened tabular baselines (XGBoost + DeepHit) on value-aware features.
+"""The single entry point for the tabular baselines.
 
-MIMIC-IV only. Mirrors evaluation/baseline/run_all.py; differences, all deliberate:
+One command for all three task families; `--task` selects which arms run.
 
-1. Reads from storage/ora/meds_tab/ instead of the submitted feature root, so the
-   original results are preserved and both baseline rows can be reported.
-2. Keeps the feature matrix **sparse** for XGBoost instead of calling `.todense()`;
-   the value-aware matrix is much wider and the dense path risks OOM.
-   DeepHit still gets dense, scaled input (see common.densify_for_mlp).
-3. The `continue` that skipped the binary arm of the phenotype loop is removed --
-   both binary and TTE results are produced for every phenotype.
-4. Wall-clock and peak RSS are recorded per task and written next to the metrics,
-   to answer the reviewer's question about baseline compute cost.
+    RUN=ora.omop_meds_tutorial.evaluation.baseline.run_all
 
-Run from the repository root (it imports its siblings as a package)::
+    python -m $RUN --task all                        # classification + tte
+    python -m $RUN --task classification --n_jobs 24 # XGBoost, CPU-bound
+    python -m $RUN --task tte --phenotypes ami       # DeepHit, GPU-bound
+    python -m $RUN --task regression \
+        --cohort_dir ... --meds_path ... --split_path ...
 
-    python -m ora.omop_meds_tutorial.evaluation.tabular.run_all --n_jobs 24                      # everything, sequential
-    python -m ora.omop_meds_tutorial.evaluation.tabular.run_all --phenotypes ami --skip survival  # one task, one family
+| task           | model      | arm                                    |
+|----------------|------------|----------------------------------------|
+| classification | XGBoost    | classification_xgboost.py              |
+| tte            | DeepHit    | tte_deephit.py                         |
+| regression     | last value | regression_most_recent_impute.py       |
 
-The DeepHit arm is the expensive one and is GPU-bound, so run the three TTE tasks
-concurrently on separate idle GPUs -- this is a free 3x reduction in wall-clock:
+Features come from `feature_extraction/`. Run that first. Whether they carry the
+MEDS-Tab numeric aggregations is decided there by `--value_stats`, not here, so
+point `--data_path` at the matching feature root (`meds_tab` or `meds_tab_count`).
 
-    CUDA_VISIBLE_DEVICES=2 python run_all.py --phenotypes ami    --skip binary --n_jobs 8 &
-    CUDA_VISIBLE_DEVICES=3 python run_all.py --phenotypes stroke --skip binary --n_jobs 8 &
-    CUDA_VISIBLE_DEVICES=4 python run_all.py --phenotypes masld  --skip binary --n_jobs 8 &
+`--truncation` must match the horizon the foundation-model probe is run with
+(`run.sh --truncation`), or the C-indices are not comparable.
 
-The XGBoost arm is CPU-bound and can run alongside them:
+The DeepHit arm is GPU-bound, so the three TTE tasks can run concurrently on
+separate idle GPUs -- a free 3x on wall-clock -- while XGBoost runs on CPU:
 
-    python -m ora.omop_meds_tutorial.evaluation.tabular.run_all --skip survival --n_jobs 24
+    CUDA_VISIBLE_DEVICES=2 python -m $RUN --task tte --phenotypes ami    --n_jobs 8 &
+    CUDA_VISIBLE_DEVICES=3 python -m $RUN --task tte --phenotypes stroke --n_jobs 8 &
+    CUDA_VISIBLE_DEVICES=4 python -m $RUN --task tte --phenotypes masld  --n_jobs 8 &
+    python -m $RUN --task classification --n_jobs 24
 """
 
 import argparse
@@ -35,13 +38,15 @@ import os
 import pickle
 import resource
 import time
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
 
-from .classification import split_binary, train_binary
+from .classification_xgboost import split_binary, train_binary
 from .common import DEFAULT_TRUNCATION, load_metrics, save_metrics, summarize
-from .tte import split_survival, train_survival
+from .regression_most_recent_impute import run_baseline as run_regression_baseline
+from .tte_deephit import split_survival, train_survival
 
 ROOT = "/path/to/workspace/ora"
 DATA_PATH = os.path.join(ROOT, "meds_tab")
@@ -53,12 +58,17 @@ PHENOTYPES = ["ami", "stroke", "masld"]
 BINARY_ONLY = ["in_hospital_mortality", "readmission", "long_los"]
 
 parser = argparse.ArgumentParser()
+parser.add_argument("--task", default="all",
+                    choices=["classification", "tte", "regression", "all"],
+                    help="Which arm(s) to run. 'all' runs classification + tte; regression "
+                         "needs --cohort_dir/--meds_path/--split_path and is opt-in.")
+parser.add_argument("--data_path", default=None,
+                    help="Feature root. Defaults to <ROOT>/meds_tab (value-aware). Point at "
+                         "<ROOT>/meds_tab_count for features extracted with --value_stats no.")
 parser.add_argument("--phenotypes", nargs="*", default=None,
                     help=f"Subset of {PHENOTYPES}")
 parser.add_argument("--binary_only", nargs="*", default=None,
                     help=f"Subset of {BINARY_ONLY}")
-parser.add_argument("--skip", nargs="*", default=[], choices=["survival", "binary"],
-                    help="Task families to skip")
 parser.add_argument("--n_jobs", type=int, default=16,
                     help="CPU cores for XGBoost (-1 = all). Report this alongside timings.")
 parser.add_argument("--overwrite", action="store_true")
@@ -78,11 +88,16 @@ parser.add_argument("--truncation", type=float, default=DEFAULT_TRUNCATION,
                          "arms are not comparable.")
 parser.add_argument("--patience", type=int, default=5,
                     help="EarlyStopping patience for DeepHit (torchtuples default is 10).")
-args = parser.parse_args()
+# --- regression arm only ---
+parser.add_argument("--cohort_dir", default=None, help="[--task regression] cohort directory")
+parser.add_argument("--meds_path", default=None, help="[--task regression] MEDS reader")
+parser.add_argument("--split_path", default=None, help="[--task regression] main_split.csv")
+parser.add_argument("--dataset", default="mimic", choices=["mimic", "institutional"],
+                    help="[--task regression] which target-code map to use")
 
-if args.results_dir:
-    RESULTS_PATH = args.results_dir
-WD_VALUES = [float(x) for x in args.wd.split(",")] if args.wd else None
+# Populated by main(). Importing this module must not parse argv or run a sweep.
+args = None
+WD_VALUES = None
 
 
 def peak_rss_gb() -> float:
@@ -221,18 +236,46 @@ def run_one(name: str, suffix: str, model: str, outcome: str) -> None:
         print(f"[ERROR] mimic | {name} | {outcome}: {type(e).__name__}: {e}")
 
 
-os.makedirs(RESULTS_PATH, exist_ok=True)
-phenotypes = args.phenotypes if args.phenotypes is not None else PHENOTYPES
-binary_only = args.binary_only if args.binary_only is not None else BINARY_ONLY
+def main():
+    global args, WD_VALUES, DATA_PATH, RESULTS_PATH
+    args = parser.parse_args()
+    if args.data_path:
+        DATA_PATH = args.data_path
+    if args.results_dir:
+        RESULTS_PATH = args.results_dir
+    WD_VALUES = [float(x) for x in args.wd.split(",")] if args.wd else None
 
-# Phenotypes: both survival and binary.
-for name in phenotypes:
-    for outcome, suffix, model in [("survival", "", "deephit"), ("binary", "_binary", "xgboost")]:
-        if outcome in args.skip:
-            continue
-        run_one(name, suffix, model, outcome)
+    if args.task == "regression":
+        missing = [f for f in ("cohort_dir", "meds_path", "split_path") if not getattr(args, f)]
+        if missing:
+            parser.error("--task regression requires " + ", ".join("--" + m for m in missing))
+        run_regression_baseline(
+            cohort_dir=Path(args.cohort_dir),
+            meds_path=args.meds_path,
+            split_path=Path(args.split_path),
+            output_dir=Path(RESULTS_PATH),
+            dataset=args.dataset,
+        )
+        return
 
-# Patient outcomes: binary only.
-if "binary" not in args.skip:
-    for name in binary_only:
-        run_one(name, "_binary", "xgboost", "binary")
+    os.makedirs(RESULTS_PATH, exist_ok=True)
+    phenotypes = args.phenotypes if args.phenotypes is not None else PHENOTYPES
+    binary_only = args.binary_only if args.binary_only is not None else BINARY_ONLY
+    run_tte = args.task in ("tte", "all")
+    run_cls = args.task in ("classification", "all")
+
+    # Phenotypes carry both a survival and a binary label.
+    for name in phenotypes:
+        if run_tte:
+            run_one(name, "", "deephit", "survival")
+        if run_cls:
+            run_one(name, "_binary", "xgboost", "binary")
+
+    # Patient outcomes are binary only.
+    if run_cls:
+        for name in binary_only:
+            run_one(name, "_binary", "xgboost", "binary")
+
+
+if __name__ == "__main__":
+    main()

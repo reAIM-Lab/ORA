@@ -1,20 +1,22 @@
 #!/usr/bin/env bash
 # Value-aware tabular feature extraction for the strengthened MIMIC-IV baseline.
 #
-# Same cohorts as evaluation/baseline/extract.sh, repointed at the current
-# cluster layout and writing to a new output root so the submitted feature
-# pickles are preserved and both baseline rows can be reported.
-#
-# Feature spec: MEDS-Tab aggregation set
+# Feature spec: code counts plus the MEDS-Tab aggregation set
 #   code/count, value/count, value/sum, value/sum_sqd, value/min, value/max
 # over nested look-back windows [7d, full]. 12 columns per numeric code.
+#
+# VALUE_STATS=no drops the numeric aggregations and extracts code counts only --
+# the count-only baseline. It writes to ${OUT}_count so the two feature sets
+# never overwrite each other:
+#
+#         VALUE_STATS=no bash extract.sh
 #
 # Usage:  bash extract.sh              # all 9 cohorts
 #         bash extract.sh tte          # phenotype TTE only
 #         bash extract.sh binary       # phenotype binary only
 #         bash extract.sh outcome      # patient outcomes only
 #
-# Env overrides: PYTHON, NUM_THREADS, MIN_SUPPORT, WINDOWS
+# Env overrides: PYTHON, NUM_THREADS, MIN_SUPPORT, WINDOWS, VALUE_STATS
 
 set -uo pipefail
 
@@ -25,18 +27,21 @@ PYTHON="${PYTHON:-/path/to/envs/tte/bin/python}"
 "${PYTHON}" -c "import ora, meds_reader" || {
   echo "ERROR: ${PYTHON} cannot import ora/meds_reader" >&2; exit 1; }
 
-MODULE="ora.omop_meds_tutorial.evaluation.tabular.features.generate_features"
+MODULE="ora.omop_meds_tutorial.evaluation.baseline.feature_extraction.generate_features"
 WINDOWS="${WINDOWS:-7,full}"
 MIN_SUPPORT="${MIN_SUPPORT:-10}"
 # Lower this while other I/O-heavy jobs are running: the preprocess pass is bound
 # by reads from the MEDS database, not by CPU, so extra threads mostly add
 # contention.  NUM_THREADS=8 bash extract.sh
 NUM_THREADS="${NUM_THREADS:-32}"
+# yes = code counts + MEDS-Tab numeric aggregations; no = code counts only.
+VALUE_STATS="${VALUE_STATS:-yes}"
 
 ROOT=/path/to/workspace/ora
 MEDS_READER="${ROOT}/meds_v0.6_reader"
 COHORT="${ROOT}/cohort"
-OUT="${ROOT}/meds_tab"
+# Separate output roots so both feature sets can exist side by side.
+if [[ "${VALUE_STATS}" == "yes" ]]; then OUT="${ROOT}/meds_tab"; else OUT="${ROOT}/meds_tab_count"; fi
 
 extract () {
   local task_dir="$1" out_dir="$2"
@@ -48,6 +53,7 @@ extract () {
     --cohort_dir "${task_dir}" \
     --windows "${WINDOWS}" \
     --min_support "${MIN_SUPPORT}" \
+    --value_stats "${VALUE_STATS}" \
     --num_threads "${NUM_THREADS}"
 }
 

@@ -1,4 +1,4 @@
-bash run.sh \
+bash classification_tte/run.sh \
   --meds_reader        /path/to/institutional_data/post_transform_meds_reader \
   --num_proc           32 \
   --model_path         /path/to/workspace/ora/institutional/icarefm/transformer/best_922142 \
@@ -32,7 +32,7 @@ bash regression/run_regression.sh \
   --tasks "platelets,creatinine,spo2,glucose" \
   --regression 
 
-bash run.sh \
+bash classification_tte/run.sh \
   --meds_reader        /path/to/institutional_data/post_transform_meds_reader \
   --num_proc           24 \
   --model_path         /path/to/workspace/ora/institutional/icarefm/transformer/best_922142 \

@@ -271,7 +271,7 @@ After pretraining your model, you can evaluate it on downstream tasks using the 
 
 Evaluates binary classification tasks (e.g., predicting patient outcomes).
 
-**Script:** `evaluation/run.sh`
+**Script:** `evaluation/classification_tte/run.sh`
 
 **Example Usage:**
 
@@ -300,7 +300,7 @@ bash run.sh \
 
 Evaluates phenotype classification and survival analysis (time-to-event) tasks.
 
-**Script:** `evaluation/run.sh`
+**Script:** `evaluation/classification_tte/run.sh`
 
 **Example Usage**
 
@@ -404,45 +404,51 @@ bash run_regression.sh \
 `src/ora/omop_meds_tutorial/evaluation/` is organised by task family. Shared machinery lives in
 `common/`; each task family owns its probe, its analysis scripts and its significance test.
 
+Each task family holds its driver next to the probe it drives.
+
 ```
 evaluation/
-  common/            generate_labels, generate_features, eval_utils, survival_utils
-  linear_probe.py    ORA probe for classification + TTE   (driven by run.sh)
-  run.sh             driver: classification + TTE
-  run_regression.sh  driver: regression
-  classification/    significance.py
-  tte/               grid_search.py, significance.py, compare.py
-  regression/        probe.py, significance.py, extract_cohort_institutional/
-  few_shot/          few-shot linear probing
-  tabular/           the tabular baseline (XGBoost / DeepHit / most-recent-value)
+  common/             generate_labels, generate_features, eval_utils, survival_utils
+  classification_tte/ run.sh + linear_probe.py     ORA probe: classification and TTE
+  regression/         run_regression.sh + probe.py + extract_cohort_institutional/
+  baseline/           the tabular baselines (XGBoost / DeepHit / most-recent-value)
+  p_test/             classification/, tte/, regression/   paired bootstrap tests
+  few_shot/           few-shot linear probing
+  run_icare.sh        convenience wrapper: one model across all task families
 ```
 
-## 5.5. Tabular Baseline
+## 5.5. Tabular Baselines
 
-`evaluation/tabular/` builds features from code counts **plus** the MEDS-Tab numeric aggregation set
-(`code/count`, `value/count`, `value/sum`, `value/sum_sqd`, `value/min`, `value/max` over `[7d, full]`
-windows), then trains XGBoost for the binary tasks and DeepHit for time-to-event.
+`evaluation/baseline/` covers all three task families. `run_all.py` is the only entry point:
 
-| Module | Role |
-|---|---|
-| `features/` | `MedsTabNumericFeaturizer`, extraction entry point, brute-force validation |
-| `common.py` | Seeding, metric IO, sparse/dense feature preparation |
-| `classification.py` | XGBoost arm |
-| `tte.py` | DeepHit arm |
-| `regression.py` | Most-recent-value imputation baseline |
-| `deephit_tuning.py` | Standalone DeepHit hyperparameter sweep |
-| `run_all.py` | Driver |
-| `collect_results.py`, `collect_compute.py` | Result and compute tables |
+| `--task` | Model | Module |
+|---|---|---|
+| `classification` | XGBoost | `classification_xgboost.py` |
+| `tte` | DeepHit | `tte_deephit.py` |
+| `regression` | most-recent value | `regression_most_recent_impute.py` |
+
+Features come from `feature_extraction/`, which chooses between two feature sets with
+`--value_stats`:
+
+- **`yes`** (default) — code counts **plus** the MEDS-Tab numeric aggregation set (`code/count`,
+  `value/count`, `value/sum`, `value/sum_sqd`, `value/min`, `value/max` over `[7d, full]` windows).
+- **`no`** — code counts only. `CountFeaturizer` under default flags drops every numeric-valued event
+  from the matrix entirely, so this is the count-only baseline in which the model never learns that a
+  lab was ordered.
+
+The two write to separate roots, so both rows can be reported side by side.
 
 ```bash
-python -m ora.omop_meds_tutorial.evaluation.tabular.features.validate_featurizer --num_subjects 200
-bash src/ora/omop_meds_tutorial/evaluation/tabular/features/extract.sh
-python -m ora.omop_meds_tutorial.evaluation.tabular.run_all --n_jobs 24 --truncation 300
+BASE=ora.omop_meds_tutorial.evaluation.baseline
+python -m $BASE.feature_extraction.validate_featurizer --num_subjects 200
+bash src/ora/omop_meds_tutorial/evaluation/baseline/feature_extraction/extract.sh
+python -m $BASE.run_all --task all --n_jobs 24 --truncation 300
 ```
 
-`--truncation` must match the horizon the foundation-model probe is run with (`run.sh --truncation`),
-or the C-indices are not comparable. Both default to 300 (`tabular/common.py:DEFAULT_TRUNCATION`).
-See `tabular/README.md` for the feature specification and hyperparameter grids.
+`--truncation` must match the horizon the foundation-model probe is run with
+(`classification_tte/run.sh --truncation`), or the C-indices are not comparable. Both default to 300
+(`baseline/common.py:DEFAULT_TRUNCATION`). See `baseline/README.md` for the feature specification and
+hyperparameter grids.
 
 ## 5.6. Significance Testing
 
@@ -451,9 +457,9 @@ Paired bootstrap confidence intervals for the difference between ORA and each ba
 
 | Script | Produces |
 |---|---|
-| `classification/significance.py` | ΔAUROC 95% CIs |
-| `tte/significance.py`, `tte/compare.py` | ΔC-index 95% CIs |
-| `regression/significance.py` | ΔR² 95% CIs |
+| `p_test/classification/classification_test.py` | ΔAUROC 95% CIs |
+| `p_test/tte/tte_test.py`, `p_test/tte/compare.py` | ΔC-index 95% CIs |
+| `p_test/regression/regression_test.py` | ΔR² 95% CIs |
 
 ## 5.7. Compute Accounting
 
@@ -462,7 +468,7 @@ Pretraining and feature extraction record FLOPs and wall time:
 - `pretrain.py --profile_steps N --time_steps M` runs the torch profiler over the first `N` training
   steps to measure FLOPs/token, then times the next `M` steps with the profiler off to measure
   seconds/token. Results are written next to the checkpoints.
-- `evaluation/tabular/collect_compute.py` merges the per-task extraction and training JSON
+- `evaluation/baseline/collect_compute.py` merges the per-task extraction and training JSON
   (wall-clock, peak RSS, column budget, density) into a single table.
 
 All models in the paper were pretrained on 4× NVIDIA H100 NVL (96 GB VRAM).

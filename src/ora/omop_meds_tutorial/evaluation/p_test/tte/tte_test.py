@@ -4,7 +4,7 @@ from tqdm import tqdm
 from sklearn.model_selection import ParameterGrid
 from pycox.models import DeepHitSingle
 import torchtuples as tt
-from ..common.survival_utils import (
+from ...common.survival_utils import (
     generate_bootstrap_indices, bootstrap_cindex_parallel,
     make_structured_array, save_survival_results,
 )

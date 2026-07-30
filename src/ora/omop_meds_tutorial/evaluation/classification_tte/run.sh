@@ -297,7 +297,7 @@ for TASK_DIR in "$CLASS_COHORT"*/; do
     echo "Running $MODEL_NAME fine-tuning for $TASK_NAME..."
 
     # Build the command with conditional observation_window parameter
-    FINETUNE_CMD="python -u -m ora.omop_meds_tutorial.evaluation.linear_probe \
+    FINETUNE_CMD="python -u -m ora.omop_meds_tutorial.evaluation.classification_tte.linear_probe \
       --cohort_label \"$TASK_NAME\" \
       --model_name \"$MODEL_NAME\" \
       --main_split_path \"$MAIN_SPLIT_PATH\" \

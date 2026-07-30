@@ -86,7 +86,7 @@ fi
 [ ! -d "$COHORT_BASE_DIR" ] && { echo "Error: Cohort base directory does not exist: $COHORT_BASE_DIR" >&2; exit 1; }
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-REPO_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/../../../.." && pwd)"
 # RUN_ROOT="$(pwd)"
 export PYTHONPATH="$REPO_ROOT:$PYTHONPATH"
 export PYTHONUNBUFFERED=1

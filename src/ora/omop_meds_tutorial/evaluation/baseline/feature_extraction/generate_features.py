@@ -1,30 +1,38 @@
-"""Generate value-aware tabular features for the strengthened XGBoost / DeepHit baseline.
+"""Generate tabular features for the XGBoost / DeepHit baselines.
 
-Mirrors ``ora.omop_meds_tutorial.generate_tabular_features`` but adds
-``MedsTabNumericFeaturizer`` to the featurizer list, so numeric events
-(laboratory results, vital signs) contribute to the feature matrix instead of
-being silently dropped.
+Two feature sets, selected with ``--value_stats``:
 
-Featurizer list::
+``--value_stats yes`` (default)::
 
-    AgeFeaturizer(is_normalize=True)          # unchanged
-    CountFeaturizer(...)                      # unchanged -- non-numeric codes
-    MedsTabNumericFeaturizer(...)             # NEW -- MEDS-Tab aggregations
+    AgeFeaturizer(is_normalize=True)
+    CountFeaturizer(...)                      # non-numeric codes
+    MedsTabNumericFeaturizer(...)             # MEDS-Tab numeric aggregations
 
-``CountFeaturizer`` keeps its default flags, so text-valued events remain
-excluded. That is a deliberate choice (rebuttal/reviewer3/Q1.md Sec. 5.7) and
-must be disclosed in the reply.
+``--value_stats no``::
 
-Runtime and peak memory are reported at the end of every run; the reviewer asked
-for the compute cost of each baseline, and feature extraction is the dominant
-CPU cost of the tabular pipeline.
+    AgeFeaturizer(is_normalize=True)
+    CountFeaturizer(...)                      # non-numeric codes only
+
+The distinction matters because ``CountFeaturizer`` under default flags
+(``numeric_value_decile=False``) drops every event carrying a numeric value from
+the matrix entirely -- not just the value but the occurrence count. So
+``--value_stats no`` reproduces the count-only baseline, in which the model never
+learns that a laboratory test was even ordered.
+
+``CountFeaturizer`` keeps its default flags in both cases, so text-valued events
+remain excluded. That follows the MEDS-Tab specification, whose aggregation set is
+numeric-only, and should be stated when reporting these numbers.
+
+Runtime and peak memory are reported at the end of every run: feature extraction
+is the dominant CPU cost of the tabular pipeline.
 
 Usage::
 
-    python -u -m ora.omop_meds_tutorial.evaluation.tabular.features.generate_features \
+    python -u -m ora.omop_meds_tutorial.evaluation.baseline.feature_extraction.generate_features \
         --pretraining_data "$OUT_DIR" \
         --meds_reader "$MEDS_READER" \
-        --cohort_dir "$TASK_DIR"
+        --cohort_dir "$TASK_DIR" \
+        --value_stats yes
 """
 
 import datetime
@@ -85,6 +93,18 @@ def create_arg_parser():
             "Minimum number of numeric observations, across the whole labelled cohort, "
             "for a code to receive a column block. 0 keeps every numeric code. "
             "Matches MEDS-Tab's tabularization.min_code_inclusion_count."
+        ),
+    )
+    parser.add_argument(
+        "--value_stats",
+        dest="value_stats",
+        choices=["yes", "no"],
+        default="yes",
+        help=(
+            "yes (default): code counts PLUS the MEDS-Tab numeric aggregation set. "
+            "no: code counts only -- every event carrying a numeric value is dropped "
+            "from the matrix entirely, which is the count-only baseline. The two write "
+            "to different subdirectories so they do not overwrite each other."
         ),
     )
     parser.add_argument("--num_threads", dest="num_threads", type=int, default=32)
@@ -163,7 +183,9 @@ def main() -> None:
 
     print(f"[{label_name}] {len(cohort)} labels from {len(files)} file(s): "
           + ", ".join(os.path.basename(f) for f in files))
-    print(f"[{label_name}] windows={windows} min_support={args.min_support}")
+    use_value_stats = args.value_stats == "yes"
+    print(f"[{label_name}] windows={windows} min_support={args.min_support} "
+          f"value_stats={args.value_stats}")
 
     feature_output_path = features_path / get_features_name(label_name, args.observation_window)
     if feature_output_path.exists():
@@ -178,14 +200,14 @@ def main() -> None:
             windows_days=windows,
             min_support=args.min_support,
         )
-        featurizer = ora.featurizers.FeaturizerList(
-            [
-                ora.featurizers.AgeFeaturizer(is_normalize=True),
-                # Unchanged from the submitted baseline: covers non-numeric codes.
-                ora.featurizers.CountFeaturizer(observation_window=args.observation_window),
-                numeric_featurizer,
-            ]
-        )
+        featurizers = [
+            ora.featurizers.AgeFeaturizer(is_normalize=True),
+            # Covers non-numeric codes. Identical in both feature sets.
+            ora.featurizers.CountFeaturizer(observation_window=args.observation_window),
+        ]
+        if use_value_stats:
+            featurizers.append(numeric_featurizer)
+        featurizer = ora.featurizers.FeaturizerList(featurizers)
 
         print("Preprocessing")
         featurizer.preprocess_featurizers(database, labels)
@@ -214,8 +236,9 @@ def main() -> None:
         "nnz": int(matrix.nnz),
         "density": float(matrix.nnz) / max(1, matrix.shape[0] * matrix.shape[1]),
         "columns_by_featurizer": sizes,
-        "numeric_codes": len(numeric_featurizer.code_to_base),
+        "numeric_codes": len(numeric_featurizer.code_to_base) if use_value_stats else 0,
         "windows": [w if w is not None else "full" for w in windows],
+        "value_stats": args.value_stats,
         "min_support": args.min_support,
         "num_threads": args.num_threads,
         "preprocess_seconds": round(t_preprocess, 1),
