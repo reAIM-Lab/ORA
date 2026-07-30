@@ -1,19 +1,6 @@
 """Validate MedsTabNumericFeaturizer against a brute-force reference. Run before the sweep.
 
-Checks (Sec. 5.9 of rebuttal/reviewer3/Q1.md):
 
-  1. Column budget: num_columns == len(code_to_base) * 6 * len(windows).
-  2. Row count:     one feature row per label, for every subject.
-  3. Correctness:   every emitted aggregate matches a naive recomputation from
-                    the raw event stream.
-  4. Monotonicity:  nested windows satisfy 7d <= full for count/sum/sum_sqd, and
-                    7d.min >= full.min, 7d.max <= full.max.
-  5. Sizing:        reports column count, density and projected dense memory, so
-                    the OOM risk in run_all can be judged before the full sweep.
-
-Also reports the share of events carrying a numeric value -- the number to quote
-in the rebuttal, since it is exactly the fraction of the record the submitted
-baseline discarded.
 
 Usage::
 

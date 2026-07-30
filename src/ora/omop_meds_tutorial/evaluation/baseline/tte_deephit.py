@@ -161,45 +161,20 @@ def train_survival(x_train, y_train, x_val, y_val, x_hyper, y_hyper, x_test, y_t
         y_train_norm = y_train
 
     # Tuning budget is a strict SUPERSET of the DeepHit head used for the
-    # foundation-model probes (classification_tte/linear_probe.py),
-    # so the tabular baseline cannot be called under-tuned relative to them:
+    # foundation-model probes (classification_tte/linear_probe.py), so the tabular
+    # baseline cannot be called under-tuned relative to them:
     #
-    #   FM probe:  dropout {0, 0.1} x lr {1e-3, 1e-4} x batch {1024, 2048}, 8 configs,
-    #              1000 epochs, architecture hard-coded to []  (linear -- it is a probe)
-    #   here:      the same three axes, plus [50] and [50,50] as options, 24 configs,
-    #              the same 1000-epoch budget.
-    #
-    # The submitted baseline used a single lr (1e-4), a single batch (1024) and only
-    # 100 epochs -- 10x less training than the probes it is compared against. That was
-    # the real handicap; the architecture grid already included non-linear options.
-    #
-    # `wd` (decoupled weight decay, via tt.optim.AdamW) is the one axis the FM probe
-    # does not have, and it is added because this arm needs it: a linear DeepHit over
-    # ~80k standardised features with 100 duration bins is ~8M parameters against ~95k
-    # training rows, and without an L2 penalty the validation loss rises from the first
-    # epoch (train 4.04 -> 2.45 while val 6.76 -> 8.03 on a 49k-feature subset).
-    # The FM probe sees 768 features (~77k parameters) and does not have this problem.
-    # Regularising a *baseline* can only strengthen it, so this cannot be called unfair.
-    # Architecture options are bottleneck *widths*, not depths. At ~74k inputs and 100
-    # duration bins the first Linear is >99% of the parameters, so depth is nearly free
-    # and nearly inert ([50] -> [50,50] adds 2,650 of 3.7M parameters) while width moves
-    # capacity by millions:  [64] 4.8M  <  [] 7.4M  <  [128] 9.5M.
-    # `[]` (no hidden layer, no nonlinearity) is the FM probe's architecture and must
-    # stay: it is what makes this grid a superset of the probe's search space.
-    #   fast -> 32 configs, full -> 48 configs.
+    #   FM probe:  lr {1e-3, 1e-4} x batch {1024, 2048} x dropout {0, 0.1}
+    #              = 8 configs, architecture fixed to [] (linear -- it is a probe)
+    #   here:      the same three axes, plus an architecture axis and weight decay
+    #              = 48 configs (grid_mode=fast) or 72 (grid_mode=full)
     layer_options = [[], [50]] if grid_mode == "fast" else [[], [64], [128]]
     grid = ParameterGrid({
         "lr": [1e-3, 1e-4],
         "batch": [1024, 2048],
         "do": [0, 0.1],
         "layers": layer_options,
-        # Two values, not three: this is where the 72 -> 48 config cut was taken,
-        # because weight decay is the only axis the FM probe does not also search.
-        # Keeping lr/batch/dropout at full resolution preserves the parity argument.
-        # 1e-4 was dropped rather than 1e-2: at 4.8-9.5M parameters it is mild enough
-        # to be near-indistinguishable from 0.0, so it would have spent half the grid
-        # measuring the same regime twice.
-        "wd": wd_values if wd_values is not None else [0.0, 1e-2],
+        "wd": wd_values if wd_values is not None else [0.0, 1e-4,1e-2],
     })
     print(f"DeepHit grid: {len(grid)} configs (mode={grid_mode})")
     # Matches `epochs = 1000` in the FM probe. EarlyStopping still cuts most

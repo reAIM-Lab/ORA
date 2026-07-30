@@ -7,14 +7,6 @@ Reads the JSON dropped by the two stages:
 
 and emits a markdown table plus a CSV.
 
-The reviewer asked for memory and runtime per baseline. The distinction that
-matters is **one-time vs per-task**: a foundation model pays pretraining once and
-amortises it over every task, whereas the tabular pipeline re-featurises for each
-cohort and has no pretraining at all. This script reports the tabular side of that
-comparison; the FM side needs the equivalent numbers (GPU hours and peak GPU
-memory for pretraining, then per-task encoder inference + probe fit).
-
-Do not add CPU-hours to GPU-hours. Report both, with the hardware named.
 
 Usage::
 

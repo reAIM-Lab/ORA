@@ -2,16 +2,16 @@
 # Pretrain ORA (loss_type=mtpp_shared) on MIMIC-IV with the transformer backbone.
 #
 # This is the proposed objective: one head over the joint (time, value) table, shared across
-# codes.  Its ablation is run_mimic_mtpp_factorized.sh, which forces that table to factorise
+# codes.  Its ablation is --loss_type mtpp_factorized, which forces that table to factorise
 # into one distribution for *when* and one for *what*.
 #
-# FAIR COMPARISON: ORA and ORA-Factorized load the same task file (mtpp_task.pkl) and the same
-# batches, so the head is the only difference.  To reproduce that pairing exactly, point
-# PRETRAINING_DATA at the directory the factorized run already prepared and set OUTPUT_DIR
-# somewhere else -- prepare.py skips artifacts that exist, so nothing is rebuilt:
+# FAIR COMPARISON: both load the same task file (mtpp_task.pkl) and the same batches, so the
+# head is the only difference.  To reproduce that pairing, run this script, then re-run it with
+# LOSS_TYPE=mtpp_factorized against the same PRETRAINING_DATA and a different OUTPUT_DIR --
+# prepare.py skips artifacts that already exist, so nothing is rebuilt:
 #
-#   PRETRAINING_DATA=$STORAGE/mtpp_factorized OUTPUT_DIR=$STORAGE/ora/transformer \
-#     bash run_ora.sh
+#   bash run_ora.sh
+#   LOSS_TYPE=mtpp_factorized OUTPUT_DIR=$STORAGE/mtpp_factorized/transformer bash run_ora.sh
 #
 # Keep NUM_PROCESSES the same across the two runs: the effective batch size is
 # NUM_PROCESSES x PER_DEVICE_TRAIN_BATCH_SIZE, so a different process count silently changes it.
@@ -36,6 +36,9 @@ MEDS_READER="${MEDS_READER:-$STORAGE/meds_v0.6_reader}"
 ONTOLOGY_PATH="${ONTOLOGY_PATH:-$STORAGE/metadata/ontology.pkl}"
 
 # Outputs: tokenizer, mtpp_task.pkl, train_batches, val_batches, main_split.csv, and the model.
+# mtpp_shared is ORA. Set LOSS_TYPE=mtpp_factorized to train the ablation against the
+# same prepared task and batches; give it its own OUTPUT_DIR.
+LOSS_TYPE="${LOSS_TYPE:-mtpp_shared}"
 PRETRAINING_DATA="${PRETRAINING_DATA:-$STORAGE/mtpp_shared}"
 OUTPUT_DIR="${OUTPUT_DIR:-$PRETRAINING_DATA/transformer}"
 HF_CACHE_PATH="${HF_CACHE_PATH:-$STORAGE/hf_cache}"
@@ -61,7 +64,7 @@ PER_DEVICE_TRAIN_BATCH_SIZE="${PER_DEVICE_TRAIN_BATCH_SIZE:-1}"
 
 # Weights & Biases.  NOTE: pretrain.py currently sets report_to="none", so nothing is logged and
 # RUN_NAME is only recorded in the HF trainer state.  Change it to report_to="wandb" to log.
-RUN_NAME="${RUN_NAME:-mimic_transformer_ora_${NUM_FINAL_TASKS}_T${TIME_BINS}_V${VALUE_BINS}_$(date +%Y%m%d_%H%M%S)}"
+RUN_NAME="${RUN_NAME:-mimic_transformer_${LOSS_TYPE}_${NUM_FINAL_TASKS}_T${TIME_BINS}_V${VALUE_BINS}_$(date +%Y%m%d_%H%M%S)}"
 export WANDB_PROJECT="${WANDB_PROJECT:-huggingface}"
 export WANDB_NAME="$RUN_NAME"
 
@@ -78,7 +81,7 @@ mkdir -p "$PRETRAINING_DATA" "$HF_CACHE_PATH" "$LOG_DIR"
 [[ -e "$PRETRAINING_DATA/ontology.pkl" ]] || ln -s "$ONTOLOGY_PATH" "$PRETRAINING_DATA/ontology.pkl"
 
 echo "=============================================================="
-echo " ORA (mtpp_shared) | MIMIC-IV | Transformer"
+echo " ORA ($LOSS_TYPE) | MIMIC-IV | Transformer"
 echo "   meds_reader      : $MEDS_READER"
 echo "   ontology         : $ONTOLOGY_PATH"
 echo "   pretraining_data : $PRETRAINING_DATA"
@@ -117,7 +120,7 @@ CUDA_VISIBLE_DEVICES="$GPUS" accelerate launch \
   --meds_reader "$MEDS_READER" \
   --output_dir "$OUTPUT_DIR" \
   --model transformer \
-  --loss_type mtpp_shared \
+  --loss_type "$LOSS_TYPE" \
   --per_device_train_batch_size "$PER_DEVICE_TRAIN_BATCH_SIZE" \
   --hf_run_name "$RUN_NAME" \
   "${RESUME_ARGS[@]}" \

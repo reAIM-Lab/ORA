@@ -1183,11 +1183,7 @@ class MTPPFactorizedTaskHead(nn.Module):
     as building that table as `cell[k, l] = when[k] * what[l]`.  Every row of such a table has
     the same shape, so the value distribution cannot depend on the horizon.
 
-    Under that constraint the ORA loss splits term for term into the "two separate losses"
-    design (one loss for event timing, one for values) that Reviewer 1 asks about:
 
-        observed  : -log cell[t*, v*]            ->  -log when[t*]  -  log what[v*]
-        censored  : -log(1 - sum of cells < c*)  ->  -log(1 - sum of when[] < c*)
 
     Everything else is deliberately identical to `MTPPSharedTaskHead`: the non-numerical
     branch, the shared trunk, the value mask, the eps conventions, the survival construction,
