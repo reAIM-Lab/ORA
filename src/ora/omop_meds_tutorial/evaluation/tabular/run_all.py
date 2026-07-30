@@ -6,16 +6,16 @@ MIMIC-IV only. Mirrors evaluation/baseline/run_all.py; differences, all delibera
    original results are preserved and both baseline rows can be reported.
 2. Keeps the feature matrix **sparse** for XGBoost instead of calling `.todense()`;
    the value-aware matrix is much wider and the dense path risks OOM.
-   DeepHit still gets dense, scaled input (see train_utils.densify_for_mlp).
+   DeepHit still gets dense, scaled input (see common.densify_for_mlp).
 3. The `continue` that skipped the binary arm of the phenotype loop is removed --
    both binary and TTE results are produced for every phenotype.
 4. Wall-clock and peak RSS are recorded per task and written next to the metrics,
    to answer the reviewer's question about baseline compute cost.
 
-Run as a script from inside this directory (it does `from train_utils import ...`)::
+Run from the repository root (it imports its siblings as a package)::
 
-    python run_all.py --n_jobs 24                      # everything, sequential
-    python run_all.py --phenotypes ami --skip survival  # one task, one family
+    python -m ora.omop_meds_tutorial.evaluation.tabular.run_all --n_jobs 24                      # everything, sequential
+    python -m ora.omop_meds_tutorial.evaluation.tabular.run_all --phenotypes ami --skip survival  # one task, one family
 
 The DeepHit arm is the expensive one and is GPU-bound, so run the three TTE tasks
 concurrently on separate idle GPUs -- this is a free 3x reduction in wall-clock:
@@ -26,7 +26,7 @@ concurrently on separate idle GPUs -- this is a free 3x reduction in wall-clock:
 
 The XGBoost arm is CPU-bound and can run alongside them:
 
-    python run_all.py --skip survival --n_jobs 24
+    python -m ora.omop_meds_tutorial.evaluation.tabular.run_all --skip survival --n_jobs 24
 """
 
 import argparse
@@ -39,15 +39,9 @@ import time
 import numpy as np
 import pandas as pd
 
-from train_utils import (
-    load_metrics,
-    save_metrics,
-    split_binary,
-    split_survival,
-    summarize,
-    train_binary,
-    train_survival,
-)
+from .classification import split_binary, train_binary
+from .common import DEFAULT_TRUNCATION, load_metrics, save_metrics, summarize
+from .tte import split_survival, train_survival
 
 ROOT = "/path/to/workspace/ora"
 DATA_PATH = os.path.join(ROOT, "meds_tab")
@@ -78,6 +72,10 @@ parser.add_argument("--deephit_grid", default="fast", choices=["fast", "full"],
                     help="'fast' = 48 configs (drops the [50,50] architecture); 'full' = 72.")
 parser.add_argument("--device", default="cpu",
                     help="XGBoost device: 'cpu' or 'cuda'. cuda is ~9x faster here.")
+parser.add_argument("--truncation", type=float, default=DEFAULT_TRUNCATION,
+                    help="Evaluation horizon in days for the TTE arm. Must match the value the "
+                         "foundation-model probe is run with (run.sh --truncation), or the two "
+                         "arms are not comparable.")
 parser.add_argument("--patience", type=int, default=5,
                     help="EarlyStopping patience for DeepHit (torchtuples default is 10).")
 args = parser.parse_args()
@@ -161,7 +159,7 @@ def run_one(name: str, suffix: str, model: str, outcome: str) -> None:
         t_load = time.perf_counter() - t0
 
         # Per-task directory for the 10,000-resample artifacts used by
-        # p_test.tte.utils.paired_bootstrap_test, mirroring the FM arms' layout.
+        # common.survival_utils.paired_bootstrap_test, mirroring the FM arms' layout.
         boot_dir = os.path.join(RESULTS_PATH, f"{name}_{model}_bootstrap")
 
         t1 = time.perf_counter()
@@ -187,6 +185,7 @@ def run_one(name: str, suffix: str, model: str, outcome: str) -> None:
                 model_name=f"meds_tab_deephit_{name}",
                 grid_mode=args.deephit_grid, patience=args.patience,
                 n_jobs=args.n_jobs, artifacts=artifacts, wd_values=WD_VALUES,
+                truncation=args.truncation,
             )
         else:
             splits = split_binary(X, y)

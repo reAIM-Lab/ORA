@@ -3,8 +3,8 @@ DeepHit survival evaluation on compressed (count-based) features.
 Produces results compatible with tte_evaluation for paired bootstrap testing.
 
 Usage:
-  python run_survival_compressed.py --phenotypes ami stroke masld
-  python deephit.py --truncation 300 --n_bootstrap 10000
+  python -m ora.omop_meds_tutorial.evaluation.tabular.deephit_tuning \
+      --phenotypes ami stroke masld --truncation 300 --n_bootstrap 10000
 """
 
 import os
@@ -19,7 +19,7 @@ from sklearn.model_selection import ParameterGrid
 from pycox.models import DeepHitSingle
 import torchtuples as tt
 
-from utils import (
+from ..common.survival_utils import (
     generate_bootstrap_indices, bootstrap_cindex_parallel,
     make_structured_array, save_survival_results,
 )

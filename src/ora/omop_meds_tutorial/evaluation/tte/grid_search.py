@@ -12,7 +12,7 @@ import json
 import os
 import argparse
 from sksurv.metrics import concordance_index_ipcw, integrated_brier_score
-from ora.omop_meds_tutorial.evaluation.eval_utils import _metric_mean_std, _update_metric_table
+from ora.omop_meds_tutorial.evaluation.common.eval_utils import _metric_mean_std, _update_metric_table
 
 np.random.seed(42)
 torch.manual_seed(42)

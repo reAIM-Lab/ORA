@@ -86,13 +86,13 @@ fi
 [ ! -d "$COHORT_BASE_DIR" ] && { echo "Error: Cohort base directory does not exist: $COHORT_BASE_DIR" >&2; exit 1; }
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-REPO_ROOT="$(cd "$SCRIPT_DIR/../../../.." && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
 # RUN_ROOT="$(pwd)"
 export PYTHONPATH="$REPO_ROOT:$PYTHONPATH"
 export PYTHONUNBUFFERED=1
 
-GEN_FEATURES_PY="$REPO_ROOT/ora/omop_meds_tutorial/evaluation/generate_features.py"
-FINETUNE_PY="$REPO_ROOT/ora/omop_meds_tutorial/evaluation/regression/finetune_regression.py"
+GEN_FEATURES_PY="$REPO_ROOT/ora/omop_meds_tutorial/evaluation/common/generate_features.py"
+FINETUNE_PY="$REPO_ROOT/ora/omop_meds_tutorial/evaluation/regression/probe.py"
 
 [ -f "$GEN_FEATURES_PY" ] || { echo "Missing: $GEN_FEATURES_PY"; exit 1; }
 [ -f "$FINETUNE_PY" ] || { echo "Missing: $FINETUNE_PY"; exit 1; }

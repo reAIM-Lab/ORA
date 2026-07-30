@@ -25,7 +25,7 @@ PYTHON="${PYTHON:-/path/to/envs/tte/bin/python}"
 "${PYTHON}" -c "import ora, meds_reader" || {
   echo "ERROR: ${PYTHON} cannot import ora/meds_reader" >&2; exit 1; }
 
-MODULE="ora.omop_meds_tutorial.evaluation.baseline_value.generate_tabular_features"
+MODULE="ora.omop_meds_tutorial.evaluation.tabular.features.generate_features"
 WINDOWS="${WINDOWS:-7,full}"
 MIN_SUPPORT="${MIN_SUPPORT:-10}"
 # Lower this while other I/O-heavy jobs are running: the preprocess pass is bound

@@ -45,7 +45,7 @@ import meds_reader
 import numpy as np
 import pandas as pd
 
-from ora.omop_meds_tutorial.evaluation.eval_utils import (
+from ora.omop_meds_tutorial.evaluation.common.eval_utils import (
     _bootstrap_regression_metrics,
     _metric_mean_std,
     _update_metric_table,

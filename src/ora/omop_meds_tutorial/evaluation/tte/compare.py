@@ -1,16 +1,16 @@
 """
 Paired bootstrap comparison of C-index between ORA and each baseline.
 
-Every model's tte_results_<TRUNCATION>.pkl was written by tte_test.py using the
+Every model's tte_results_<TRUNCATION>.pkl was written by significance.py using the
 same bootstrap indices and the same test row order, so the comparison is paired;
 paired_bootstrap_test asserts that ordering matches before computing anything.
 
-Run with: python compare.py
+Run with: python -m ora.omop_meds_tutorial.evaluation.tte.compare
 """
 from pathlib import Path
 import pickle
 
-from utils import paired_bootstrap_test
+from ..common.survival_utils import paired_bootstrap_test
 
 BASE = Path("/path/to/workspace/mimic/task/phenotype_task/results")
 TASKS = ["ami", "masld", "stroke"]
@@ -35,30 +35,33 @@ def load_results(task, model_dir):
         return pickle.load(f)
 
 
-# results_table[display_name][task] = dict from paired_bootstrap_test
-results_table = {name: {} for _, name in BASELINES}
-
-for task in TASKS:
-    print(f"\n=== Task: {task} ===")
-    ora = load_results(task, ORA_DIR)
-    for model_dir, name in BASELINES:
-        baseline = load_results(task, model_dir)
-        results_table[name][task] = paired_bootstrap_test(baseline, ora, name, "ORA")
-
-
-# === LaTeX table ===
 def fmt_cell(r):
     lo, hi = r["ci"]
     star = "*" if r["p_value"] < 0.05 else ""
     return f"[{lo:.4f}, {hi:.4f}]{star}"
 
 
-print("\n\n=== LaTeX Table (ΔC-index 95% CI: ORA − baseline; * = p<0.05) ===")
-print("\\begin{tabular}{l" + "c" * len(TASKS) + "}")
-print("\\toprule")
-print("Model & " + " & ".join(TASKS) + " \\\\")
-print("\\midrule")
-for _, name in BASELINES:
-    print(name + " & " + " & ".join(fmt_cell(results_table[name][t]) for t in TASKS) + " \\\\")
-print("\\bottomrule")
-print("\\end{tabular}")
+def main():
+    # results_table[display_name][task] = dict from paired_bootstrap_test
+    results_table = {name: {} for _, name in BASELINES}
+
+    for task in TASKS:
+        print(f"\n=== Task: {task} ===")
+        ora = load_results(task, ORA_DIR)
+        for model_dir, name in BASELINES:
+            baseline = load_results(task, model_dir)
+            results_table[name][task] = paired_bootstrap_test(baseline, ora, name, "ORA")
+
+    print("\n\n=== LaTeX Table (ΔC-index 95% CI: ORA − baseline; * = p<0.05) ===")
+    print("\\begin{tabular}{l" + "c" * len(TASKS) + "}")
+    print("\\toprule")
+    print("Model & " + " & ".join(TASKS) + " \\\\")
+    print("\\midrule")
+    for _, name in BASELINES:
+        print(name + " & " + " & ".join(fmt_cell(results_table[name][t]) for t in TASKS) + " \\\\")
+    print("\\bottomrule")
+    print("\\end{tabular}")
+
+
+if __name__ == "__main__":
+    main()

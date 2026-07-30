@@ -12,7 +12,7 @@ import meds
 import pathlib
 import torch
 import argparse
-from ora.omop_meds_tutorial.evaluation.generate_labels import (  # type: ignore
+from ora.omop_meds_tutorial.evaluation.common.generate_labels import (  # type: ignore
         create_omop_meds_tutorial_arg_parser,
         LABEL_NAMES,
     )

@@ -258,7 +258,7 @@ for TASK_DIR in "$CLASS_COHORT"*/; do
         echo "Found existing features and ${METRICS_KIND} metrics, reusing: $FEATURE_FILE"
     else
         echo "Features not found, generating: $FEATURE_FILE"
-        GENERATE_CMD="python -u -m ora.omop_meds_tutorial.evaluation.generate_features \
+        GENERATE_CMD="python -u -m ora.omop_meds_tutorial.evaluation.common.generate_features \
             --model_path \"$MODEL_PATH\" \
             --model_name \"$MODEL_NAME\" \
             --meds_reader \"$OMOP_MEDS_READER\" \
@@ -297,7 +297,7 @@ for TASK_DIR in "$CLASS_COHORT"*/; do
     echo "Running $MODEL_NAME fine-tuning for $TASK_NAME..."
 
     # Build the command with conditional observation_window parameter
-    FINETUNE_CMD="python -u -m ora.omop_meds_tutorial.evaluation.finetune_motor \
+    FINETUNE_CMD="python -u -m ora.omop_meds_tutorial.evaluation.linear_probe \
       --cohort_label \"$TASK_NAME\" \
       --model_name \"$MODEL_NAME\" \
       --main_split_path \"$MAIN_SPLIT_PATH\" \

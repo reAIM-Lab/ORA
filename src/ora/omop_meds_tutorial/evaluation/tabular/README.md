@@ -1,6 +1,6 @@
 # Value-aware tabular baseline (MEDS-Tab aggregation set)
 
-The tabular baseline in `../baseline/` builds features with `ora.featurizers.CountFeaturizer` under
+A count-only tabular baseline builds features with `ora.featurizers.CountFeaturizer` under
 default flags (`numeric_value_decile=False`). Under those defaults every event carrying a numeric value
 is dropped from the feature matrix entirely — not only the value but the occurrence count — because
 `add_preprocess_data` routes numeric events into a branch that is a no-op when the flag is off, so the
@@ -22,16 +22,18 @@ the feature specification is the published one.
 
 | File | Purpose |
 |---|---|
-| `meds_tab_featurizer.py` | `MedsTabNumericFeaturizer` — the featurizer |
-| `generate_tabular_features.py` | Feature-extraction entry point |
-| `extract.sh` | Extraction over all nine cohorts (3 TTE + 3 phenotype-binary + 3 outcome) |
-| `validate_featurizer.py` | Brute-force correctness check — run this first |
-| `train_utils.py` | `../baseline/train_utils.py` plus widened grids and sparse handling |
+| `features/meds_tab_featurizer.py` | `MedsTabNumericFeaturizer` — the featurizer |
+| `features/generate_features.py` | Feature-extraction entry point |
+| `features/extract.sh` | Extraction over all nine cohorts (3 TTE + 3 phenotype-binary + 3 outcome) |
+| `features/validate_featurizer.py` | Brute-force correctness check — run this first |
+| `common.py` | Seeding, metric IO, and the sparse/dense feature preparation shared by both arms |
+| `classification.py` | XGBoost arm: `split_binary`, `train_binary`, AUROC bootstraps |
+| `tte.py` | DeepHit arm: `split_survival`, `train_survival`, IPCW C-index and IBS |
+| `regression.py` | Most-recent-value imputation baseline |
+| `deephit_tuning.py` | Standalone DeepHit hyperparameter sweep |
 | `run_all.py` | Driver: sparse for XGBoost, dense + scaled for DeepHit |
 | `collect_results.py` | Merges per-task metric JSON into result tables |
 | `collect_compute.py` | Merges per-task runtime / peak-RSS JSON into a compute table |
-| `rescore_tte.py` | Re-scores saved TTE predictions |
-| `export_best_300.py`, `launch.sh` | Convenience wrappers |
 
 ## Run order
 
@@ -39,13 +41,13 @@ Extraction needs `meds_reader` and `ora`. `run_all.py` additionally needs `xgboo
 `scikit-survival`.
 
 ```bash
-cd src/ora/omop_meds_tutorial/evaluation/baseline_value
+cd src/ora/omop_meds_tutorial/evaluation/tabular
 
 # 1. Validate the featurizer against a brute-force reference. Do not skip.
-python -m ora.omop_meds_tutorial.evaluation.baseline_value.validate_featurizer --num_subjects 200
+python -m ora.omop_meds_tutorial.evaluation.tabular.features.validate_featurizer --num_subjects 200
 
 # 2. Extract features for all nine cohorts
-bash extract.sh
+bash features/extract.sh
 
 # 3. Train: DeepHit for phenotype TTE, XGBoost for all binary tasks
 python run_all.py --n_jobs 24
@@ -54,11 +56,18 @@ python run_all.py --n_jobs 24
 python collect_compute.py --csv compute.csv
 ```
 
-`run_all.py` uses `from train_utils import ...`, so run it as a script from inside this directory, not
-with `-m`. Dataset paths at the top of `extract.sh` and `run_all.py` are placeholders — point them at
-your MEDS reader, cohort and split files before running.
+`run_all.py` imports its siblings as a package, so run it with `-m` from the repository root:
 
-## What differs from `../baseline/`
+```bash
+python -m ora.omop_meds_tutorial.evaluation.tabular.run_all --n_jobs 24 --truncation 300
+```
+
+`--truncation` must match the value the foundation-model probe is run with (`run.sh --truncation`),
+or the two arms are scored at different horizons and their C-indices are not comparable. Both default
+to 300 (`common.DEFAULT_TRUNCATION`). Dataset paths at the top of `features/extract.sh` and
+`run_all.py` are placeholders — point them at your MEDS reader, cohort and split files first.
+
+## What differs from a count-only baseline
 
 Cohorts, splits, metrics and the bootstrap protocol are unchanged. The differences are:
 
@@ -73,7 +82,7 @@ Cohorts, splits, metrics and the bootstrap protocol are unchanged. The differenc
 4. **Hyperparameter search.** Both arms are widened to match or exceed the foundation-model probes they
    are compared against:
 
-   | | FM probe | `../baseline/` | Here |
+   | | FM probe | Count-only baseline | Here |
    |---|---|---|---|
    | DeepHit architecture | `[]` (linear) | `[]`, `[50]`, `[50,50]` | `[]`, `[50]`, `[50,50]` |
    | DeepHit learning rate | {1e-3, 1e-4} | {1e-4} | {1e-3, 1e-4} |

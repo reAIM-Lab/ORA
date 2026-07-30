@@ -399,47 +399,70 @@ bash run_regression.sh \
 | `--num_proc` | No | Number of parallel processes (default: 24) |
 | `--use_ntp` | Yes | Whether to use NTP mode: `yes` or `no` |
 
-## 5.4. Tabular Baselines
+## 5.4. Evaluation Layout
 
-Two tabular baselines live under `src/ora/omop_meds_tutorial/evaluation/`. Both use XGBoost for the
-binary tasks and DeepHit for time-to-event; they differ only in the feature set.
+`src/ora/omop_meds_tutorial/evaluation/` is organised by task family. Shared machinery lives in
+`common/`; each task family owns its probe, its analysis scripts and its significance test.
 
-| Directory | Features | Reported as |
-|---|---|---|
-| `baseline/` | `CountFeaturizer` code counts only | XGBoost / DeepHit |
-| `baseline_value/` | code counts **plus** the MEDS-Tab numeric aggregation set (`code/count`, `value/count`, `value/sum`, `value/sum_sqd`, `value/min`, `value/max` over `[7d, full]` windows) | Value-added XGBoost / DeepHit |
-
-```bash
-cd src/ora/omop_meds_tutorial/evaluation/baseline_value
-python -m ora.omop_meds_tutorial.evaluation.baseline_value.validate_featurizer --num_subjects 200
-bash extract.sh
-python run_all.py --n_jobs 24
+```
+evaluation/
+  common/            generate_labels, generate_features, eval_utils, survival_utils
+  linear_probe.py    ORA probe for classification + TTE   (driven by run.sh)
+  run.sh             driver: classification + TTE
+  run_regression.sh  driver: regression
+  classification/    significance.py
+  tte/               grid_search.py, significance.py, compare.py
+  regression/        probe.py, significance.py, extract_cohort_institutional/
+  few_shot/          few-shot linear probing
+  tabular/           the tabular baseline (XGBoost / DeepHit / most-recent-value)
 ```
 
-Both drivers use `from train_utils import ...`, so run them as scripts from inside their own directory.
-See `baseline_value/README.md` for the feature specification, the hyperparameter grids, and what
-differs between the two.
+## 5.5. Tabular Baseline
 
-## 5.5. Significance Testing
+`evaluation/tabular/` builds features from code counts **plus** the MEDS-Tab numeric aggregation set
+(`code/count`, `value/count`, `value/sum`, `value/sum_sqd`, `value/min`, `value/max` over `[7d, full]`
+windows), then trains XGBoost for the binary tasks and DeepHit for time-to-event.
 
-`src/ora/omop_meds_tutorial/evaluation/p_test/` computes paired bootstrap confidence intervals for the
-difference between ORA and each baseline (10,000 resamples, seed 42).
+| Module | Role |
+|---|---|
+| `features/` | `MedsTabNumericFeaturizer`, extraction entry point, brute-force validation |
+| `common.py` | Seeding, metric IO, sparse/dense feature preparation |
+| `classification.py` | XGBoost arm |
+| `tte.py` | DeepHit arm |
+| `regression.py` | Most-recent-value imputation baseline |
+| `deephit_tuning.py` | Standalone DeepHit hyperparameter sweep |
+| `run_all.py` | Driver |
+| `collect_results.py`, `collect_compute.py` | Result and compute tables |
+
+```bash
+python -m ora.omop_meds_tutorial.evaluation.tabular.features.validate_featurizer --num_subjects 200
+bash src/ora/omop_meds_tutorial/evaluation/tabular/features/extract.sh
+python -m ora.omop_meds_tutorial.evaluation.tabular.run_all --n_jobs 24 --truncation 300
+```
+
+`--truncation` must match the horizon the foundation-model probe is run with (`run.sh --truncation`),
+or the C-indices are not comparable. Both default to 300 (`tabular/common.py:DEFAULT_TRUNCATION`).
+See `tabular/README.md` for the feature specification and hyperparameter grids.
+
+## 5.6. Significance Testing
+
+Paired bootstrap confidence intervals for the difference between ORA and each baseline
+(10,000 resamples, seed 42), using shared bootstrap indices so the pairing is valid:
 
 | Script | Produces |
 |---|---|
-| `regression/classification_test.py` | ΔAUROC 95% CIs |
-| `tte/tte_test.py`, `tte/compare.py` | ΔC-index 95% CIs |
-| `regression/regression_test.py` | ΔR² 95% CIs |
-| `tte/deephit.py` | The tuned DeepHit baseline (grid over learning rate, batch size, dropout, hidden dimension, weight decay) |
+| `classification/significance.py` | ΔAUROC 95% CIs |
+| `tte/significance.py`, `tte/compare.py` | ΔC-index 95% CIs |
+| `regression/significance.py` | ΔR² 95% CIs |
 
-## 5.6. Compute Accounting
+## 5.7. Compute Accounting
 
 Pretraining and feature extraction record FLOPs and wall time:
 
 - `pretrain.py --profile_steps N --time_steps M` runs the torch profiler over the first `N` training
   steps to measure FLOPs/token, then times the next `M` steps with the profiler off to measure
   seconds/token. Results are written next to the checkpoints.
-- `evaluation/baseline_value/collect_compute.py` merges the per-task extraction and training JSON
+- `evaluation/tabular/collect_compute.py` merges the per-task extraction and training JSON
   (wall-clock, peak RSS, column budget, density) into a single table.
 
 All models in the paper were pretrained on 4× NVIDIA H100 NVL (96 GB VRAM).

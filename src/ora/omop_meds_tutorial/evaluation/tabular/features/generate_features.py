@@ -21,7 +21,7 @@ CPU cost of the tabular pipeline.
 
 Usage::
 
-    python -u -m ora.omop_meds_tutorial.evaluation.baseline_value.generate_tabular_features \
+    python -u -m ora.omop_meds_tutorial.evaluation.tabular.features.generate_features \
         --pretraining_data "$OUT_DIR" \
         --meds_reader "$MEDS_READER" \
         --cohort_dir "$TASK_DIR"
@@ -42,7 +42,7 @@ import pandas as pd
 
 import ora.featurizers
 
-from ..generate_labels import create_omop_meds_tutorial_arg_parser
+from ...common.generate_labels import create_omop_meds_tutorial_arg_parser
 from .meds_tab_featurizer import MedsTabNumericFeaturizer
 
 # Cohort directories on this cluster hold one parquet per split. Some also hold a

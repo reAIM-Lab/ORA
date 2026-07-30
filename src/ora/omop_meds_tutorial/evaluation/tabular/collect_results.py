@@ -137,7 +137,7 @@ def main() -> None:
     print("|---|---|---|---|")
     for r in rows:
         print(f"| {r['task']} | {r['family']} | {r['n_saved'] or '-'} | `{r['saved_path'] or '-'}` |")
-    print("\nPair against the FM arms with `p_test.tte.utils.paired_bootstrap_test`; it asserts "
+    print("\nPair against the FM arms with `common.survival_utils.paired_bootstrap_test`; it asserts "
           "`test_order` equality, and `generate_bootstrap_indices(n, 10000, seed=42)` is "
           "deterministic in n, so the indices already match.")
 

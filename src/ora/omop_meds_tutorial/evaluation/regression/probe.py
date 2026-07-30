@@ -19,11 +19,11 @@ from sklearn.linear_model import LogisticRegressionCV
 from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 import ora.splits
 import argparse
-from ora.omop_meds_tutorial.evaluation.generate_features import get_model_name
+from ora.omop_meds_tutorial.evaluation.common.generate_features import get_model_name
 from sklearn.linear_model import LinearRegression
-from ora.omop_meds_tutorial.evaluation.eval_utils import _metric_mean_std, _update_metric_table
+from ora.omop_meds_tutorial.evaluation.common.eval_utils import _metric_mean_std, _update_metric_table
 
-from ora.omop_meds_tutorial.evaluation.generate_labels import (  # type: ignore
+from ora.omop_meds_tutorial.evaluation.common.generate_labels import (  # type: ignore
         create_omop_meds_tutorial_arg_parser,
         LABEL_NAMES,
     )

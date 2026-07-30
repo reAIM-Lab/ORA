@@ -15,10 +15,10 @@ import sklearn
 from sklearn.linear_model import LogisticRegressionCV
 import ora.splits
 import argparse
-from .generate_labels import LABEL_NAMES, create_omop_meds_tutorial_arg_parser
-from .generate_features import get_model_name
-from .eval_utils import _metric_mean_std, _update_metric_table
-from .p_test.tte.utils import (
+from .common.generate_labels import LABEL_NAMES, create_omop_meds_tutorial_arg_parser
+from .common.generate_features import get_model_name
+from .common.eval_utils import _metric_mean_std, _update_metric_table
+from .common.survival_utils import (
     bootstrap_cindex_parallel,
     generate_bootstrap_indices,
     make_structured_array,
