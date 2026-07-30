@@ -38,9 +38,9 @@ feature-extraction step that runs before it.
 | `feature_extraction/extract.sh` | entry point | All nine cohorts (3 TTE + 3 phenotype-binary + 3 outcome) |
 | `feature_extraction/validate_featurizer.py` | entry point | Brute-force correctness check — run this first |
 | `common.py` | library | Seeding, metric IO, sparse/dense feature preparation |
-| `classification_xgboost.py` | library | XGBoost arm: `split_binary`, `train_binary`, AUROC bootstraps |
-| `tte_deephit.py` | library | DeepHit arm: `split_survival`, `train_survival`, IPCW C-index and IBS |
-| `regression_most_recent_impute.py` | library + CLI | Most-recent-value baseline |
+| `classification.py` | library | XGBoost arm: `split_binary`, `train_binary`, AUROC bootstraps |
+| `tte.py` | library | DeepHit arm: `split_survival`, `train_survival`, IPCW C-index and IBS |
+| `regression.py` | library + CLI | Most-recent-value baseline |
 | `collect_results.py` | entry point | Merges per-task metric JSON into result tables |
 | `collect_compute.py` | entry point | Merges per-task runtime / peak-RSS JSON into a compute table |
 

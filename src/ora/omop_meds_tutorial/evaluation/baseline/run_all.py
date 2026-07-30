@@ -12,9 +12,9 @@ One command for all three task families; `--task` selects which arms run.
 
 | task           | model      | arm                                    |
 |----------------|------------|----------------------------------------|
-| classification | XGBoost    | classification_xgboost.py              |
-| tte            | DeepHit    | tte_deephit.py                         |
-| regression     | last value | regression_most_recent_impute.py       |
+| classification | XGBoost    | classification.py                      |
+| tte            | DeepHit    | tte.py                                 |
+| regression     | last value | regression.py                          |
 
 Features come from `feature_extraction/`. Run that first. Whether they carry the
 MEDS-Tab numeric aggregations is decided there by `--value_stats`, not here, so
@@ -43,10 +43,10 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from .classification_xgboost import split_binary, train_binary
+from .classification import split_binary, train_binary
 from .common import DEFAULT_TRUNCATION, load_metrics, save_metrics, summarize
-from .regression_most_recent_impute import run_baseline as run_regression_baseline
-from .tte_deephit import split_survival, train_survival
+from .regression import run_baseline as run_regression_baseline
+from .tte import split_survival, train_survival
 
 ROOT = "/path/to/workspace/ora"
 DATA_PATH = os.path.join(ROOT, "meds_tab")

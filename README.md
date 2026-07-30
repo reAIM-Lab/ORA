@@ -410,7 +410,7 @@ Each task family holds its driver next to the probe it drives.
 evaluation/
   common/             generate_labels, generate_features, eval_utils, survival_utils
   classification_tte/ run.sh + linear_probe.py     ORA probe: classification and TTE
-  regression/         run_regression.sh + probe.py + extract_cohort_institutional/
+  regression/         run_regression.sh + probe.py
   baseline/           the tabular baselines (XGBoost / DeepHit / most-recent-value)
   p_test/             classification/, tte/, regression/   paired bootstrap tests
   few_shot/           few-shot linear probing
@@ -423,9 +423,9 @@ evaluation/
 
 | `--task` | Model | Module |
 |---|---|---|
-| `classification` | XGBoost | `classification_xgboost.py` |
-| `tte` | DeepHit | `tte_deephit.py` |
-| `regression` | most-recent value | `regression_most_recent_impute.py` |
+| `classification` | XGBoost | `classification.py` |
+| `tte` | DeepHit | `tte.py` |
+| `regression` | most-recent value | `regression.py` |
 
 Features come from `feature_extraction/`, which chooses between two feature sets with
 `--value_stats`:
